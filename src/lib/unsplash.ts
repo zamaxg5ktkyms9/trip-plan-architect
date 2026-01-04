@@ -28,6 +28,15 @@ interface UnsplashSearchResponse {
 const UNSPLASH_ACCESS_KEY = process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY
 const UNSPLASH_API_URL = 'https://api.unsplash.com/search/photos'
 
+// Debug: Log API key status on module load
+console.log(
+  `[Unsplash Debug] Key exists: ${!!UNSPLASH_ACCESS_KEY}, Length: ${UNSPLASH_ACCESS_KEY?.length}, Preview: ${UNSPLASH_ACCESS_KEY?.substring(0, 4)}***`
+)
+console.log(
+  `[Unsplash Debug] All NEXT_PUBLIC env vars:`,
+  Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC_'))
+)
+
 /**
  * Fetches an image URL from Unsplash API based on a search query
  * @param query - Search query (e.g., "Tokyo Tower", "Paris Eiffel Tower")
@@ -36,7 +45,13 @@ const UNSPLASH_API_URL = 'https://api.unsplash.com/search/photos'
 export async function getUnsplashImage(query: string): Promise<string | null> {
   // Return null if API key is not configured
   if (!UNSPLASH_ACCESS_KEY) {
-    console.warn('[Unsplash] API key not configured')
+    console.warn(
+      '[Unsplash] API key not configured - NEXT_PUBLIC_UNSPLASH_ACCESS_KEY is missing'
+    )
+    console.warn(
+      '[Unsplash Debug] Available env vars:',
+      Object.keys(process.env).filter(key => key.startsWith('NEXT_PUBLIC_'))
+    )
     return null
   }
 

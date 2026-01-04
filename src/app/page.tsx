@@ -28,6 +28,8 @@ import { ResultView } from '@/components/result-view'
 import { FooterAd } from '@/components/footer-ad'
 import { toast } from 'sonner'
 import { debugLog, debugError } from '@/lib/debug'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { X } from 'lucide-react'
 
 export default function Home() {
   const [destination, setDestination] = useState('')
@@ -35,6 +37,7 @@ export default function Home() {
   const [period, setPeriod] = useState('3')
   const [arrivalTime, setArrivalTime] = useState('10:00')
   const [budget, setBudget] = useState('standard')
+  const [showJapaneseNotice, setShowJapaneseNotice] = useState(true)
 
   const { object, submit, isLoading, error } = useObject({
     api: '/api/generate',
@@ -122,7 +125,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <header className="text-center mb-12">
+        <header className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 notranslate">
             ✈️ Trip Plan Architect
           </h1>
@@ -130,6 +133,25 @@ export default function Home() {
             AI-powered travel itinerary generator
           </p>
         </header>
+
+        {/* Japanese Notice */}
+        {showJapaneseNotice && (
+          <Alert className="mb-6 bg-muted/50 border-muted">
+            <AlertDescription className="flex items-start justify-between gap-4">
+              <span className="text-sm">
+                🇯🇵 日本語でご利用の方へ:
+                本アプリは英語ベースですが、ブラウザの翻訳機能を使用して日本語でご利用いただけます。
+              </span>
+              <button
+                onClick={() => setShowJapaneseNotice(false)}
+                className="shrink-0 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {!object ? (
           <Card className="shadow-lg">

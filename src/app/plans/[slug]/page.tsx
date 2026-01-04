@@ -10,6 +10,9 @@ interface PageProps {
   }>
 }
 
+// Force dynamic rendering since we use Redis (not compatible with static generation)
+export const dynamic = 'force-dynamic'
+
 // Generate static paths for recent plans (limit to 50 for build performance)
 export async function generateStaticParams() {
   const repository = new PlanRepository()

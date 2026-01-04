@@ -34,7 +34,7 @@ export const globalRateLimit =
           GLOBAL_RATE_LIMIT_WINDOW
         ),
         analytics: true,
-        prefix: '@trip-plan-architect/global',
+        prefix: 'ratelimit_v2:global',
       })
     : null
 
@@ -52,7 +52,7 @@ export const ipRateLimit =
           IP_RATE_LIMIT_WINDOW
         ),
         analytics: true,
-        prefix: '@trip-plan-architect/ip',
+        prefix: 'ratelimit_v2:ip',
       })
     : null
 

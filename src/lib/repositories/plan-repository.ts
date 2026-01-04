@@ -1,5 +1,6 @@
 import { Redis } from '@upstash/redis'
 import type { Plan } from '@/types/plan'
+import { debugLog } from '@/lib/debug'
 
 /**
  * Interface for Plan repository operations
@@ -61,7 +62,7 @@ export class PlanRepository implements IPlanRepository {
 
     if (!this.redis) {
       // For local development without Redis, just return the slug
-      console.warn('Redis not configured, plan not saved:', fullSlug)
+      debugLog('Redis not configured, plan not saved:', fullSlug)
       return fullSlug
     }
 
@@ -90,7 +91,7 @@ export class PlanRepository implements IPlanRepository {
 
       return JSON.parse(data) as Plan
     } catch (error) {
-      console.error('Error retrieving plan:', error)
+      debugLog('Error retrieving plan:', error)
       return null
     }
   }
@@ -111,7 +112,7 @@ export class PlanRepository implements IPlanRepository {
       })
       return slugs
     } catch (error) {
-      console.error('Error listing plans:', error)
+      debugLog('Error listing plans:', error)
       return []
     }
   }
@@ -138,7 +139,7 @@ export class PlanRepository implements IPlanRepository {
       )
       return slugs
     } catch (error) {
-      console.error('Error getting recent plans:', error)
+      debugLog('Error getting recent plans:', error)
       return []
     }
   }

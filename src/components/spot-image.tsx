@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { getPlaceholderGradient } from '@/lib/unsplash'
+import { debugLog } from '@/lib/debug'
 
 interface SpotImageProps {
   spotName: string
@@ -37,7 +38,7 @@ export function SpotImage({ spotName, destination }: SpotImageProps) {
           setError(true)
         }
       } catch (err) {
-        console.error('[SpotImage] Error fetching image:', err)
+        debugLog('[SpotImage] Error fetching image:', err)
         setError(true)
       } finally {
         setIsLoading(false)

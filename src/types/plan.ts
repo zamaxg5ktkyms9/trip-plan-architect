@@ -17,6 +17,7 @@ export type TargetType = z.infer<typeof TargetTypeSchema>
  */
 export const EventSchema = z.object({
   time: z.string().describe('Time of the event (e.g., "09:00")'),
+  name: z.string().describe('Name of the place or activity'),
   activity: z.string().describe('Description of the activity'),
   type: EventTypeSchema.describe('Type of activity'),
   note: z.string().describe('Additional notes or details'),

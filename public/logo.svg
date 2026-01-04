@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="#4A90E2" opacity="0.1"/>
+  
+  <!-- Compass circle -->
+  <circle cx="100" cy="100" r="70" fill="none" stroke="#4A90E2" stroke-width="3"/>
+  <circle cx="100" cy="100" r="60" fill="none" stroke="#4A90E2" stroke-width="1.5" opacity="0.3"/>
+  
+  <!-- Compass directions -->
+  <!-- North -->
+  <path d="M 100 35 L 105 50 L 100 45 L 95 50 Z" fill="#E74C3C"/>
+  <!-- South -->
+  <path d="M 100 165 L 105 150 L 100 155 L 95 150 Z" fill="#95A5A6"/>
+  <!-- East -->
+  <path d="M 165 100 L 150 95 L 155 100 L 150 105 Z" fill="#95A5A6"/>
+  <!-- West -->
+  <path d="M 35 100 L 50 95 L 45 100 L 50 105 Z" fill="#95A5A6"/>
+  
+  <!-- Compass needle -->
+  <g transform="rotate(-30 100 100)">
+    <path d="M 100 50 L 105 100 L 100 95 L 95 100 Z" fill="#E74C3C"/>
+    <path d="M 100 150 L 105 100 L 100 105 L 95 100 Z" fill="#34495E"/>
+  </g>
+  
+  <!-- Center pin -->
+  <circle cx="100" cy="100" r="5" fill="#34495E"/>
+  <circle cx="100" cy="100" r="3" fill="#ECF0F1"/>
+  
+  <!-- Pen design -->
+  <g transform="translate(130, 130)">
+    <!-- Pen body -->
+    <path d="M 0 0 L 35 35 L 30 40 L -5 5 Z" fill="#F39C12"/>
+    <path d="M -5 5 L 30 40 L 25 45 L -10 10 Z" fill="#E67E22"/>
+    
+    <!-- Pen tip -->
+    <path d="M 30 40 L 35 35 L 40 40 L 35 45 Z" fill="#95A5A6"/>
+    <path d="M 35 45 L 40 40 L 42 42 L 37 47 Z" fill="#34495E"/>
+    
+    <!-- Pen clip -->
+    <path d="M 5 -5 Q 8 -8 10 -5 L 8 5 Q 6 3 5 5 Z" fill="#BDC3C7"/>
+  </g>
+  
+  <!-- Writing line accent -->
+  <path d="M 145 145 Q 155 155 165 160" fill="none" stroke="#3498DB" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+</svg>

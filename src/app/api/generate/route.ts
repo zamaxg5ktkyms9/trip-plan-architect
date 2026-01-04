@@ -10,7 +10,7 @@ import {
   ipRateLimit,
 } from '@/lib/rate-limit'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
 
 /**
  * POST /api/generate

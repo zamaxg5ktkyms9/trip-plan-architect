@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900">
+  <!-- グレー背景 -->
+  <rect width="1600" height="900" fill="#cccccc"/>
+  
+  <!-- カメラアイコン -->
+  <g transform="translate(800, 400)">
+    <!-- カメラ本体 -->
+    <rect x="-80" y="-40" width="160" height="100" rx="8" fill="#666666"/>
+    <!-- レンズ -->
+    <circle cx="0" cy="20" r="35" fill="#888888"/>
+    <circle cx="0" cy="20" r="25" fill="#555555"/>
+    <!-- ビューファインダー -->
+    <rect x="-25" y="-55" width="50" height="15" rx="3" fill="#666666"/>
+    <!-- フラッシュ -->
+    <circle cx="50" cy="-25" r="8" fill="#888888"/>
+  </g>
+  
+  <!-- "No Image" テキスト -->
+  <text x="800" y="550" font-family="Arial, sans-serif" font-size="48" fill="#666666" text-anchor="middle" font-weight="bold">
+    No Image
+  </text>
+</svg>

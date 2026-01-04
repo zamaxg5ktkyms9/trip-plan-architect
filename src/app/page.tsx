@@ -27,6 +27,7 @@ import { PlanSchema } from '@/types/plan'
 import { ResultView } from '@/components/result-view'
 import { FooterAd } from '@/components/footer-ad'
 import { toast } from 'sonner'
+import { debugLog, debugError } from '@/lib/debug'
 
 export default function Home() {
   const [destination, setDestination] = useState('')
@@ -39,9 +40,9 @@ export default function Home() {
     api: '/api/generate',
     schema: PlanSchema,
     onError: error => {
-      console.error('[DEBUG] Generation error:', error)
-      console.error('[DEBUG] Error type:', error.constructor.name)
-      console.error('[DEBUG] Error message:', error.message)
+      debugError('[DEBUG] Generation error:', error)
+      debugError('[DEBUG] Error type:', error.constructor.name)
+      debugError('[DEBUG] Error message:', error.message)
 
       // Parse error message for user-friendly display
       const errorMessage = error.message || 'An unexpected error occurred'
@@ -76,18 +77,18 @@ export default function Home() {
 
   // Debug logging to track state changes
   useEffect(() => {
-    console.log('[DEBUG] State Update:')
-    console.log('  - object:', object)
-    console.log('  - object type:', typeof object)
-    console.log('  - object keys:', object ? Object.keys(object) : 'null')
-    console.log('  - isLoading:', isLoading)
-    console.log('  - error:', error)
-    console.log('  - Current Mode:', !object ? 'INPUT FORM' : 'RESULT VIEW')
+    debugLog('[DEBUG] State Update:')
+    debugLog('  - object:', object)
+    debugLog('  - object type:', typeof object)
+    debugLog('  - object keys:', object ? Object.keys(object) : 'null')
+    debugLog('  - isLoading:', isLoading)
+    debugLog('  - error:', error)
+    debugLog('  - Current Mode:', !object ? 'INPUT FORM' : 'RESULT VIEW')
   }, [object, isLoading, error])
 
   const handleGenerate = async () => {
-    console.log('[DEBUG] handleGenerate called')
-    console.log('[DEBUG] Input data:', {
+    debugLog('[DEBUG] handleGenerate called')
+    debugLog('[DEBUG] Input data:', {
       destination,
       template: selectedTemplate,
       options: { period, arrivalTime, budget },
@@ -101,7 +102,7 @@ export default function Home() {
     }
 
     try {
-      console.log('[DEBUG] Calling submit()...')
+      debugLog('[DEBUG] Calling submit()...')
       await submit({
         destination,
         template: selectedTemplate,
@@ -111,10 +112,10 @@ export default function Home() {
           budget,
         },
       })
-      console.log('[DEBUG] submit() completed')
+      debugLog('[DEBUG] submit() completed')
     } catch (err) {
       // Error already handled by onError callback
-      console.error('[DEBUG] Submit error:', err)
+      debugError('[DEBUG] Submit error:', err)
     }
   }
 
@@ -122,7 +123,7 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <header className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 notranslate">
             ✈️ Trip Plan Architect
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
@@ -260,6 +261,41 @@ export default function Home() {
                   'Generate Itinerary ✨'
                 )}
               </Button>
+
+              {/* Disclaimer Accordion */}
+              <Accordion type="single" collapsible className="w-full mt-6">
+                <AccordionItem value="disclaimer">
+                  <AccordionTrigger className="text-sm">
+                    About & Limitations (Beta)
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-2 text-sm text-gray-600">
+                    <p>
+                      ⚠️ This is a <strong>Beta version</strong> powered by AI.
+                      Information may be inaccurate or outdated.
+                    </p>
+                    <p>
+                      📊 <strong>Usage limit:</strong> Approximately 100 plans
+                      per day due to API restrictions.
+                    </p>
+                    <p>
+                      ✈️ <strong>Important:</strong> Please verify all
+                      information (opening hours, prices, availability) before
+                      your trip.
+                    </p>
+                    <p className="text-xs text-gray-500 mt-4">
+                      Images provided by{' '}
+                      <a
+                        href="https://unsplash.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline hover:text-gray-700"
+                      >
+                        Unsplash
+                      </a>
+                    </p>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </CardContent>
           </Card>
         ) : (

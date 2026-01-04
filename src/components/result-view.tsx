@@ -9,8 +9,8 @@ import { Badge } from '@/components/ui/badge'
 import { Plan, Event } from '@/types/plan'
 import { Copy, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
-import Image from 'next/image'
 import type { DeepPartial } from 'ai'
+import { SpotImage } from './spot-image'
 
 interface ResultViewProps {
   plan: DeepPartial<Plan>
@@ -52,11 +52,6 @@ export function ResultView({ plan, destination }: ResultViewProps) {
         [eventKey]: { ...currentEvent, ...updates },
       })
     }
-  }
-
-  const getUnsplashImage = (spotName: string) => {
-    const query = encodeURIComponent(spotName)
-    return `https://source.unsplash.com/800x400/?${query},${destination}`
   }
 
   const copyAsNotionMarkdown = () => {
@@ -211,15 +206,10 @@ export function ResultView({ plan, destination }: ResultViewProps) {
                   >
                     {/* Event Image */}
                     {evt.type === 'spot' && evt.name && (
-                      <div className="relative h-48 bg-gray-100">
-                        <Image
-                          src={getUnsplashImage(evt.name)}
-                          alt={evt.name}
-                          fill
-                          className="object-cover"
-                          unoptimized
-                        />
-                      </div>
+                      <SpotImage
+                        spotName={evt.name}
+                        destination={destination}
+                      />
                     )}
 
                     {/* Event Content */}

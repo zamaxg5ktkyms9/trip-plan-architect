@@ -36,9 +36,9 @@ const UNSPLASH_API_URL = 'https://api.unsplash.com/search/photos'
  */
 export async function getUnsplashImage(query: string): Promise<string | null> {
   // Return null if API key is not configured
-  if (!env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY) {
+  if (!env.UNSPLASH_ACCESS_KEY) {
     console.warn(
-      '[Unsplash] API key not configured - NEXT_PUBLIC_UNSPLASH_ACCESS_KEY is missing'
+      '[Unsplash] API key not configured - UNSPLASH_ACCESS_KEY is missing'
     )
     return null
   }
@@ -51,7 +51,7 @@ export async function getUnsplashImage(query: string): Promise<string | null> {
 
     const response = await fetch(url.toString(), {
       headers: {
-        Authorization: `Client-ID ${env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY}`,
+        Authorization: `Client-ID ${env.UNSPLASH_ACCESS_KEY}`,
       },
       next: {
         // Cache for 24 hours to avoid hitting rate limits

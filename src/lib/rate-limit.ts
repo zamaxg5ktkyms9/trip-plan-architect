@@ -1,37 +1,23 @@
 import { Ratelimit, type Duration } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
+import { env } from '@/env'
 
 /**
  * Rate limiter configuration and instances
+ * Uses type-safe environment variables from @/env
  */
-
-// Read rate limit configuration from environment variables with defaults
-const GLOBAL_RATE_LIMIT_REQUESTS = parseInt(
-  process.env.GLOBAL_RATE_LIMIT_REQUESTS || '30',
-  10
-)
-const GLOBAL_RATE_LIMIT_WINDOW = (process.env.GLOBAL_RATE_LIMIT_WINDOW ||
-  '1 h') as Duration
-
-const IP_RATE_LIMIT_REQUESTS = parseInt(
-  process.env.IP_RATE_LIMIT_REQUESTS || '5',
-  10
-)
-const IP_RATE_LIMIT_WINDOW = (process.env.IP_RATE_LIMIT_WINDOW ||
-  '1 d') as Duration
 
 /**
  * Global rate limiter: configurable requests per time window across all users
- * Default: 30 requests per hour
- * Configure via: GLOBAL_RATE_LIMIT_REQUESTS and GLOBAL_RATE_LIMIT_WINDOW
+ * Configured via env.GLOBAL_RATE_LIMIT_REQUESTS and env.GLOBAL_RATE_LIMIT_WINDOW
  */
 export const globalRateLimit =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+  env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
     ? new Ratelimit({
         redis: Redis.fromEnv(),
         limiter: Ratelimit.slidingWindow(
-          GLOBAL_RATE_LIMIT_REQUESTS,
-          GLOBAL_RATE_LIMIT_WINDOW
+          env.GLOBAL_RATE_LIMIT_REQUESTS,
+          env.GLOBAL_RATE_LIMIT_WINDOW as Duration
         ),
         analytics: true,
         prefix: 'ratelimit_v2:global',
@@ -40,16 +26,15 @@ export const globalRateLimit =
 
 /**
  * IP-based rate limiter: configurable requests per time window per IP address
- * Default: 5 requests per day
- * Configure via: IP_RATE_LIMIT_REQUESTS and IP_RATE_LIMIT_WINDOW
+ * Configured via env.IP_RATE_LIMIT_REQUESTS and env.IP_RATE_LIMIT_WINDOW
  */
 export const ipRateLimit =
-  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
+  env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
     ? new Ratelimit({
         redis: Redis.fromEnv(),
         limiter: Ratelimit.slidingWindow(
-          IP_RATE_LIMIT_REQUESTS,
-          IP_RATE_LIMIT_WINDOW
+          env.IP_RATE_LIMIT_REQUESTS,
+          env.IP_RATE_LIMIT_WINDOW as Duration
         ),
         analytics: true,
         prefix: 'ratelimit_v2:ip',

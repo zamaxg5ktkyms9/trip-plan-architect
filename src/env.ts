@@ -2,66 +2,42 @@ import { z } from 'zod'
 
 /**
  * Environment variables schema with validation and type safety
- * All environment variables must be defined here to prevent runtime errors
  */
 const envSchema = z.object({
-  // OpenAI Configuration
-  // During build time (CI), this may not be set, so we make it optional
-  // At runtime, it will be required for the API to function
-  OPENAI_API_KEY: z.string().optional(),
+  // Unsplash Configuration (server-side only, optional)
+  UNSPLASH_ACCESS_KEY: z.string().optional(),
 
-  // Upstash Redis Configuration
-  UPSTASH_REDIS_REST_URL: z.string().optional(),
-  UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  // Rate Limit Configuration (coerce string to number, with default)
+  RATE_LIMIT_REQUESTS: z.coerce.number().default(10),
 
-  // Rate Limit Configuration
-  GLOBAL_RATE_LIMIT_REQUESTS: z.coerce
-    .number()
-    .int()
-    .positive()
-    .default(30)
-    .describe('Global rate limit: requests per time window'),
-  GLOBAL_RATE_LIMIT_WINDOW: z
-    .string()
-    .default('1 h')
-    .describe('Global rate limit: time window (e.g., "1 h", "1 d")'),
-
-  IP_RATE_LIMIT_REQUESTS: z.coerce
-    .number()
-    .int()
-    .positive()
-    .default(5)
-    .describe('IP-based rate limit: requests per time window'),
-  IP_RATE_LIMIT_WINDOW: z
-    .string()
-    .default('1 d')
-    .describe('IP-based rate limit: time window (e.g., "1 h", "1 d")'),
-
-  // Unsplash Configuration (optional - uses fallback if not set)
-  NEXT_PUBLIC_UNSPLASH_ACCESS_KEY: z
-    .string()
-    .optional()
-    .describe('Unsplash API access key for fetching images'),
-
-  // Debug Configuration
+  // Debug Mode (transform string "true" to boolean, optional)
   NEXT_PUBLIC_IS_DEBUG: z
-    .enum(['true', 'false'])
-    .default('false')
-    .transform(val => val === 'true')
-    .describe('Enable debug logging'),
+    .string()
+    .transform(s => s === 'true')
+    .optional(),
 
-  // Next.js / Vercel Configuration (auto-injected)
+  // System environment variables
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
     .default('development'),
-  VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
 })
 
 /**
  * Parse and validate environment variables
- * Throws an error if validation fails with detailed error messages
+ * Safely handles both server and client environments
  */
 function parseEnv() {
+  // In browser environment, only NEXT_PUBLIC_* variables are available
+  if (typeof window !== 'undefined') {
+    const clientEnv = {
+      NEXT_PUBLIC_IS_DEBUG: process.env.NEXT_PUBLIC_IS_DEBUG,
+      NODE_ENV: process.env.NODE_ENV || 'development',
+    }
+    const parsed = envSchema.safeParse(clientEnv)
+    return parsed.success ? parsed.data : ({} as z.infer<typeof envSchema>)
+  }
+
+  // Server-side: full validation
   const parsed = envSchema.safeParse(process.env)
 
   if (!parsed.success) {
@@ -83,33 +59,14 @@ export const env = parseEnv()
 
 /**
  * Log configuration on startup (server-side only)
- * Masks sensitive values for security
  */
 if (typeof window === 'undefined') {
   console.log('\n[Config] ✅ Loaded Configuration:')
+  console.log(`  - Environment: ${env.NODE_ENV}`)
+  console.log(`  - Rate Limit Requests: ${env.RATE_LIMIT_REQUESTS}`)
+  console.log(`  - Debug Mode: ${env.NEXT_PUBLIC_IS_DEBUG || false}`)
   console.log(
-    `  - Environment: ${env.VERCEL_ENV || env.NODE_ENV} (${env.NODE_ENV})`
-  )
-  console.log(
-    `  - Global Rate Limit: ${env.GLOBAL_RATE_LIMIT_REQUESTS} reqs / ${env.GLOBAL_RATE_LIMIT_WINDOW}`
-  )
-  console.log(
-    `  - IP Rate Limit: ${env.IP_RATE_LIMIT_REQUESTS} reqs / ${env.IP_RATE_LIMIT_WINDOW}`
-  )
-  console.log(`  - Debug Mode: ${env.NEXT_PUBLIC_IS_DEBUG}`)
-
-  // Mask sensitive values
-  console.log(
-    `  - OpenAI API Key: ${env.OPENAI_API_KEY ? `Set (${env.OPENAI_API_KEY.substring(0, 7)}***)` : 'NOT SET'}`
-  )
-  console.log(
-    `  - Unsplash API Key: ${env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY ? `Set (Length: ${env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY.length}, ${env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY.substring(0, 4)}***)` : 'NOT SET (images will use fallback)'}`
-  )
-  console.log(
-    `  - Redis URL: ${env.UPSTASH_REDIS_REST_URL ? `Set (Length: ${env.UPSTASH_REDIS_REST_URL.length})` : 'NOT SET'}`
-  )
-  console.log(
-    `  - Redis Token: ${env.UPSTASH_REDIS_REST_TOKEN ? `Set (${env.UPSTASH_REDIS_REST_TOKEN.substring(0, 4)}***)` : 'NOT SET'}`
+    `  - Unsplash API Key: ${env.UNSPLASH_ACCESS_KEY ? `Set (${env.UNSPLASH_ACCESS_KEY.substring(0, 4)}***)` : 'NOT SET'}`
   )
   console.log('')
 }

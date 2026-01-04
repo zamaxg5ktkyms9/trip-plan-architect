@@ -1,4 +1,4 @@
-import { Ratelimit, type Duration } from '@upstash/ratelimit'
+import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
 import { env } from '@/env'
 
@@ -9,16 +9,13 @@ import { env } from '@/env'
 
 /**
  * Global rate limiter: configurable requests per time window across all users
- * Configured via env.GLOBAL_RATE_LIMIT_REQUESTS and env.GLOBAL_RATE_LIMIT_WINDOW
+ * Configured via env.RATE_LIMIT_REQUESTS
  */
 export const globalRateLimit =
-  env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
     ? new Ratelimit({
         redis: Redis.fromEnv(),
-        limiter: Ratelimit.slidingWindow(
-          env.GLOBAL_RATE_LIMIT_REQUESTS,
-          env.GLOBAL_RATE_LIMIT_WINDOW as Duration
-        ),
+        limiter: Ratelimit.slidingWindow(env.RATE_LIMIT_REQUESTS, '1 d'),
         analytics: true,
         prefix: 'ratelimit_v2:global',
       })
@@ -26,16 +23,13 @@ export const globalRateLimit =
 
 /**
  * IP-based rate limiter: configurable requests per time window per IP address
- * Configured via env.IP_RATE_LIMIT_REQUESTS and env.IP_RATE_LIMIT_WINDOW
+ * Uses the same configuration as global rate limiter
  */
 export const ipRateLimit =
-  env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
     ? new Ratelimit({
         redis: Redis.fromEnv(),
-        limiter: Ratelimit.slidingWindow(
-          env.IP_RATE_LIMIT_REQUESTS,
-          env.IP_RATE_LIMIT_WINDOW as Duration
-        ),
+        limiter: Ratelimit.slidingWindow(env.RATE_LIMIT_REQUESTS, '1 d'),
         analytics: true,
         prefix: 'ratelimit_v2:ip',
       })

@@ -1,0 +1,33 @@
+name: Daily Content Check
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs at 00:00 UTC (09:00 JST) daily
+
+jobs:
+  daily-check:
+    name: Daily Content Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Run daily checks
+        run: |
+          npm run lint
+          npm run type-check
+          npm run test
+          npm run build
+
+      - name: Notify Discord on failure
+        if: failure()
+        run: |
+          curl -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"content\": \"⚠️ Daily content check failed for ${{ github.repository }}\\nWorkflow: ${{ github.workflow }}\\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}" \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}

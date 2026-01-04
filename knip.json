@@ -1,0 +1,21 @@
+{
+  "entry": ["src/app/**/*.{ts,tsx}"],
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignore": ["src/components/ui/**", "src/lib/utils.ts"],
+  "ignoreDependencies": [
+    "@radix-ui/react-accordion",
+    "@radix-ui/react-dialog",
+    "@radix-ui/react-select",
+    "@radix-ui/react-slot",
+    "class-variance-authority",
+    "clsx",
+    "lucide-react",
+    "next-themes",
+    "sonner",
+    "tailwind-merge",
+    "@testing-library/react",
+    "postcss",
+    "tailwindcss",
+    "tw-animate-css"
+  ]
+}

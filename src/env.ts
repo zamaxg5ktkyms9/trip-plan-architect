@@ -58,9 +58,13 @@ function parseEnv() {
 export const env = parseEnv()
 
 /**
- * Log configuration on startup (server-side only)
+ * Log configuration on startup (server-side only, development mode only)
  */
-if (typeof window === 'undefined') {
+if (
+  typeof window === 'undefined' &&
+  (process.env.NODE_ENV === 'development' ||
+    process.env.NEXT_PUBLIC_IS_DEBUG === 'true')
+) {
   console.log('\n[Config] ✅ Loaded Configuration:')
   console.log(`  - Environment: ${env.NODE_ENV}`)
   console.log(`  - Rate Limit Requests: ${env.RATE_LIMIT_REQUESTS}`)

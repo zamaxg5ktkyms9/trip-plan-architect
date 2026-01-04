@@ -1,4 +1,5 @@
 import { env } from '@/env'
+import { debugLog } from '@/lib/debug'
 
 /**
  * Unsplash API integration for fetching location images
@@ -30,6 +31,16 @@ interface UnsplashSearchResponse {
 const UNSPLASH_API_URL = 'https://api.unsplash.com/search/photos'
 
 /**
+ * Sanitizes search query by removing parenthetical content
+ * @param query - Raw search query
+ * @returns Sanitized query without parentheses and their content
+ */
+export function sanitizeQuery(query: string): string {
+  // Remove parentheses and their content, then trim whitespace
+  return query.replace(/\s*\(.*?\)\s*/g, '').trim()
+}
+
+/**
  * Fetches an image URL from Unsplash API based on a search query
  * @param query - Search query (e.g., "Tokyo Tower", "Paris Eiffel Tower")
  * @returns Image URL or null if not found/error
@@ -37,15 +48,21 @@ const UNSPLASH_API_URL = 'https://api.unsplash.com/search/photos'
 export async function getUnsplashImage(query: string): Promise<string | null> {
   // Return null if API key is not configured
   if (!env.UNSPLASH_ACCESS_KEY) {
-    console.warn(
+    debugLog(
       '[Unsplash] API key not configured - UNSPLASH_ACCESS_KEY is missing'
     )
     return null
   }
 
   try {
+    // Sanitize query to improve search accuracy
+    const sanitizedQuery = sanitizeQuery(query)
+    debugLog(
+      `[Unsplash] Original query: "${query}" -> Sanitized: "${sanitizedQuery}"`
+    )
+
     const url = new URL(UNSPLASH_API_URL)
-    url.searchParams.set('query', query)
+    url.searchParams.set('query', sanitizedQuery)
     url.searchParams.set('orientation', 'landscape')
     url.searchParams.set('per_page', '1')
 
@@ -60,7 +77,7 @@ export async function getUnsplashImage(query: string): Promise<string | null> {
     })
 
     if (!response.ok) {
-      console.error(
+      debugLog(
         `[Unsplash] API error: ${response.status} ${response.statusText}`
       )
       return null
@@ -69,14 +86,14 @@ export async function getUnsplashImage(query: string): Promise<string | null> {
     const data: UnsplashSearchResponse = await response.json()
 
     if (data.results.length === 0) {
-      console.warn(`[Unsplash] No images found for query: ${query}`)
+      debugLog(`[Unsplash] No images found for query: ${sanitizedQuery}`)
       return null
     }
 
     // Return the regular size URL (good balance between quality and load time)
     return data.results[0].urls.regular
   } catch (error) {
-    console.error('[Unsplash] Error fetching image:', error)
+    debugLog('[Unsplash] Error fetching image:', error)
     return null
   }
 }

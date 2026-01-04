@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUnsplashImage } from '@/lib/unsplash'
+import { debugLog } from '@/lib/debug'
 
 export const runtime = 'edge'
 
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ imageUrl })
   } catch (error) {
-    console.error('[API] Error fetching Unsplash image:', error)
+    debugLog('[API] Error fetching Unsplash image:', error)
     return NextResponse.json(
       {
         error: 'Failed to fetch image',

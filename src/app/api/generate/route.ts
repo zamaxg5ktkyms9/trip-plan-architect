@@ -9,6 +9,7 @@ import {
   globalRateLimit,
   ipRateLimit,
 } from '@/lib/rate-limit'
+import { debugLog } from '@/lib/debug'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
@@ -86,12 +87,12 @@ Please generate a complete travel itinerary with daily events including times, a
           finalObject.target
         ) {
           planRepository.save(finalObject as Plan).catch(error => {
-            console.error('[DEBUG] Failed to save plan:', error)
+            debugLog('[DEBUG] Failed to save plan:', error)
           })
         }
       })
       .catch(error => {
-        console.error('[DEBUG] Error in object promise:', error)
+        debugLog('[DEBUG] Error in object promise:', error)
       })
 
     return result.toTextStreamResponse()

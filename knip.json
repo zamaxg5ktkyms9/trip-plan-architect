@@ -1,7 +1,13 @@
 {
-  "entry": ["src/app/**/*.{ts,tsx}"],
-  "project": ["src/**/*.{ts,tsx}"],
-  "ignore": ["src/components/ui/**", "src/lib/utils.ts"],
+  "entry": ["src/app/**/*.{ts,tsx}", "scripts/**/*.ts"],
+  "project": ["src/**/*.{ts,tsx}", "scripts/**/*.ts"],
+  "ignore": [
+    "src/components/ui/**",
+    "src/lib/utils.ts",
+    "src/types/**",
+    "src/lib/repositories/plan-repository.ts"
+  ],
+  "ignoreExportsUsedInFile": true,
   "ignoreDependencies": [
     "@radix-ui/react-accordion",
     "@radix-ui/react-dialog",
@@ -16,6 +22,7 @@
     "@testing-library/react",
     "postcss",
     "tailwindcss",
-    "tw-animate-css"
+    "tw-animate-css",
+    "openai"
   ]
 }

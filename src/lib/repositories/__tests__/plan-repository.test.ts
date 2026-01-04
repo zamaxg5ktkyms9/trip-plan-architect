@@ -17,12 +17,14 @@ describe('PlanRepository', () => {
         events: [
           {
             time: '09:00',
+            name: 'Shibuya Crossing',
             activity: 'Visit Shibuya Crossing',
             type: 'spot',
             note: 'Famous scramble crossing',
           },
           {
             time: '12:00',
+            name: 'Ramen Shop',
             activity: 'Lunch at Ramen Shop',
             type: 'food',
             note: 'Try tonkotsu ramen',
@@ -34,6 +36,7 @@ describe('PlanRepository', () => {
         events: [
           {
             time: '10:00',
+            name: 'Tokyo Tower',
             activity: 'Visit Tokyo Tower',
             type: 'spot',
             note: 'Great city views',

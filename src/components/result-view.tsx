@@ -10,9 +10,10 @@ import { Plan, Event } from '@/types/plan'
 import { Copy, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
+import type { DeepPartial } from 'ai'
 
 interface ResultViewProps {
-  plan: Partial<Plan>
+  plan: DeepPartial<Plan>
   destination: string
 }
 
@@ -35,7 +36,7 @@ export function ResultView({ plan, destination }: ResultViewProps) {
     if (editedEvents[eventKey]) {
       return editedEvents[eventKey]
     }
-    return plan.days?.[dayIndex]?.events?.[eventIndex]
+    return plan.days?.[dayIndex]?.events?.[eventIndex] as Event | undefined
   }
 
   const updateEvent = (
@@ -65,9 +66,11 @@ export function ResultView({ plan, destination }: ResultViewProps) {
     markdown += `**Target:** ${plan.target || 'General'}\n\n`
 
     plan.days.forEach((day, dayIndex) => {
-      markdown += `## ${day.day}\n\n`
+      if (!day) return
+      markdown += `## Day ${day.day || dayIndex + 1}\n\n`
       day.events?.forEach((event, eventIndex) => {
         const evt = getEvent(dayIndex, eventIndex) || event
+        if (!evt || !evt.type || !evt.time || !evt.name) return
         markdown += `### ${EVENT_ICONS[evt.type]} ${evt.time} - ${evt.name}\n\n`
         if (evt.activity) {
           markdown += `${evt.activity}\n\n`
@@ -86,9 +89,11 @@ export function ResultView({ plan, destination }: ResultViewProps) {
     text += `Target: ${plan.target || 'General'}\n\n`
 
     plan.days.forEach((day, dayIndex) => {
-      text += `【${day.day}】\n`
+      if (!day) return
+      text += `【Day ${day.day || dayIndex + 1}】\n`
       day.events?.forEach((event, eventIndex) => {
         const evt = getEvent(dayIndex, eventIndex) || event
+        if (!evt || !evt.time || !evt.name) return
         text += `${evt.time} ${evt.name}\n`
         if (evt.activity) {
           text += `${evt.activity}\n`
@@ -183,111 +188,119 @@ export function ResultView({ plan, destination }: ResultViewProps) {
       </Card>
 
       {/* Daily Itinerary */}
-      {plan.days.map((day, dayIndex) => (
-        <Card key={dayIndex} className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-xl">{day.day}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {day.events?.map((event, eventIndex) => {
-              const evt = getEvent(dayIndex, eventIndex) || event
-              const eventKey = `${dayIndex}-${eventIndex}`
-              const isEditing = editingEvent === eventKey
+      {plan.days.map((day, dayIndex) => {
+        if (!day) return null
+        return (
+          <Card key={dayIndex} className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-xl">
+                Day {day.day || dayIndex + 1}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {day.events?.map((event, eventIndex) => {
+                const evt = getEvent(dayIndex, eventIndex) || event
+                if (!evt || !evt.type || !evt.time || !evt.name) return null
+                const eventKey = `${dayIndex}-${eventIndex}`
+                const isEditing = editingEvent === eventKey
 
-              return (
-                <div
-                  key={eventIndex}
-                  className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
-                >
-                  {/* Event Image */}
-                  {evt.type === 'spot' && evt.name && (
-                    <div className="relative h-48 bg-gray-100">
-                      <Image
-                        src={getUnsplashImage(evt.name)}
-                        alt={evt.name}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                    </div>
-                  )}
-
-                  {/* Event Content */}
-                  <div className="p-4 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{EVENT_ICONS[evt.type]}</span>
-                      {isEditing ? (
-                        <Input
-                          value={evt.time}
-                          onChange={e =>
-                            updateEvent(dayIndex, eventIndex, {
-                              time: e.target.value,
-                            })
-                          }
-                          className="w-24"
-                          type="time"
+                return (
+                  <div
+                    key={eventIndex}
+                    className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+                  >
+                    {/* Event Image */}
+                    {evt.type === 'spot' && evt.name && (
+                      <div className="relative h-48 bg-gray-100">
+                        <Image
+                          src={getUnsplashImage(evt.name)}
+                          alt={evt.name}
+                          fill
+                          className="object-cover"
+                          unoptimized
                         />
-                      ) : (
-                        <span
-                          className="font-semibold cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-                          onClick={() => setEditingEvent(eventKey)}
-                        >
-                          {evt.time}
-                        </span>
-                      )}
-                      <span className="text-gray-400">-</span>
-                      {isEditing ? (
-                        <Input
-                          value={evt.name}
-                          onChange={e =>
-                            updateEvent(dayIndex, eventIndex, {
-                              name: e.target.value,
-                            })
-                          }
-                          className="flex-1"
-                          onBlur={() => setEditingEvent(null)}
-                          autoFocus
-                        />
-                      ) : (
-                        <span
-                          className="font-semibold cursor-pointer hover:bg-gray-100 px-2 py-1 rounded flex-1"
-                          onClick={() => setEditingEvent(eventKey)}
-                        >
-                          {evt.name}
-                        </span>
-                      )}
-                    </div>
-
-                    {evt.activity && (
-                      <div className="ml-10">
-                        {isEditing ? (
-                          <Textarea
-                            value={evt.activity}
-                            onChange={e =>
-                              updateEvent(dayIndex, eventIndex, {
-                                activity: e.target.value,
-                              })
-                            }
-                            className="min-h-[80px]"
-                            onBlur={() => setEditingEvent(null)}
-                          />
-                        ) : (
-                          <p
-                            className="text-gray-600 cursor-pointer hover:bg-gray-50 p-2 rounded"
-                            onClick={() => setEditingEvent(eventKey)}
-                          >
-                            {evt.activity}
-                          </p>
-                        )}
                       </div>
                     )}
+
+                    {/* Event Content */}
+                    <div className="p-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">
+                          {EVENT_ICONS[evt.type]}
+                        </span>
+                        {isEditing ? (
+                          <Input
+                            value={evt.time}
+                            onChange={e =>
+                              updateEvent(dayIndex, eventIndex, {
+                                time: e.target.value,
+                              })
+                            }
+                            className="w-24"
+                            type="time"
+                          />
+                        ) : (
+                          <span
+                            className="font-semibold cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+                            onClick={() => setEditingEvent(eventKey)}
+                          >
+                            {evt.time}
+                          </span>
+                        )}
+                        <span className="text-gray-400">-</span>
+                        {isEditing ? (
+                          <Input
+                            value={evt.name}
+                            onChange={e =>
+                              updateEvent(dayIndex, eventIndex, {
+                                name: e.target.value,
+                              })
+                            }
+                            className="flex-1"
+                            onBlur={() => setEditingEvent(null)}
+                            autoFocus
+                          />
+                        ) : (
+                          <span
+                            className="font-semibold cursor-pointer hover:bg-gray-100 px-2 py-1 rounded flex-1"
+                            onClick={() => setEditingEvent(eventKey)}
+                          >
+                            {evt.name}
+                          </span>
+                        )}
+                      </div>
+
+                      {evt.activity && (
+                        <div className="ml-10">
+                          {isEditing ? (
+                            <Textarea
+                              value={evt.activity}
+                              onChange={e =>
+                                updateEvent(dayIndex, eventIndex, {
+                                  activity: e.target.value,
+                                })
+                              }
+                              className="min-h-[80px]"
+                              onBlur={() => setEditingEvent(null)}
+                            />
+                          ) : (
+                            <p
+                              className="text-gray-600 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                              onClick={() => setEditingEvent(eventKey)}
+                            >
+                              {evt.activity}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )
-            })}
-          </CardContent>
-        </Card>
-      ))}
+                )
+              })}
+            </CardContent>
+          </Card>
+        )
+      })}
 
       {/* Reset Button */}
       <div className="flex justify-center">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { experimental_useObject as useObject } from '@ai-sdk/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -39,7 +39,9 @@ export default function Home() {
     api: '/api/generate',
     schema: PlanSchema,
     onError: error => {
-      console.error('Generation error:', error)
+      console.error('[DEBUG] Generation error:', error)
+      console.error('[DEBUG] Error type:', error.constructor.name)
+      console.error('[DEBUG] Error message:', error.message)
 
       // Parse error message for user-friendly display
       const errorMessage = error.message || 'An unexpected error occurred'
@@ -72,7 +74,25 @@ export default function Home() {
     },
   })
 
+  // Debug logging to track state changes
+  useEffect(() => {
+    console.log('[DEBUG] State Update:')
+    console.log('  - object:', object)
+    console.log('  - object type:', typeof object)
+    console.log('  - object keys:', object ? Object.keys(object) : 'null')
+    console.log('  - isLoading:', isLoading)
+    console.log('  - error:', error)
+    console.log('  - Current Mode:', !object ? 'INPUT FORM' : 'RESULT VIEW')
+  }, [object, isLoading, error])
+
   const handleGenerate = async () => {
+    console.log('[DEBUG] handleGenerate called')
+    console.log('[DEBUG] Input data:', {
+      destination,
+      template: selectedTemplate,
+      options: { period, arrivalTime, budget },
+    })
+
     if (!destination.trim()) {
       toast.error('Destination Required', {
         description: 'Please enter a destination to generate an itinerary.',
@@ -81,6 +101,7 @@ export default function Home() {
     }
 
     try {
+      console.log('[DEBUG] Calling submit()...')
       await submit({
         destination,
         template: selectedTemplate,
@@ -90,9 +111,10 @@ export default function Home() {
           budget,
         },
       })
+      console.log('[DEBUG] submit() completed')
     } catch (err) {
       // Error already handled by onError callback
-      console.error('Submit error:', err)
+      console.error('[DEBUG] Submit error:', err)
     }
   }
 

@@ -3,6 +3,18 @@ import type { Plan } from '@/types/plan'
 import { debugLog } from '@/lib/debug'
 
 /**
+ * Plan metadata for listing pages
+ */
+export interface PlanMetadata {
+  id: string
+  title: string
+  destination: string
+  days: number
+  target: 'engineer' | 'general'
+  createdAt: number
+}
+
+/**
  * Interface for Plan repository operations
  */
 export interface IPlanRepository {
@@ -10,6 +22,7 @@ export interface IPlanRepository {
   get(slug: string): Promise<Plan | null>
   list(): Promise<string[]>
   getRecent(limit?: number): Promise<string[]>
+  getRecentPlans(limit?: number): Promise<PlanMetadata[]>
 }
 
 /**
@@ -140,6 +153,62 @@ export class PlanRepository implements IPlanRepository {
       return slugs
     } catch (error) {
       debugLog('Error getting recent plans:', error)
+      return []
+    }
+  }
+
+  /**
+   * Gets recent plans with metadata
+   * @param limit - Maximum number of plans to return (default: 20, max: 100)
+   * @returns Array of plan metadata (newest first)
+   */
+  async getRecentPlans(limit: number = 20): Promise<PlanMetadata[]> {
+    if (!this.redis) {
+      return []
+    }
+
+    try {
+      // Limit to 100 to prevent performance issues
+      const actualLimit = Math.min(limit, 100)
+
+      // Get most recent slugs with scores (timestamps)
+      const results = await this.redis.zrange<string[]>(
+        'plan:slugs',
+        0,
+        actualLimit - 1,
+        {
+          rev: true,
+          withScores: true,
+        }
+      )
+
+      // Results come in pairs: [member, score, member, score, ...]
+      const metadata: PlanMetadata[] = []
+
+      for (let i = 0; i < results.length; i += 2) {
+        const slug = results[i]
+        const timestamp = Number(results[i + 1])
+
+        // Fetch the full plan to extract metadata
+        const plan = await this.get(slug)
+        if (plan) {
+          // Extract destination from title (assumes format like "Tokyo Trip" or "3-Day Paris Adventure")
+          const destination = plan.title.split(' ')[0] || 'Travel'
+
+          metadata.push({
+            id: slug,
+            title: plan.title,
+            destination,
+            days: plan.days.length,
+            target: plan.target,
+            createdAt: timestamp,
+          })
+        }
+      }
+
+      return metadata
+    } catch (error) {
+      debugLog('Error getting recent plans metadata:', error)
       return []
     }
   }

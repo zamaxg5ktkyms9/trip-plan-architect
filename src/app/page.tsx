@@ -26,6 +26,7 @@ import {
 import { PlanSchema } from '@/types/plan'
 import { ResultView } from '@/components/result-view'
 import { FooterAd } from '@/components/footer-ad'
+import { toast } from 'sonner'
 
 export default function Home() {
   const [destination, setDestination] = useState('')
@@ -34,23 +35,65 @@ export default function Home() {
   const [arrivalTime, setArrivalTime] = useState('10:00')
   const [budget, setBudget] = useState('standard')
 
-  const { object, submit, isLoading } = useObject({
+  const { object, submit, isLoading, error } = useObject({
     api: '/api/generate',
     schema: PlanSchema,
+    onError: error => {
+      console.error('Generation error:', error)
+
+      // Parse error message for user-friendly display
+      const errorMessage = error.message || 'An unexpected error occurred'
+
+      if (errorMessage.includes('Rate limit exceeded')) {
+        toast.error('Rate Limit Exceeded', {
+          description: errorMessage,
+          duration: 5000,
+        })
+      } else if (
+        errorMessage.includes('timeout') ||
+        errorMessage.includes('504')
+      ) {
+        toast.error('Request Timeout', {
+          description:
+            'The request took too long to process. Please try again with a shorter itinerary.',
+          duration: 5000,
+        })
+      } else if (errorMessage.includes('429')) {
+        toast.error('Too Many Requests', {
+          description: 'Please wait a moment before trying again.',
+          duration: 5000,
+        })
+      } else {
+        toast.error('Generation Failed', {
+          description: errorMessage,
+          duration: 5000,
+        })
+      }
+    },
   })
 
   const handleGenerate = async () => {
-    if (!destination.trim()) return
+    if (!destination.trim()) {
+      toast.error('Destination Required', {
+        description: 'Please enter a destination to generate an itinerary.',
+      })
+      return
+    }
 
-    await submit({
-      destination,
-      template: selectedTemplate,
-      options: {
-        period,
-        arrivalTime,
-        budget,
-      },
-    })
+    try {
+      await submit({
+        destination,
+        template: selectedTemplate,
+        options: {
+          period,
+          arrivalTime,
+          budget,
+        },
+      })
+    } catch (err) {
+      // Error already handled by onError callback
+      console.error('Submit error:', err)
+    }
   }
 
   return (

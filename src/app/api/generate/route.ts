@@ -9,6 +9,7 @@ import {
   globalRateLimit,
   ipRateLimit,
 } from '@/lib/rate-limit'
+import { env } from '@/env'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
@@ -26,6 +27,20 @@ export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
  */
 export async function POST(request: NextRequest) {
   try {
+    // Check if OpenAI API key is configured
+    if (!env.OPENAI_API_KEY) {
+      return new Response(
+        JSON.stringify({
+          error:
+            'OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.',
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
     const body = await request.json()
     const input = GenerateInputSchema.parse(body)
 

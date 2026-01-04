@@ -11,14 +11,15 @@ import {
 } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
+export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
 
 /**
  * POST /api/generate
  * Generates a travel plan using AI based on the provided input
  *
- * Rate Limits:
- * - Global: 30 requests per hour across all users
- * - Per IP: 5 requests per day per IP address
+ * Rate Limits (configurable via environment variables):
+ * - Global: Default 30 requests per hour across all users
+ * - Per IP: Default 5 requests per day per IP address
  *
  * @param request - Next.js request object containing destination, template, and options
  * @returns Streaming JSON response with the generated plan

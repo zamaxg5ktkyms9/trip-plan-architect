@@ -66,8 +66,8 @@ describe('API Route Components', () => {
   })
 
   describe('PlanRepository Integration', () => {
-    it('should be instantiable', () => {
-      const repo = new PlanRepository('data/test-plans')
+    it('should be instantiable without Redis', () => {
+      const repo = new PlanRepository()
       expect(repo).toBeDefined()
     })
   })

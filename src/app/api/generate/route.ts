@@ -62,18 +62,23 @@ Please generate a complete travel itinerary with daily events including times, a
       prompt: userPrompt,
     })
 
-    const partialPlan = await result.partialObjectStream
-
-    let finalPlan: Plan | null = null
-    for await (const part of partialPlan) {
-      if (part && part.title && part.days && part.target) {
-        finalPlan = part as Plan
-      }
-    }
-
-    if (finalPlan) {
-      await planRepository.save(finalPlan)
-    }
+    // Save the plan after streaming completes (non-blocking)
+    result.object
+      .then(finalObject => {
+        if (
+          finalObject &&
+          finalObject.title &&
+          finalObject.days &&
+          finalObject.target
+        ) {
+          planRepository.save(finalObject as Plan).catch(error => {
+            console.error('[DEBUG] Failed to save plan:', error)
+          })
+        }
+      })
+      .catch(error => {
+        console.error('[DEBUG] Error in object promise:', error)
+      })
 
     return result.toTextStreamResponse()
   } catch (error) {

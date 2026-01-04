@@ -6,7 +6,9 @@ import { z } from 'zod'
  */
 const envSchema = z.object({
   // OpenAI Configuration
-  OPENAI_API_KEY: z.string().min(1, 'OpenAI API key is required'),
+  // During build time (CI), this may not be set, so we make it optional
+  // At runtime, it will be required for the API to function
+  OPENAI_API_KEY: z.string().optional(),
 
   // Upstash Redis Configuration
   UPSTASH_REDIS_REST_URL: z.string().optional(),

@@ -9,20 +9,25 @@ import { Calendar, MapPin, Target } from 'lucide-react'
 export async function RecentPlans() {
   const plans = await planRepository.getRecentPlans(20)
 
-  if (plans.length === 0) {
-    return null
-  }
-
   return (
     <section className="mt-16">
       <h2 className="text-3xl font-bold text-center mb-8">
         Recently Generated Plans
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {plans.map(plan => (
-          <PlanCard key={plan.id} plan={plan} />
-        ))}
-      </div>
+      {plans.length === 0 ? (
+        <div className="text-center text-muted-foreground py-12">
+          <p className="text-lg mb-2">No plans generated yet</p>
+          <p className="text-sm">
+            Be the first to create a travel plan using the form above!
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {plans.map(plan => (
+            <PlanCard key={plan.id} plan={plan} />
+          ))}
+        </div>
+      )}
     </section>
   )
 }

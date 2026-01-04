@@ -1,11 +1,16 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { PlanRepository } from '../plan-repository'
 import type { Plan } from '@/types/plan'
-import { promises as fs } from 'fs'
-import path from 'path'
+
+// Mock Redis
+const mockRedis = {
+  set: vi.fn(),
+  get: vi.fn(),
+  zadd: vi.fn(),
+  zrange: vi.fn(),
+}
 
 describe('PlanRepository', () => {
-  const testBasePath = 'data/plans-test'
   let repository: PlanRepository
 
   const mockPlan: Plan = {
@@ -47,42 +52,32 @@ describe('PlanRepository', () => {
   }
 
   beforeEach(() => {
-    repository = new PlanRepository(testBasePath)
-  })
-
-  afterEach(async () => {
-    try {
-      await fs.rm(testBasePath, { recursive: true, force: true })
-    } catch {
-      // Ignore errors
-    }
+    vi.clearAllMocks()
+    repository = new PlanRepository(mockRedis as never)
   })
 
   describe('save', () => {
     it('should save a plan and return a slug', async () => {
+      mockRedis.set.mockResolvedValue('OK')
+      mockRedis.zadd.mockResolvedValue(1)
+
       const slug = await repository.save(mockPlan)
 
       expect(slug).toBeTruthy()
       expect(slug).toContain('test-tokyo-trip')
       expect(slug).toMatch(/^test-tokyo-trip-\d+$/)
-    })
 
-    it('should create the directory if it does not exist', async () => {
-      const slug = await repository.save(mockPlan)
-
-      const files = await fs.readdir(testBasePath)
-      expect(files.length).toBeGreaterThan(0)
-      expect(files[0]).toContain(slug)
-    })
-
-    it('should save the plan as valid JSON', async () => {
-      const slug = await repository.save(mockPlan)
-
-      const savedPlan = await repository.get(slug)
-      expect(savedPlan).toEqual(mockPlan)
+      expect(mockRedis.set).toHaveBeenCalledWith(
+        `plan:${slug}`,
+        JSON.stringify(mockPlan)
+      )
+      expect(mockRedis.zadd).toHaveBeenCalled()
     })
 
     it('should generate unique slugs for plans with the same title', async () => {
+      mockRedis.set.mockResolvedValue('OK')
+      mockRedis.zadd.mockResolvedValue(1)
+
       const slug1 = await repository.save(mockPlan)
       await new Promise(resolve => setTimeout(resolve, 10))
       const slug2 = await repository.save(mockPlan)
@@ -93,58 +88,76 @@ describe('PlanRepository', () => {
 
   describe('get', () => {
     it('should retrieve a saved plan by slug', async () => {
-      const slug = await repository.save(mockPlan)
+      const slug = 'test-tokyo-trip-1234567890'
+      mockRedis.get.mockResolvedValue(JSON.stringify(mockPlan))
+
       const retrievedPlan = await repository.get(slug)
 
       expect(retrievedPlan).toEqual(mockPlan)
+      expect(mockRedis.get).toHaveBeenCalledWith(`plan:${slug}`)
     })
 
     it('should return null for non-existent plan', async () => {
+      mockRedis.get.mockResolvedValue(null)
+
       const plan = await repository.get('non-existent-plan')
 
       expect(plan).toBeNull()
     })
 
-    it('should work with or without .json extension', async () => {
-      const slug = await repository.save(mockPlan)
+    it('should return null if Redis is not configured', async () => {
+      const repoWithoutRedis = new PlanRepository()
+      const plan = await repoWithoutRedis.get('some-slug')
 
-      const plan1 = await repository.get(slug)
-      const plan2 = await repository.get(`${slug}.json`)
-
-      expect(plan1).toEqual(mockPlan)
-      expect(plan2).toEqual(mockPlan)
+      expect(plan).toBeNull()
     })
   })
 
   describe('list', () => {
     it('should return empty array when no plans exist', async () => {
+      mockRedis.zrange.mockResolvedValue([])
+
       const plans = await repository.list()
 
       expect(plans).toEqual([])
     })
 
     it('should list all saved plans', async () => {
-      const slug1 = await repository.save(mockPlan)
-      const slug2 = await repository.save({
-        ...mockPlan,
-        title: 'Another Plan',
-      })
+      const slugs = ['test-tokyo-trip-123', 'another-plan-456']
+      mockRedis.zrange.mockResolvedValue(slugs)
 
       const plans = await repository.list()
 
-      expect(plans).toHaveLength(2)
-      expect(plans).toContain(slug1)
-      expect(plans).toContain(slug2)
+      expect(plans).toEqual(slugs)
+      expect(mockRedis.zrange).toHaveBeenCalledWith('plan:slugs', 0, -1, {
+        rev: true,
+      })
+    })
+  })
+
+  describe('getRecent', () => {
+    it('should get recent plans with default limit', async () => {
+      const slugs = Array.from({ length: 10 }, (_, i) => `plan-${i}`)
+      mockRedis.zrange.mockResolvedValue(slugs)
+
+      const recent = await repository.getRecent()
+
+      expect(recent).toEqual(slugs)
+      expect(mockRedis.zrange).toHaveBeenCalledWith('plan:slugs', 0, 9, {
+        rev: true,
+      })
     })
 
-    it('should only return .json files', async () => {
-      await repository.save(mockPlan)
-      await fs.writeFile(path.join(testBasePath, 'test.txt'), 'test', 'utf-8')
+    it('should respect custom limit', async () => {
+      const slugs = Array.from({ length: 5 }, (_, i) => `plan-${i}`)
+      mockRedis.zrange.mockResolvedValue(slugs)
 
-      const plans = await repository.list()
+      const recent = await repository.getRecent(5)
 
-      expect(plans).toHaveLength(1)
-      expect(plans.every(slug => !slug.endsWith('.txt'))).toBe(true)
+      expect(recent).toEqual(slugs)
+      expect(mockRedis.zrange).toHaveBeenCalledWith('plan:slugs', 0, 4, {
+        rev: true,
+      })
     })
   })
 })

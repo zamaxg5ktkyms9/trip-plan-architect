@@ -10,10 +10,10 @@ interface PageProps {
   }>
 }
 
-// Generate static paths for all saved plans
+// Generate static paths for recent plans (limit to 50 for build performance)
 export async function generateStaticParams() {
   const repository = new PlanRepository()
-  const slugs = await repository.list()
+  const slugs = await repository.getRecent(50)
 
   return slugs.map(slug => ({
     slug,

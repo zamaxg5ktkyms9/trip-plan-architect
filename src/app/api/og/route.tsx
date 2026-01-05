@@ -3,6 +3,16 @@ import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
 
+/**
+ * GET /api/og
+ * Generates Open Graph images for social media sharing
+ *
+ * Query parameters:
+ * - title: Plan title (e.g., "Tokyo Adventure")
+ * - days: Number of days (e.g., "5")
+ *
+ * Returns a 1200x630 image optimized for Twitter, Facebook, etc.
+ */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
   const title = searchParams.get('title') || 'Travel Plan'
@@ -18,8 +28,8 @@ export async function GET(request: NextRequest) {
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: '#fff',
-        backgroundImage:
-          'linear-gradient(to bottom right, #dbeafe 0%, #ffffff 50%, #e0f2fe 100%)',
+        backgroundImage: 'linear-gradient(to bottom, #eff6ff, #ffffff)',
+        fontFamily: 'system-ui, -apple-system, sans-serif',
       }}
     >
       <div
@@ -28,14 +38,15 @@ export async function GET(request: NextRequest) {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          padding: '40px',
+          padding: '60px',
+          maxWidth: '1000px',
         }}
       >
         {/* Logo/Icon */}
         <div
           style={{
-            fontSize: 120,
-            marginBottom: 20,
+            fontSize: 100,
+            marginBottom: 30,
           }}
         >
           ✈️
@@ -44,44 +55,48 @@ export async function GET(request: NextRequest) {
         {/* Title */}
         <div
           style={{
-            fontSize: 60,
+            fontSize: 64,
             fontWeight: 'bold',
-            color: '#1e40af',
+            color: '#1e3a8a',
             textAlign: 'center',
-            marginBottom: 20,
+            marginBottom: 24,
             maxWidth: '90%',
-            lineHeight: 1.2,
+            lineHeight: 1.1,
+            letterSpacing: '-0.02em',
           }}
         >
           {title}
         </div>
 
         {/* Days Badge */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            backgroundColor: '#3b82f6',
-            color: '#fff',
-            padding: '16px 32px',
-            borderRadius: 12,
-            fontSize: 32,
-            fontWeight: 'bold',
-            marginBottom: 30,
-          }}
-        >
-          {days} Day{parseInt(days) > 1 ? 's' : ''} Itinerary
-        </div>
+        {days && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: '#3b82f6',
+              color: '#ffffff',
+              padding: '12px 28px',
+              borderRadius: 8,
+              fontSize: 28,
+              fontWeight: '600',
+              marginBottom: 32,
+            }}
+          >
+            {days} Day{parseInt(days) > 1 ? 's' : ''} Trip
+          </div>
+        )}
 
-        {/* App Name */}
+        {/* Subtitle */}
         <div
           style={{
-            fontSize: 28,
+            fontSize: 32,
             color: '#64748b',
-            marginTop: 20,
+            fontWeight: '500',
+            marginTop: 16,
           }}
         >
-          Trip Plan Architect
+          AI-Powered Trip Plan Architect
         </div>
       </div>
     </div>,

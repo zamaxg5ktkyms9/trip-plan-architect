@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Plan, Event } from '@/types/plan'
-import { Copy, Share2 } from 'lucide-react'
+import { Copy, Share2, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import type { DeepPartial } from 'ai'
 import { SpotImage } from './spot-image'
@@ -76,7 +76,9 @@ export function ResultView({ plan, destination }: ResultViewProps) {
     })
 
     navigator.clipboard.writeText(markdown)
-    toast.success('Copied as Notion Markdown!')
+    toast.success('Copied!', {
+      description: 'Paste into Notion to save your edits.',
+    })
   }
 
   const copyAsLineText = () => {
@@ -180,6 +182,14 @@ export function ResultView({ plan, destination }: ResultViewProps) {
                 <Share2 className="h-4 w-4 mr-1" />X
               </Button>
             </div>
+          </div>
+          {/* Edit Disclaimer */}
+          <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+            <Info className="w-3 h-3" />
+            <span>
+              Edits are temporary and for export only. Shared URLs display the
+              original plan.
+            </span>
           </div>
         </CardHeader>
       </Card>

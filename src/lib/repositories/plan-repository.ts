@@ -240,10 +240,13 @@ export class PlanRepository implements IPlanRepository {
       console.timeEnd('[PERF] getRecentPlans:pipeline')
 
       console.time('[PERF] getRecentPlans:parse')
-      // Filter out null results and parse metadata
+      // Collect slugs that need fallback (missing metadata)
       const metadata: PlanMetadata[] = []
+      const slugsNeedingFallback: string[] = []
+
       for (let i = 0; i < metadataResults.length; i++) {
         const meta = metadataResults[i]
+        const slug = slugs[i]
 
         if (meta && typeof meta === 'object') {
           // Upstash already parsed JSON
@@ -253,18 +256,55 @@ export class PlanRepository implements IPlanRepository {
           try {
             metadata.push(JSON.parse(meta) as PlanMetadata)
           } catch {
-            debugLog('Failed to parse metadata for slug:', slugs[i])
+            debugLog('Failed to parse metadata for slug:', slug)
+            slugsNeedingFallback.push(slug)
           }
+        } else {
+          // No metadata key exists - need to fetch full plan (legacy data)
+          slugsNeedingFallback.push(slug)
         }
       }
       console.timeEnd('[PERF] getRecentPlans:parse')
 
+      // Fallback: fetch full plans for legacy data without metadata
+      if (slugsNeedingFallback.length > 0) {
+        console.time('[PERF] getRecentPlans:fallback')
+        const fallbackPipeline = this.redis.pipeline()
+        slugsNeedingFallback.forEach(slug => {
+          fallbackPipeline.get(`plan:${slug}`)
+        })
+
+        const planResults = await fallbackPipeline.exec<(Plan | null)[]>()
+
+        for (let i = 0; i < planResults.length; i++) {
+          const plan = planResults[i]
+          const slug = slugsNeedingFallback[i]
+
+          if (plan && typeof plan === 'object') {
+            // Extract metadata from full plan
+            const destination = plan.title?.split(' ')[0] || 'Travel'
+            const timestamp = Number(slug.split('-').pop()) || Date.now()
+
+            metadata.push({
+              id: slug,
+              title: plan.title || '',
+              destination,
+              days: Array.isArray(plan.days) ? plan.days.length : 0,
+              target: plan.target || 'general',
+              createdAt: timestamp,
+            })
+          }
+        }
+        console.timeEnd('[PERF] getRecentPlans:fallback')
+      }
+
       console.timeEnd('[PERF] getRecentPlans:total')
       console.log(
-        `[PERF] Fetched ${metadata.length} plans (requested: ${slugs.length})`
+        `[PERF] Fetched ${metadata.length} plans (requested: ${slugs.length}, fallback: ${slugsNeedingFallback.length})`
       )
 
-      return metadata
+      // Sort by createdAt descending to maintain order
+      return metadata.sort((a, b) => b.createdAt - a.createdAt)
     } catch (error) {
       debugLog('Error getting recent plans metadata:', error)
       return []

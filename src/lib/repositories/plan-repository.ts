@@ -99,10 +99,22 @@ export class PlanRepository implements IPlanRepository {
     }
 
     try {
-      const data = await this.redis.get<string>(`plan:${slug}`)
+      const data = await this.redis.get(`plan:${slug}`)
       if (!data) return null
 
-      return JSON.parse(data) as Plan
+      // Upstash Redis SDK may auto-parse JSON, so check the type
+      if (typeof data === 'object' && data !== null) {
+        // Already parsed as object
+        return data as Plan
+      }
+
+      if (typeof data === 'string') {
+        // Still a string, parse it
+        return JSON.parse(data) as Plan
+      }
+
+      debugLog('Unexpected data type from Redis:', typeof data)
+      return null
     } catch (error) {
       debugLog('Error retrieving plan:', error)
       return null

@@ -5,7 +5,8 @@
     "src/components/ui/**",
     "src/lib/utils.ts",
     "src/types/**",
-    "src/lib/repositories/plan-repository.ts"
+    "src/lib/repositories/plan-repository.ts",
+    "src/lib/constants/seed.ts"
   ],
   "ignoreExportsUsedInFile": true,
   "ignoreDependencies": [

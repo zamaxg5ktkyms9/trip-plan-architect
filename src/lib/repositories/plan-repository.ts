@@ -185,6 +185,8 @@ export class PlanRepository implements IPlanRepository {
     }
 
     try {
+      console.time('getRecentPlans')
+
       // Limit to 100 to prevent performance issues
       const actualLimit = Math.min(limit, 100)
 
@@ -192,7 +194,8 @@ export class PlanRepository implements IPlanRepository {
       const start = offset
       const end = offset + actualLimit - 1
 
-      // Get recent slugs with scores (timestamps)
+      console.time('getRecentPlans:zrange')
+      // Get recent slugs with scores (timestamps) - DB-level pagination
       const results = await this.redis.zrange<string[]>(
         'plan:slugs',
         start,
@@ -202,31 +205,54 @@ export class PlanRepository implements IPlanRepository {
           withScores: true,
         }
       )
+      console.timeEnd('getRecentPlans:zrange')
 
       // Results come in pairs: [member, score, member, score, ...]
-      const metadata: PlanMetadata[] = []
-
+      const slugsWithTimestamps: Array<{ slug: string; timestamp: number }> = []
       for (let i = 0; i < results.length; i += 2) {
-        const slug = results[i]
-        const timestamp = Number(results[i + 1])
+        slugsWithTimestamps.push({
+          slug: results[i],
+          timestamp: Number(results[i + 1]),
+        })
+      }
 
-        // Fetch the full plan to extract metadata
-        const plan = await this.get(slug)
-        if (plan) {
+      if (slugsWithTimestamps.length === 0) {
+        console.timeEnd('getRecentPlans')
+        return []
+      }
+
+      console.time('getRecentPlans:pipeline')
+      // Use pipeline for batch GET operations (N+1 problem fix)
+      const pipeline = this.redis.pipeline()
+      slugsWithTimestamps.forEach(({ slug }) => {
+        pipeline.get(`plan:${slug}`)
+      })
+
+      const planResults = await pipeline.exec<(Plan | null)[]>()
+      console.timeEnd('getRecentPlans:pipeline')
+
+      // Extract metadata from plans
+      const metadata: PlanMetadata[] = []
+      for (let i = 0; i < planResults.length; i++) {
+        const plan = planResults[i]
+        const { slug, timestamp } = slugsWithTimestamps[i]
+
+        if (plan && typeof plan === 'object') {
           // Extract destination from title (assumes format like "Tokyo Trip" or "3-Day Paris Adventure")
-          const destination = plan.title.split(' ')[0] || 'Travel'
+          const destination = plan.title?.split(' ')[0] || 'Travel'
 
           metadata.push({
             id: slug,
-            title: plan.title,
+            title: plan.title || '',
             destination,
-            days: plan.days.length,
-            target: plan.target,
+            days: Array.isArray(plan.days) ? plan.days.length : 0,
+            target: plan.target || 'general',
             createdAt: timestamp,
           })
         }
       }
 
+      console.timeEnd('getRecentPlans')
       return metadata
     } catch (error) {
       debugLog('Error getting recent plans metadata:', error)

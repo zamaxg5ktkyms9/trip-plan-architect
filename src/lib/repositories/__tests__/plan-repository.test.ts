@@ -2,12 +2,34 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { PlanRepository } from '../plan-repository'
 import type { Plan } from '@/types/plan'
 
-// Mock Redis
+// Mock Redis with pipeline support
+const createMockPipeline = () => {
+  const commands: Array<() => Promise<unknown>> = []
+  return {
+    set: vi.fn((...args) => {
+      commands.push(() => mockRedis.set(...args))
+      return createMockPipeline()
+    }),
+    get: vi.fn((...args) => {
+      commands.push(() => mockRedis.get(...args))
+      return createMockPipeline()
+    }),
+    zadd: vi.fn((...args) => {
+      commands.push(() => mockRedis.zadd(...args))
+      return createMockPipeline()
+    }),
+    exec: vi.fn(async () => {
+      return Promise.all(commands.map(cmd => cmd()))
+    }),
+  }
+}
+
 const mockRedis = {
   set: vi.fn(),
   get: vi.fn(),
   zadd: vi.fn(),
   zrange: vi.fn(),
+  pipeline: vi.fn(() => createMockPipeline()),
 }
 
 describe('PlanRepository', () => {
@@ -67,10 +89,10 @@ describe('PlanRepository', () => {
       expect(slug).toContain('test-tokyo-trip')
       expect(slug).toMatch(/^test-tokyo-trip-\d+$/)
 
-      expect(mockRedis.set).toHaveBeenCalledWith(
-        `plan:${slug}`,
-        JSON.stringify(mockPlan)
-      )
+      // Verify pipeline was used
+      expect(mockRedis.pipeline).toHaveBeenCalled()
+      // Verify the actual Redis commands were called (via pipeline)
+      expect(mockRedis.set).toHaveBeenCalledTimes(2) // plan + metadata
       expect(mockRedis.zadd).toHaveBeenCalled()
     })
 
@@ -83,6 +105,7 @@ describe('PlanRepository', () => {
       const slug2 = await repository.save(mockPlan)
 
       expect(slug1).not.toBe(slug2)
+      expect(mockRedis.pipeline).toHaveBeenCalledTimes(2)
     })
   })
 

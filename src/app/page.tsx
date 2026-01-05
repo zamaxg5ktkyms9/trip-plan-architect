@@ -1,6 +1,9 @@
+import Link from 'next/link'
 import { TripGenerator } from '@/components/trip-generator'
 import { RecentPlans } from '@/components/recent-plans'
 import { FooterAd } from '@/components/footer-ad'
+import { Button } from '@/components/ui/button'
+import { ArrowRight } from 'lucide-react'
 
 export default function Home() {
   return (
@@ -17,7 +20,16 @@ export default function Home() {
 
         <TripGenerator />
 
-        <RecentPlans />
+        <RecentPlans limit={6} />
+
+        <div className="text-center mt-8">
+          <Link href="/plans">
+            <Button variant="outline" size="lg" className="gap-2">
+              View All Plans
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
 
         <FooterAd />
       </div>

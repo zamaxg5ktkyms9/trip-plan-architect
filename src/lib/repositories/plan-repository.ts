@@ -22,7 +22,8 @@ export interface IPlanRepository {
   get(slug: string): Promise<Plan | null>
   list(): Promise<string[]>
   getRecent(limit?: number): Promise<string[]>
-  getRecentPlans(limit?: number): Promise<PlanMetadata[]>
+  getRecentPlans(limit?: number, offset?: number): Promise<PlanMetadata[]>
+  getTotalCount(): Promise<number>
 }
 
 /**
@@ -172,9 +173,13 @@ export class PlanRepository implements IPlanRepository {
   /**
    * Gets recent plans with metadata
    * @param limit - Maximum number of plans to return (default: 20, max: 100)
+   * @param offset - Number of plans to skip (default: 0)
    * @returns Array of plan metadata (newest first)
    */
-  async getRecentPlans(limit: number = 20): Promise<PlanMetadata[]> {
+  async getRecentPlans(
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<PlanMetadata[]> {
     if (!this.redis) {
       return []
     }
@@ -183,11 +188,15 @@ export class PlanRepository implements IPlanRepository {
       // Limit to 100 to prevent performance issues
       const actualLimit = Math.min(limit, 100)
 
-      // Get most recent slugs with scores (timestamps)
+      // Calculate Redis range: offset to (offset + limit - 1)
+      const start = offset
+      const end = offset + actualLimit - 1
+
+      // Get recent slugs with scores (timestamps)
       const results = await this.redis.zrange<string[]>(
         'plan:slugs',
-        0,
-        actualLimit - 1,
+        start,
+        end,
         {
           rev: true,
           withScores: true,
@@ -222,6 +231,24 @@ export class PlanRepository implements IPlanRepository {
     } catch (error) {
       debugLog('Error getting recent plans metadata:', error)
       return []
+    }
+  }
+
+  /**
+   * Gets the total number of plans stored
+   * @returns Total count of plans
+   */
+  async getTotalCount(): Promise<number> {
+    if (!this.redis) {
+      return 0
+    }
+
+    try {
+      const count = await this.redis.zcard('plan:slugs')
+      return count
+    } catch (error) {
+      debugLog('Error getting total plan count:', error)
+      return 0
     }
   }
 }

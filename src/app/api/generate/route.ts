@@ -1,15 +1,13 @@
 import { openai } from '@ai-sdk/openai'
 import { streamObject } from 'ai'
 import { NextRequest } from 'next/server'
-import { PlanSchema, GenerateInputSchema, type Plan } from '@/types/plan'
-import { planRepository } from '@/lib/repositories/plan-repository'
+import { PlanSchema, GenerateInputSchema } from '@/types/plan'
 import {
   checkRateLimit,
   getClientIP,
   globalRateLimit,
   ipRateLimit,
 } from '@/lib/rate-limit'
-import { debugLog } from '@/lib/debug'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
@@ -17,6 +15,9 @@ export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
 /**
  * POST /api/generate
  * Generates a travel plan using AI based on the provided input
+ *
+ * NOTE: This endpoint only generates the plan. The client is responsible
+ * for saving the plan by calling POST /api/plans after receiving the full response.
  *
  * Rate Limits (configurable via environment variables):
  * - Global: Default 30 requests per hour across all users
@@ -77,24 +78,8 @@ Please generate a complete travel itinerary with daily events including times, a
       prompt: userPrompt,
     })
 
-    // Save the plan after streaming completes (non-blocking)
-    result.object
-      .then(finalObject => {
-        if (
-          finalObject &&
-          finalObject.title &&
-          finalObject.days &&
-          finalObject.target
-        ) {
-          planRepository.save(finalObject as Plan).catch(error => {
-            debugLog('[DEBUG] Failed to save plan:', error)
-          })
-        }
-      })
-      .catch(error => {
-        debugLog('[DEBUG] Error in object promise:', error)
-      })
-
+    // Return streaming response without saving
+    // Client will call POST /api/plans to save the plan after receiving it
     return result.toTextStreamResponse()
   } catch (error) {
     console.error('Error generating plan:', error)

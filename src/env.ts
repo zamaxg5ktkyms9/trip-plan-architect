@@ -32,7 +32,7 @@ function parseEnv() {
   const isBrowser =
     typeof globalThis !== 'undefined' &&
     'window' in globalThis &&
-    globalThis.window !== undefined
+    (globalThis as { window?: unknown }).window !== undefined
 
   if (isBrowser) {
     const clientEnv = {
@@ -70,7 +70,7 @@ export const env = parseEnv()
 const isServer =
   typeof globalThis === 'undefined' ||
   !('window' in globalThis) ||
-  globalThis.window === undefined
+  (globalThis as { window?: unknown }).window === undefined
 
 if (
   isServer &&

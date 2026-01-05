@@ -31,6 +31,17 @@ import { PlanRepository } from '../src/lib/repositories/plan-repository'
 import { SEED_PLANS, SeedPlan } from '../src/lib/constants/seeds'
 
 /**
+ * Unsplash API response type
+ */
+interface UnsplashSearchResponse {
+  results: Array<{
+    urls: {
+      regular: string
+    }
+  }>
+}
+
+/**
  * Environment variable validation
  */
 function validateEnvironment(): void {
@@ -89,7 +100,7 @@ async function fetchUnsplashImage(seed: SeedPlan): Promise<string | null> {
       return null
     }
 
-    const data = await response.json()
+    const data = (await response.json()) as UnsplashSearchResponse
 
     if (data.results && data.results.length > 0) {
       console.log(`✓ Image fetched for query: "${primaryQuery}"`)
@@ -107,7 +118,8 @@ async function fetchUnsplashImage(seed: SeedPlan): Promise<string | null> {
     })
 
     if (fallbackResponse.ok) {
-      const fallbackData = await fallbackResponse.json()
+      const fallbackData =
+        (await fallbackResponse.json()) as UnsplashSearchResponse
       if (fallbackData.results && fallbackData.results.length > 0) {
         console.log(`✓ Image fetched for region: "${seed.region}"`)
         return fallbackData.results[0].urls.regular

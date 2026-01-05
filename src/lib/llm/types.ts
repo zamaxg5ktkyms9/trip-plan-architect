@@ -33,12 +33,3 @@ export interface LLMProvider {
    */
   readonly name: string
 }
-
-/**
- * Configuration for LLM providers
- */
-export interface LLMConfig {
-  provider: 'openai' | 'google'
-  apiKey: string
-  model?: string // Optional model override
-}

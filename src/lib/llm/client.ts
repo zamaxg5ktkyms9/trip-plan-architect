@@ -39,18 +39,3 @@ export function getLLMClient(): LLMProvider {
       )
   }
 }
-
-/**
- * Get the current provider name for logging
- */
-export function getLLMProviderName(): string {
-  const provider = (process.env.LLM_PROVIDER || 'openai').toLowerCase()
-  switch (provider) {
-    case 'openai':
-      return 'OpenAI'
-    case 'google':
-      return 'Google Gemini'
-    default:
-      return 'Unknown'
-  }
-}

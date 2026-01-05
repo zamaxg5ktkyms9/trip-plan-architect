@@ -15,6 +15,7 @@
     "postcss",
     "tailwindcss",
     "tw-animate-css",
-    "openai"
+    "openai",
+    "tsconfig-paths"
   ]
 }

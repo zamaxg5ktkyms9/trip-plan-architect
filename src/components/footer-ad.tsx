@@ -12,8 +12,15 @@ export function FooterAd() {
   )
 
   return (
-    <Card className="mt-12 shadow-lg border-2 border-blue-100">
+    <Card className="mt-12 shadow-lg border-2 border-blue-100 relative">
       <CardContent className="pt-6">
+        {/* PR Disclosure - FTC/Japan Compliance */}
+        <div className="absolute top-2 right-2">
+          <span className="text-xs text-muted-foreground/50 border border-muted-foreground/20 rounded px-1.5 py-0.5">
+            PR
+          </span>
+        </div>
+
         <div className="text-center mb-4">
           <span className="text-sm text-gray-500 uppercase tracking-wide">
             Recommended Travel Gadget

@@ -28,7 +28,13 @@ const envSchema = z.object({
  */
 function parseEnv() {
   // In browser environment, only NEXT_PUBLIC_* variables are available
-  if (typeof window !== 'undefined') {
+  // Use globalThis to safely check for window in both Node.js and browser
+  const isBrowser =
+    typeof globalThis !== 'undefined' &&
+    'window' in globalThis &&
+    globalThis.window !== undefined
+
+  if (isBrowser) {
     const clientEnv = {
       NEXT_PUBLIC_IS_DEBUG: process.env.NEXT_PUBLIC_IS_DEBUG,
       NODE_ENV: process.env.NODE_ENV || 'development',
@@ -60,8 +66,14 @@ export const env = parseEnv()
 /**
  * Log configuration on startup (server-side only, development mode only)
  */
+// Use globalThis to safely check for window in both Node.js and browser
+const isServer =
+  typeof globalThis === 'undefined' ||
+  !('window' in globalThis) ||
+  globalThis.window === undefined
+
 if (
-  typeof window === 'undefined' &&
+  isServer &&
   (process.env.NODE_ENV === 'development' ||
     process.env.NEXT_PUBLIC_IS_DEBUG === 'true')
 ) {

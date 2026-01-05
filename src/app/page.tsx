@@ -14,7 +14,7 @@ export default function Home() {
             ✈️ Trip Plan Architect
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            AI-powered travel itinerary generator
+            ハイスペックな休日を、設計しよう。
           </p>
         </header>
 
@@ -25,7 +25,7 @@ export default function Home() {
         <div className="text-center mt-8">
           <Link href="/plans">
             <Button variant="outline" size="lg" className="gap-2">
-              View All Plans
+              全てのプランを見る
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>

@@ -1,13 +1,14 @@
 import type { Metadata } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Noto_Sans_JP, Geist_Mono } from 'next/font/google'
 import { GoogleAnalytics } from '@next/third-parties/google'
 import { Toaster } from 'sonner'
 import { Footer } from '@/components/footer'
 import './globals.css'
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const notoSansJP = Noto_Sans_JP({
+  variable: '--font-noto-sans-jp',
   subsets: ['latin'],
+  weight: ['400', '500', '700'],
 })
 
 const geistMono = Geist_Mono({
@@ -16,18 +17,20 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Trip Plan Architect - AI-Powered Travel Itinerary Generator',
+  title: 'Trip Plan Architect - エンジニアのための旅行計画',
   description:
-    'Create personalized travel itineraries with AI. Generate detailed day-by-day plans for your next trip in seconds.',
+    '開発合宿、ワーケーション、デジタルデトックス。日本のエンジニアに最適な『没頭できる旅』をAIが自動構築します。',
   openGraph: {
-    title: 'Trip Plan Architect',
-    description: 'AI-powered travel itinerary generator',
+    title: 'Trip Plan Architect - エンジニアのための旅行計画',
+    description:
+      '開発合宿、ワーケーション、デジタルデトックス。日本のエンジニアに最適な『没頭できる旅』をAIが自動構築します。',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Trip Plan Architect',
-    description: 'AI-powered travel itinerary generator',
+    title: 'Trip Plan Architect - エンジニアのための旅行計画',
+    description:
+      '開発合宿、ワーケーション、デジタルデトックス。日本のエンジニアに最適な『没頭できる旅』をAIが自動構築します。',
   },
 }
 
@@ -37,9 +40,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${notoSansJP.variable} ${geistMono.variable} antialiased`}
       >
         {children}
         <Footer />

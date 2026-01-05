@@ -76,6 +76,55 @@ export function TripGenerator() {
     },
   })
 
+  // Save plan when generation completes successfully
+  useEffect(() => {
+    const savePlan = async () => {
+      // Only save when we have a complete plan and loading has finished
+      if (
+        object &&
+        !isLoading &&
+        object.title &&
+        object.days &&
+        object.target
+      ) {
+        debugLog('[DEBUG] Saving plan to database...')
+        try {
+          const response = await fetch('/api/plans', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(object),
+          })
+
+          const result = await response.json()
+
+          if (result.success) {
+            debugLog('[DEBUG] Plan saved successfully:', result.slug)
+            toast.success('Plan Saved', {
+              description: 'Your travel plan has been saved successfully!',
+              duration: 3000,
+            })
+          } else {
+            debugError('[DEBUG] Failed to save plan:', result.error)
+            toast.error('Save Failed', {
+              description: 'Plan generated but could not be saved to history.',
+              duration: 5000,
+            })
+          }
+        } catch (error) {
+          debugError('[DEBUG] Error saving plan:', error)
+          toast.error('Save Error', {
+            description: 'Plan generated but could not be saved to history.',
+            duration: 5000,
+          })
+        }
+      }
+    }
+
+    savePlan()
+  }, [object, isLoading])
+
   useEffect(() => {
     debugLog('[DEBUG] State Update:')
     debugLog('  - object:', object)

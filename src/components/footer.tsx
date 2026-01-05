@@ -25,7 +25,7 @@ export function Footer() {
               Privacy Policy
             </Link>
             <a
-              href="https://x.com/fixme_your_account"
+              href="https://x.com/TripPlanArch"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-foreground transition-colors"

@@ -6,8 +6,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calendar, MapPin, Target } from 'lucide-react'
 
-export async function RecentPlans() {
-  const plans = await planRepository.getRecentPlans(20)
+interface RecentPlansProps {
+  limit?: number
+}
+
+export async function RecentPlans({ limit = 20 }: RecentPlansProps) {
+  const plans = await planRepository.getRecentPlans(limit)
 
   return (
     <section className="mt-16">

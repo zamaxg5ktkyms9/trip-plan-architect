@@ -347,15 +347,7 @@ export default function PrivacyPage() {
             </p>
             <ul className="list-none text-gray-700">
               <li className="mb-2">
-                <strong>Twitter/X:</strong>{' '}
-                <a
-                  href="https://x.com/fixme_your_account"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  @fixme_your_account
-                </a>
+                <strong>Twitter/X:</strong> See contact link in the footer
               </li>
               <li>
                 <strong>Website:</strong>{' '}

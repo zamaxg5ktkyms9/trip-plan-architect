@@ -221,6 +221,14 @@ export default function TermsPage() {
                 amount you paid to use the Service (currently $0).
               </li>
             </ul>
+            <p className="text-gray-700 leading-relaxed text-sm italic">
+              <strong>Note:</strong> Some jurisdictions (including Japan) do not
+              allow the exclusion of implied warranties or limitation of
+              liability for incidental or consequential damages, especially in
+              cases of intentional misconduct or gross negligence. Accordingly,
+              some of the above limitations may not apply to you, and you may
+              have additional rights under applicable consumer protection laws.
+            </p>
           </section>
 
           <section className="mb-8">
@@ -279,13 +287,14 @@ export default function TermsPage() {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              12. Governing Law
+              12. Governing Law and Jurisdiction
             </h2>
             <p className="text-gray-700 leading-relaxed">
               These Terms shall be governed by and construed in accordance with
-              the laws of the United States, without regard to its conflict of
-              law provisions. Any disputes shall be resolved in the appropriate
-              courts.
+              the laws of Japan, without regard to its conflict of law
+              provisions. Any disputes arising from or relating to these Terms
+              or the Service shall be subject to the exclusive jurisdiction of
+              the Tokyo District Court in Tokyo, Japan.
             </p>
           </section>
 
@@ -311,15 +320,7 @@ export default function TermsPage() {
             </p>
             <ul className="list-none text-gray-700">
               <li className="mb-2">
-                <strong>Twitter/X:</strong>{' '}
-                <a
-                  href="https://x.com/fixme_your_account"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  @fixme_your_account
-                </a>
+                <strong>Twitter/X:</strong> See contact link in the footer
               </li>
               <li>
                 <strong>Website:</strong>{' '}

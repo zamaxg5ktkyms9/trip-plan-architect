@@ -80,11 +80,29 @@ export class PlanRepository implements IPlanRepository {
       return fullSlug
     }
 
-    // Save plan data with key pattern: plan:{slug}
-    await this.redis.set(`plan:${fullSlug}`, JSON.stringify(plan))
+    // Prepare metadata for fast listing (only essential fields)
+    const metadata: PlanMetadata = {
+      id: fullSlug,
+      title: plan.title,
+      destination: plan.title.split(' ')[0] || 'Travel',
+      days: plan.days.length,
+      target: plan.target,
+      createdAt: timestamp,
+    }
 
-    // Add to sorted set for listing (score = timestamp for chronological ordering)
-    await this.redis.zadd('plan:slugs', { score: timestamp, member: fullSlug })
+    // Use pipeline to save everything atomically
+    const pipeline = this.redis.pipeline()
+
+    // Save full plan data (for detail page)
+    pipeline.set(`plan:${fullSlug}`, JSON.stringify(plan))
+
+    // Save lightweight metadata (for listing pages)
+    pipeline.set(`plan:meta:${fullSlug}`, JSON.stringify(metadata))
+
+    // Add to sorted set for chronological ordering
+    pipeline.zadd('plan:slugs', { score: timestamp, member: fullSlug })
+
+    await pipeline.exec()
 
     return fullSlug
   }
@@ -185,7 +203,7 @@ export class PlanRepository implements IPlanRepository {
     }
 
     try {
-      console.time('getRecentPlans')
+      console.time('[PERF] getRecentPlans:total')
 
       // Limit to 100 to prevent performance issues
       const actualLimit = Math.min(limit, 100)
@@ -194,65 +212,58 @@ export class PlanRepository implements IPlanRepository {
       const start = offset
       const end = offset + actualLimit - 1
 
-      console.time('getRecentPlans:zrange')
-      // Get recent slugs with scores (timestamps) - DB-level pagination
-      const results = await this.redis.zrange<string[]>(
+      console.time('[PERF] getRecentPlans:zrange')
+      // Get recent slugs (DB-level pagination)
+      const slugs = await this.redis.zrange<string[]>(
         'plan:slugs',
         start,
         end,
         {
           rev: true,
-          withScores: true,
         }
       )
-      console.timeEnd('getRecentPlans:zrange')
+      console.timeEnd('[PERF] getRecentPlans:zrange')
 
-      // Results come in pairs: [member, score, member, score, ...]
-      const slugsWithTimestamps: Array<{ slug: string; timestamp: number }> = []
-      for (let i = 0; i < results.length; i += 2) {
-        slugsWithTimestamps.push({
-          slug: results[i],
-          timestamp: Number(results[i + 1]),
-        })
-      }
-
-      if (slugsWithTimestamps.length === 0) {
-        console.timeEnd('getRecentPlans')
+      if (slugs.length === 0) {
+        console.timeEnd('[PERF] getRecentPlans:total')
         return []
       }
 
-      console.time('getRecentPlans:pipeline')
-      // Use pipeline for batch GET operations (N+1 problem fix)
+      console.time('[PERF] getRecentPlans:pipeline')
+      // Use pipeline to fetch lightweight metadata (not full plans)
       const pipeline = this.redis.pipeline()
-      slugsWithTimestamps.forEach(({ slug }) => {
-        pipeline.get(`plan:${slug}`)
+      slugs.forEach(slug => {
+        pipeline.get(`plan:meta:${slug}`)
       })
 
-      const planResults = await pipeline.exec<(Plan | null)[]>()
-      console.timeEnd('getRecentPlans:pipeline')
+      const metadataResults = await pipeline.exec<(PlanMetadata | null)[]>()
+      console.timeEnd('[PERF] getRecentPlans:pipeline')
 
-      // Extract metadata from plans
+      console.time('[PERF] getRecentPlans:parse')
+      // Filter out null results and parse metadata
       const metadata: PlanMetadata[] = []
-      for (let i = 0; i < planResults.length; i++) {
-        const plan = planResults[i]
-        const { slug, timestamp } = slugsWithTimestamps[i]
+      for (let i = 0; i < metadataResults.length; i++) {
+        const meta = metadataResults[i]
 
-        if (plan && typeof plan === 'object') {
-          // Extract destination from title (assumes format like "Tokyo Trip" or "3-Day Paris Adventure")
-          const destination = plan.title?.split(' ')[0] || 'Travel'
-
-          metadata.push({
-            id: slug,
-            title: plan.title || '',
-            destination,
-            days: Array.isArray(plan.days) ? plan.days.length : 0,
-            target: plan.target || 'general',
-            createdAt: timestamp,
-          })
+        if (meta && typeof meta === 'object') {
+          // Upstash already parsed JSON
+          metadata.push(meta as PlanMetadata)
+        } else if (typeof meta === 'string') {
+          // Fallback: manual parse
+          try {
+            metadata.push(JSON.parse(meta) as PlanMetadata)
+          } catch {
+            debugLog('Failed to parse metadata for slug:', slugs[i])
+          }
         }
       }
+      console.timeEnd('[PERF] getRecentPlans:parse')
 
-      console.timeEnd('getRecentPlans')
+      console.timeEnd('[PERF] getRecentPlans:total')
+      console.log(
+        `[PERF] Fetched ${metadata.length} plans (requested: ${slugs.length})`
+      )
+
       return metadata
     } catch (error) {
       debugLog('Error getting recent plans metadata:', error)

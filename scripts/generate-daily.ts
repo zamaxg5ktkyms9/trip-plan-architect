@@ -8,7 +8,7 @@
  * Flow:
  * 1. Load environment variables and validate configuration
  * 2. Select a random seed plan from SEED_PLANS
- * 3. Generate travel plan using OpenAI API
+ * 3. Generate travel plan using configured LLM provider (OpenAI or Google Gemini)
  * 4. Fetch images from Unsplash API using seed keywords
  * 5. Save plan to Redis database
  * 6. Send notification to Discord webhook
@@ -17,16 +17,16 @@
  *   ts-node scripts/generate-daily.ts
  *
  * Requirements:
- *   - OPENAI_API_KEY
+ *   - LLM_PROVIDER (optional, defaults to 'openai')
+ *   - OPENAI_API_KEY (if using OpenAI)
+ *   - GEMINI_API_KEY (if using Google Gemini)
  *   - UPSTASH_REDIS_REST_URL
  *   - UPSTASH_REDIS_REST_TOKEN
  *   - UNSPLASH_ACCESS_KEY (optional)
  *   - DISCORD_WEBHOOK_URL (optional)
  */
 
-import { openai } from '@ai-sdk/openai'
-import { generateObject } from 'ai'
-import { PlanSchema } from '../src/types/plan'
+import { getLLMClient } from '../src/lib/llm/client'
 import { PlanRepository } from '../src/lib/repositories/plan-repository'
 import { SEED_PLANS, SeedPlan } from '../src/lib/constants/seeds'
 
@@ -45,11 +45,16 @@ interface UnsplashSearchResponse {
  * Environment variable validation
  */
 function validateEnvironment(): void {
-  const required = [
-    'OPENAI_API_KEY',
-    'UPSTASH_REDIS_REST_URL',
-    'UPSTASH_REDIS_REST_TOKEN',
-  ]
+  const provider = (process.env.LLM_PROVIDER || 'openai').toLowerCase()
+
+  const required = ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN']
+
+  // Add provider-specific API key requirement
+  if (provider === 'openai') {
+    required.push('OPENAI_API_KEY')
+  } else if (provider === 'google') {
+    required.push('GEMINI_API_KEY')
+  }
 
   const missing = required.filter(key => !process.env[key])
 
@@ -59,7 +64,7 @@ function validateEnvironment(): void {
     process.exit(1)
   }
 
-  console.log('✓ Environment variables validated')
+  console.log(`✓ Environment variables validated (LLM Provider: ${provider})`)
 }
 
 /**
@@ -135,7 +140,7 @@ async function fetchUnsplashImage(seed: SeedPlan): Promise<string | null> {
 }
 
 /**
- * Generates a travel plan using OpenAI API based on seed data
+ * Generates a travel plan using configured LLM provider based on seed data
  */
 async function generatePlan(seed: SeedPlan) {
   console.log(`\n📝 Generating plan for: ${seed.title}`)
@@ -165,20 +170,16 @@ Please generate a complete travel itinerary with:
 
 Important: Ensure the plan feels natural and valuable, not just keyword-stuffed for SEO.`
 
-  const result = await generateObject({
-    model: openai('gpt-4o-mini'),
-    schema: PlanSchema,
-    system: systemPrompt,
-    prompt: userPrompt,
-  })
+  const llmClient = getLLMClient()
+  const plan = await llmClient.generatePlan(systemPrompt, userPrompt)
 
-  console.log(`✓ Plan generated: "${result.object.title}"`)
-  console.log(`   Days: ${result.object.days.length}`)
+  console.log(`✓ Plan generated: "${plan.title}"`)
+  console.log(`   Days: ${plan.days.length}`)
   console.log(
-    `   Total events: ${result.object.days.reduce((acc, day) => acc + day.events.length, 0)}`
+    `   Total events: ${plan.days.reduce((acc: number, day) => acc + day.events.length, 0)}`
   )
 
-  return result.object
+  return plan
 }
 
 /**

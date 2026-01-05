@@ -1,13 +1,12 @@
-import { openai } from '@ai-sdk/openai'
-import { streamObject } from 'ai'
 import { NextRequest } from 'next/server'
-import { PlanSchema, GenerateInputSchema } from '@/types/plan'
+import { GenerateInputSchema } from '@/types/plan'
 import {
   checkRateLimit,
   getClientIP,
   globalRateLimit,
   ipRateLimit,
 } from '@/lib/rate-limit'
+import { getLLMClient } from '@/lib/llm/client'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
@@ -28,12 +27,17 @@ export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
  */
 export async function POST(request: NextRequest) {
   try {
-    // Check if OpenAI API key is configured
-    if (!process.env.OPENAI_API_KEY) {
+    // Validate LLM client configuration
+    let llmClient
+    try {
+      llmClient = getLLMClient()
+    } catch (error) {
       return new Response(
         JSON.stringify({
           error:
-            'OpenAI API key is not configured. Please set OPENAI_API_KEY environment variable.',
+            error instanceof Error
+              ? error.message
+              : 'LLM provider is not configured correctly.',
         }),
         {
           status: 500,
@@ -71,12 +75,7 @@ ${input.options ? `Additional options: ${JSON.stringify(input.options)}` : ''}
 
 Please generate a complete travel itinerary with daily events including times, activities, types (spot/food/work/move), and notes.`
 
-    const result = streamObject({
-      model: openai('gpt-4o-mini'),
-      schema: PlanSchema,
-      system: systemPrompt,
-      prompt: userPrompt,
-    })
+    const result = llmClient.streamPlan(systemPrompt, userPrompt)
 
     // Return streaming response without saving
     // Client will call POST /api/plans to save the plan after receiving it

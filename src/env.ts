@@ -7,6 +7,10 @@ const envSchema = z.object({
   // Unsplash Configuration (server-side only, optional)
   UNSPLASH_ACCESS_KEY: z.string().optional(),
 
+  // LLM Model Configuration (optional, with defaults)
+  OPENAI_MODEL: z.string().default('gpt-4o-mini'),
+  GEMINI_MODEL: z.string().default('gemini-2.0-flash-exp'),
+
   // Rate Limit Configuration (coerce string to number, with defaults)
   // Global rate limit: Total requests allowed across all users per day
   GLOBAL_RATE_LIMIT_REQUESTS: z.coerce.number().default(100),

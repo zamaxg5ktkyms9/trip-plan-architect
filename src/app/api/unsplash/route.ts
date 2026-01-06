@@ -14,10 +14,10 @@ export const runtime = 'edge'
  * @returns JSON with imageUrl or null if not found
  */
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = request.nextUrl
-    const query = searchParams.get('query')
+  const { searchParams } = request.nextUrl
+  const query = searchParams.get('query')
 
+  try {
     if (!query) {
       return NextResponse.json(
         { error: 'Query parameter is required' },
@@ -27,9 +27,14 @@ export async function GET(request: NextRequest) {
 
     const imageUrl = await getUnsplashImage(query)
 
+    if (!imageUrl) {
+      debugLog(`[API] No image found for query: "${query}"`)
+    }
+
     return NextResponse.json({ imageUrl })
   } catch (error) {
-    debugLog('[API] Error fetching Unsplash image:', error)
+    console.error('[API] ❌ Error fetching Unsplash image:', error)
+    console.error('[API] Query was:', query || 'undefined')
     return NextResponse.json(
       {
         error: 'Failed to fetch image',

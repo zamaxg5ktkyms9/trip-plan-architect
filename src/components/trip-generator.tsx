@@ -319,7 +319,7 @@ export function TripGenerator() {
           </CardContent>
         </Card>
       ) : (
-        <ResultView plan={object} destination={destination} />
+        <ResultView plan={object} />
       )}
     </>
   )

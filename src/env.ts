@@ -8,8 +8,8 @@ const envSchema = z.object({
   UNSPLASH_ACCESS_KEY: z.string().optional(),
 
   // LLM Model Configuration (optional, with defaults)
-  // Changed from gpt-4o-mini to gpt-4o for better streaming performance with Structured Outputs
-  OPENAI_MODEL: z.string().default('gpt-4o'),
+  // Using gpt-4o-mini for faster generation speed (2x faster than gpt-4o)
+  OPENAI_MODEL: z.string().default('gpt-4o-mini'),
   GEMINI_MODEL: z.string().default('gemini-2.0-flash-exp'),
 
   // Rate Limit Configuration (coerce string to number, with defaults)

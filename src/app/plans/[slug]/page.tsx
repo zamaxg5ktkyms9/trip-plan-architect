@@ -69,13 +69,10 @@ export default async function PlanPage({ params }: PageProps) {
     notFound()
   }
 
-  // Extract destination from title (assumes format like "Tokyo Trip")
-  const destination = plan.title.split(' ')[0] || 'Travel'
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <div className="container mx-auto px-4 py-8">
-        <ResultView plan={plan} destination={destination} />
+        <ResultView plan={plan} />
         <FooterAd />
       </div>
     </div>

@@ -21,6 +21,12 @@ export const EventSchema = z.object({
   activity: z.string().describe('Description of the activity'),
   type: EventTypeSchema.describe('Type of activity'),
   note: z.string().describe('Additional notes or details'),
+  imageSearchQuery: z
+    .string()
+    .optional()
+    .describe(
+      'English search query optimized for Unsplash API (only for type="spot")'
+    ),
 })
 export type Event = z.infer<typeof EventSchema>
 

@@ -10,19 +10,19 @@ export function Footer() {
           {/* Links */}
           <nav className="flex gap-6">
             <Link href="/" className="hover:text-foreground transition-colors">
-              Home
+              ホーム
             </Link>
             <Link
               href="/terms"
               className="hover:text-foreground transition-colors"
             >
-              Terms of Service
+              利用規約
             </Link>
             <Link
               href="/privacy"
               className="hover:text-foreground transition-colors"
             >
-              Privacy Policy
+              プライバシーポリシー
             </Link>
             <a
               href="https://x.com/TripPlanArch"
@@ -30,7 +30,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="hover:text-foreground transition-colors"
             >
-              Contact
+              お問い合わせ
             </a>
           </nav>
 

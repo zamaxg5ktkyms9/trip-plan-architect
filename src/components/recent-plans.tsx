@@ -16,13 +16,13 @@ export async function RecentPlans({ limit = 20 }: RecentPlansProps) {
   return (
     <section className="mt-16">
       <h2 className="text-3xl font-bold text-center mb-8">
-        Recently Generated Plans
+        最近生成されたプラン
       </h2>
       {plans.length === 0 ? (
         <div className="text-center text-muted-foreground py-12">
-          <p className="text-lg mb-2">No plans generated yet</p>
+          <p className="text-lg mb-2">まだプランが生成されていません</p>
           <p className="text-sm">
-            Be the first to create a travel plan using the form above!
+            上のフォームを使って最初の旅行プランを作成してみましょう！
           </p>
         </div>
       ) : (
@@ -51,14 +51,12 @@ function PlanCard({ plan }: { plan: PlanMetadata }) {
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <span>{plan.days} days</span>
+              <span>{plan.days}日間</span>
             </div>
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               <span>
-                {plan.target === 'engineer'
-                  ? 'Tech Professional'
-                  : 'General Travel'}
+                {plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}
               </span>
             </div>
             <div className="text-xs text-muted-foreground/60 mt-2">

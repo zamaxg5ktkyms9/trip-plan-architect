@@ -60,11 +60,11 @@ export function ResultView({ plan, destination }: ResultViewProps) {
     if (!plan.title || !plan.days) return
 
     let markdown = `# ${plan.title}\n\n`
-    markdown += `**Target:** ${plan.target || 'General'}\n\n`
+    markdown += `**対象:** ${plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}\n\n`
 
     plan.days.forEach((day, dayIndex) => {
       if (!day) return
-      markdown += `## Day ${day.day || dayIndex + 1}\n\n`
+      markdown += `## ${day.day || dayIndex + 1}日目\n\n`
       day.events?.forEach((event, eventIndex) => {
         const evt = getEvent(dayIndex, eventIndex) || event
         if (!evt || !evt.type || !evt.time || !evt.name) return
@@ -76,8 +76,8 @@ export function ResultView({ plan, destination }: ResultViewProps) {
     })
 
     navigator.clipboard.writeText(markdown)
-    toast.success('Copied!', {
-      description: 'Paste into Notion to save your edits.',
+    toast.success('コピーしました', {
+      description: 'Notionに貼り付けて編集内容を保存できます。',
     })
   }
 
@@ -85,11 +85,11 @@ export function ResultView({ plan, destination }: ResultViewProps) {
     if (!plan.title || !plan.days) return
 
     let text = `${plan.title}\n\n`
-    text += `Target: ${plan.target || 'General'}\n\n`
+    text += `対象: ${plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}\n\n`
 
     plan.days.forEach((day, dayIndex) => {
       if (!day) return
-      text += `【Day ${day.day || dayIndex + 1}】\n`
+      text += `【${day.day || dayIndex + 1}日目】\n`
       day.events?.forEach((event, eventIndex) => {
         const evt = getEvent(dayIndex, eventIndex) || event
         if (!evt || !evt.time || !evt.name) return
@@ -102,11 +102,11 @@ export function ResultView({ plan, destination }: ResultViewProps) {
     })
 
     navigator.clipboard.writeText(text)
-    toast.success('Copied as LINE text!')
+    toast.success('LINEテキストとしてコピーしました')
   }
 
   const shareToTwitter = () => {
-    const text = `${plan.title || 'My Travel Plan'} - Created with Trip Plan Architect ✈️`
+    const text = `${plan.title || '旅行プラン'} - Trip Plan Architectで生成 ✈️`
     const url = window.location.href
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`
     window.open(twitterUrl, '_blank', 'noopener,noreferrer')
@@ -137,7 +137,7 @@ export function ResultView({ plan, destination }: ResultViewProps) {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            <span>Generating your itinerary...</span>
+            <span>プランをコンパイル中...</span>
           </div>
         </CardContent>
       </Card>
@@ -152,7 +152,9 @@ export function ResultView({ plan, destination }: ResultViewProps) {
           <div className="flex items-start justify-between">
             <div>
               <CardTitle className="text-2xl mb-2">{plan.title}</CardTitle>
-              <Badge variant="outline">{plan.target}</Badge>
+              <Badge variant="outline">
+                {plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}
+              </Badge>
             </div>
             <div className="flex gap-2">
               <Button
@@ -187,8 +189,7 @@ export function ResultView({ plan, destination }: ResultViewProps) {
           <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
             <Info className="w-3 h-3" />
             <span>
-              Edits are temporary and for export only. Shared URLs display the
-              original plan.
+              編集内容は一時的でエクスポート用のみです。共有URLには元のプランが表示されます。
             </span>
           </div>
         </CardHeader>
@@ -201,7 +202,7 @@ export function ResultView({ plan, destination }: ResultViewProps) {
           <Card key={dayIndex} className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-xl">
-                Day {day.day || dayIndex + 1}
+                {day.day || dayIndex + 1}日目
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -311,7 +312,7 @@ export function ResultView({ plan, destination }: ResultViewProps) {
           onClick={() => router.push('/')}
           className="w-full max-w-md"
         >
-          Create Another Trip
+          別のプランを作成
         </Button>
       </div>
     </div>

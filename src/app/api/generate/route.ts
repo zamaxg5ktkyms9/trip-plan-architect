@@ -32,7 +32,9 @@ export async function POST(request: NextRequest) {
     let llmClient
     try {
       llmClient = getLLMClient()
-      console.log(`[LLM Provider] Using: ${llmClient.name}`)
+      console.log(
+        `[LLM Provider] Using: ${llmClient.name} (Model: ${llmClient.getModelName()})`
+      )
     } catch (error) {
       console.error('[LLM Provider] Failed to initialize:', error)
       return new Response(

@@ -18,6 +18,13 @@ export class GoogleProvider implements LLMProvider {
     }
     this.apiKey = apiKey
     this.model = model
+    console.log(
+      `[GoogleProvider] Initialized with model: ${this.model} (received: ${model || 'undefined'})`
+    )
+  }
+
+  getModelName(): string {
+    return this.model
   }
 
   getModel(): LanguageModel {

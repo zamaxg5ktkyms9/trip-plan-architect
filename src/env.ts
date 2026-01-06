@@ -7,8 +7,11 @@ const envSchema = z.object({
   // Unsplash Configuration (server-side only, optional)
   UNSPLASH_ACCESS_KEY: z.string().optional(),
 
-  // Rate Limit Configuration (coerce string to number, with default)
-  RATE_LIMIT_REQUESTS: z.coerce.number().default(10),
+  // Rate Limit Configuration (coerce string to number, with defaults)
+  // Global rate limit: Total requests allowed across all users per day
+  GLOBAL_RATE_LIMIT_REQUESTS: z.coerce.number().default(100),
+  // IP rate limit: Requests allowed per IP address per day
+  IP_RATE_LIMIT_REQUESTS: z.coerce.number().default(5),
 
   // Debug Mode (transform string "true" to boolean, optional)
   NEXT_PUBLIC_IS_DEBUG: z
@@ -79,7 +82,10 @@ if (
 ) {
   console.log('\n[Config] ✅ Loaded Configuration:')
   console.log(`  - Environment: ${env.NODE_ENV}`)
-  console.log(`  - Rate Limit Requests: ${env.RATE_LIMIT_REQUESTS}`)
+  console.log(
+    `  - Global Rate Limit: ${env.GLOBAL_RATE_LIMIT_REQUESTS} requests/day`
+  )
+  console.log(`  - IP Rate Limit: ${env.IP_RATE_LIMIT_REQUESTS} requests/day`)
   console.log(`  - Debug Mode: ${env.NEXT_PUBLIC_IS_DEBUG || false}`)
   console.log(
     `  - Unsplash API Key: ${env.UNSPLASH_ACCESS_KEY ? `Set (${env.UNSPLASH_ACCESS_KEY.substring(0, 4)}***)` : 'NOT SET'}`

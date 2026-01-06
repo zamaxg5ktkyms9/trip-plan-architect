@@ -8,28 +8,28 @@ import { env } from '@/env'
  */
 
 /**
- * Global rate limiter: configurable requests per time window across all users
- * Configured via env.RATE_LIMIT_REQUESTS
+ * Global rate limiter: Total requests allowed across all users per day
+ * Configured via env.GLOBAL_RATE_LIMIT_REQUESTS (default: 100/day)
  */
 export const globalRateLimit =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
     ? new Ratelimit({
         redis: Redis.fromEnv(),
-        limiter: Ratelimit.slidingWindow(env.RATE_LIMIT_REQUESTS, '1 d'),
+        limiter: Ratelimit.slidingWindow(env.GLOBAL_RATE_LIMIT_REQUESTS, '1 d'),
         analytics: true,
         prefix: 'ratelimit_v2:global',
       })
     : null
 
 /**
- * IP-based rate limiter: configurable requests per time window per IP address
- * Uses the same configuration as global rate limiter
+ * IP-based rate limiter: Requests allowed per IP address per day
+ * Configured via env.IP_RATE_LIMIT_REQUESTS (default: 5/day)
  */
 export const ipRateLimit =
   process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN
     ? new Ratelimit({
         redis: Redis.fromEnv(),
-        limiter: Ratelimit.slidingWindow(env.RATE_LIMIT_REQUESTS, '1 d'),
+        limiter: Ratelimit.slidingWindow(env.IP_RATE_LIMIT_REQUESTS, '1 d'),
         analytics: true,
         prefix: 'ratelimit_v2:ip',
       })

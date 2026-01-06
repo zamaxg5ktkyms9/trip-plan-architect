@@ -66,15 +66,22 @@ export async function getUnsplashImage(query: string): Promise<string | null> {
     url.searchParams.set('orientation', 'landscape')
     url.searchParams.set('per_page', '1')
 
+    // Fetch with timeout to prevent hanging
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 3000)
+
     const response = await fetch(url.toString(), {
       headers: {
         Authorization: `Client-ID ${env.UNSPLASH_ACCESS_KEY}`,
       },
+      signal: controller.signal,
       next: {
         // Cache for 24 hours to avoid hitting rate limits
         revalidate: 86400,
       },
     })
+
+    clearTimeout(timeoutId)
 
     if (!response.ok) {
       const errorText = await response.text()
@@ -96,7 +103,11 @@ export async function getUnsplashImage(query: string): Promise<string | null> {
     // Return the regular size URL (good balance between quality and load time)
     return data.results[0].urls.regular
   } catch (error) {
-    debugLog('[Unsplash] Error fetching image:', error)
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('[Unsplash] Request timeout (3000ms exceeded)')
+    } else {
+      debugLog('[Unsplash] Error fetching image:', error)
+    }
     return null
   }
 }

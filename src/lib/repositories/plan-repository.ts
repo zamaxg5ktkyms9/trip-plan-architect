@@ -53,15 +53,14 @@ export class PlanRepository implements IPlanRepository {
 
   /**
    * Generates a URL-friendly slug from a plan title
-   * @param title - The plan title
-   * @returns A slugified version of the title
+   * Supports Japanese and other Unicode characters
+   * @returns A slugified version of the title (timestamp-based)
    * @private
    */
-  private generateSlug(title: string): string {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
+  private generateSlug(): string {
+    // Use timestamp-only slug for simplicity and reliability
+    // This avoids issues with Japanese characters, Unicode normalization, etc.
+    return `plan-${Date.now()}`
   }
 
   /**
@@ -70,9 +69,8 @@ export class PlanRepository implements IPlanRepository {
    * @returns The slug of the saved plan
    */
   async save(plan: Plan): Promise<string> {
-    const slug = this.generateSlug(plan.title)
+    const fullSlug = this.generateSlug()
     const timestamp = Date.now()
-    const fullSlug = `${slug}-${timestamp}`
 
     if (!this.redis) {
       // For local development without Redis, just return the slug

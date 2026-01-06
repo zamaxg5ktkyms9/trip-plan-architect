@@ -86,8 +86,8 @@ describe('PlanRepository', () => {
       const slug = await repository.save(mockPlan)
 
       expect(slug).toBeTruthy()
-      expect(slug).toContain('test-tokyo-trip')
-      expect(slug).toMatch(/^test-tokyo-trip-\d+$/)
+      // Slug format changed to plan-{timestamp} to support Japanese titles
+      expect(slug).toMatch(/^plan-\d+$/)
 
       // Verify pipeline was used
       expect(mockRedis.pipeline).toHaveBeenCalled()

@@ -52,13 +52,47 @@ export async function POST(request: NextRequest) {
 
     const clientIP = getClientIP(request.headers)
 
+    // Check global rate limit first
+    let globalResult
     try {
-      await checkRateLimit('global', globalRateLimit)
-      await checkRateLimit(clientIP, ipRateLimit)
+      globalResult = await checkRateLimit('global', globalRateLimit)
+      console.log(
+        `[Rate Limit] GLOBAL: ${globalResult.remaining}/${globalResult.limit} requests remaining`
+      )
     } catch (error) {
+      console.error(
+        `[Rate Limit] ❌ GLOBAL LIMIT EXCEEDED - Total requests across all users exceeded`
+      )
+      console.error(`[Rate Limit] Error:`, error)
       return new Response(
         JSON.stringify({
           error: error instanceof Error ? error.message : 'Rate limit exceeded',
+          type: 'global',
+        }),
+        {
+          status: 429,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    // Check IP-specific rate limit
+    let ipResult
+    try {
+      ipResult = await checkRateLimit(clientIP, ipRateLimit)
+      console.log(
+        `[Rate Limit] IP (${clientIP}): ${ipResult.remaining}/${ipResult.limit} requests remaining`
+      )
+    } catch (error) {
+      console.error(
+        `[Rate Limit] ❌ IP LIMIT EXCEEDED for ${clientIP} - This IP has exceeded its daily quota`
+      )
+      console.error(`[Rate Limit] Error:`, error)
+      return new Response(
+        JSON.stringify({
+          error: error instanceof Error ? error.message : 'Rate limit exceeded',
+          type: 'ip',
+          ip: clientIP,
         }),
         {
           status: 429,

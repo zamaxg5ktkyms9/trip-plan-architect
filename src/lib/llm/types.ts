@@ -1,4 +1,5 @@
 import type { Plan } from '@/types/plan'
+import type { LanguageModel } from 'ai'
 
 /**
  * Stream result returned by streaming generation
@@ -27,6 +28,12 @@ export interface LLMProvider {
    * @returns StreamResult that can be converted to Response
    */
   streamPlan(systemPrompt: string, userPrompt: string): StreamResult
+
+  /**
+   * Get the underlying AI SDK model instance
+   * @returns LanguageModel instance for use with AI SDK functions
+   */
+  getModel(): LanguageModel
 
   /**
    * Provider name for logging and debugging

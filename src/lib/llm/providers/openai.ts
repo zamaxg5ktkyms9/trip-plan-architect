@@ -1,5 +1,5 @@
 import { openai } from '@ai-sdk/openai'
-import { generateObject, streamObject } from 'ai'
+import { generateObject, streamObject, type LanguageModel } from 'ai'
 import { PlanSchema, type Plan } from '@/types/plan'
 import type { LLMProvider, StreamResult } from '../types'
 
@@ -20,9 +20,13 @@ export class OpenAIProvider implements LLMProvider {
     this.model = model
   }
 
+  getModel(): LanguageModel {
+    return openai(this.model)
+  }
+
   async generatePlan(systemPrompt: string, userPrompt: string): Promise<Plan> {
     const result = await generateObject({
-      model: openai(this.model),
+      model: this.getModel(),
       schema: PlanSchema,
       system: systemPrompt,
       prompt: userPrompt,
@@ -33,7 +37,7 @@ export class OpenAIProvider implements LLMProvider {
 
   streamPlan(systemPrompt: string, userPrompt: string): StreamResult {
     return streamObject({
-      model: openai(this.model),
+      model: this.getModel(),
       schema: PlanSchema,
       system: systemPrompt,
       prompt: userPrompt,

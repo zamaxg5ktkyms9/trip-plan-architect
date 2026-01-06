@@ -219,11 +219,7 @@ export function ResultView({ plan }: ResultViewProps) {
                     {/* Event Image */}
                     {evt.type === 'spot' && evt.name && (
                       <SpotImage
-                        query={
-                          evt.imageSearchQuery && evt.imageSearchQuery.trim()
-                            ? evt.imageSearchQuery
-                            : evt.name
-                        }
+                        query={evt.imageSearchQuery || evt.name}
                         spotName={evt.name}
                       />
                     )}

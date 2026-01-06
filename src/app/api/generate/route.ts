@@ -129,8 +129,8 @@ export async function POST(request: NextRequest) {
 3. **Output Language:**
    * 入力言語に関わらず、必ず日本語で出力すること（Output must be in Japanese regardless of input language）。
 4. **Image Search Query (imageSearchQuery field):**
-   * For events with type="spot", you MUST provide an "imageSearchQuery" field.
-   * imageSearchQuery MUST be a simple English noun or phrase suitable for Unsplash search (e.g., "Tokyo Tower", "Hot Spring", "Kyoto Street").
+   * For events with type="spot", you MUST provide an "imageSearchQuery" field with a simple English noun or phrase suitable for Unsplash search (e.g., "Tokyo Tower", "Hot Spring", "Kyoto Street").
+   * For events with type="food", "work", or "move", set imageSearchQuery to null.
    * Do NOT use verbs or abstract concepts (e.g., "Sightseeing", "Enjoying").
    * If the spot is a specific facility, use its official English name.
    * This field ensures accurate photo results and prevents API errors.`

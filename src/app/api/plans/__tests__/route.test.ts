@@ -24,6 +24,7 @@ describe('POST /api/plans', () => {
             activity: 'Visit Shibuya Crossing',
             type: 'spot',
             note: 'Famous scramble crossing',
+            imageSearchQuery: 'Shibuya Crossing Tokyo',
           },
         ],
       },

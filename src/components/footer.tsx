@@ -1,8 +1,10 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export function Footer() {
+  const router = useRouter()
   const currentYear = new Date().getFullYear()
 
   return (
@@ -16,7 +18,7 @@ export function Footer() {
               className="hover:text-foreground transition-colors"
               onClick={e => {
                 e.preventDefault()
-                window.location.href = '/'
+                router.push('/')
               }}
             >
               ホーム

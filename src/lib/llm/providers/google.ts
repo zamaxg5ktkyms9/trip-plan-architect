@@ -5,14 +5,14 @@ import type { LLMProvider, StreamResult } from '../types'
 
 /**
  * Google Gemini provider implementation using Vercel AI SDK
- * Uses gemini-1.5-flash model for fast and cost-effective generation
+ * Uses gemini-1.5-flash-latest model for fast and cost-effective generation
  */
 export class GoogleProvider implements LLMProvider {
   readonly name = 'Google Gemini'
   private readonly apiKey: string
   private readonly model: string
 
-  constructor(apiKey: string, model: string = 'gemini-1.5-flash') {
+  constructor(apiKey: string, model: string = 'gemini-1.5-flash-latest') {
     if (!apiKey) {
       throw new Error('Google API key is required')
     }

@@ -22,8 +22,8 @@ export function FooterAd() {
         </div>
 
         <div className="text-center mb-4">
-          <span className="text-sm text-gray-500 uppercase tracking-wide">
-            Recommended Travel Gadget
+          <span className="text-sm text-gray-500 tracking-wide">
+            おすすめトラベルガジェット
           </span>
         </div>
         <a
@@ -48,7 +48,7 @@ export function FooterAd() {
                 {ad.price}
               </span>
               <span className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                View Product
+                商品を見る
               </span>
             </div>
           </div>

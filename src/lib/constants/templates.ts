@@ -4,32 +4,32 @@
 export const TEMPLATES = [
   {
     id: 'business',
-    name: 'Business',
-    description: 'Perfect for business travelers with meetings',
+    name: 'ワーケーション',
+    description: '開発合宿・リモートワークに最適',
     icon: '💼',
   },
   {
     id: 'leisure',
-    name: 'Leisure',
-    description: 'Relaxed sightseeing and local experiences',
+    name: 'デトックス',
+    description: 'デジタルデトックス・リラックス',
     icon: '🌴',
   },
   {
     id: 'family',
-    name: 'Family',
-    description: 'Kid-friendly activities and attractions',
+    name: 'ファミリー',
+    description: '家族向けアクティビティ',
     icon: '👨‍👩‍👧‍👦',
   },
   {
     id: 'adventure',
-    name: 'Adventure',
-    description: 'Outdoor activities and thrilling experiences',
+    name: 'アウトドア',
+    description: '自然・アクティビティ重視',
     icon: '🏔️',
   },
   {
     id: 'cultural',
-    name: 'Cultural',
-    description: 'Museums, history, and local culture',
+    name: 'カルチャー',
+    description: '文化・歴史・アニメ聖地巡礼',
     icon: '🏛️',
   },
 ]
@@ -38,19 +38,19 @@ export const TEMPLATES = [
  * Period options for travel duration
  */
 export const PERIOD_OPTIONS = [
-  { value: '1', label: '1 Day' },
-  { value: '2', label: '2 Days' },
-  { value: '3', label: '3 Days' },
-  { value: '4', label: '4 Days' },
-  { value: '5', label: '5 Days' },
-  { value: '7', label: '1 Week' },
+  { value: '1', label: '1日' },
+  { value: '2', label: '2日' },
+  { value: '3', label: '3日' },
+  { value: '4', label: '4日' },
+  { value: '5', label: '5日' },
+  { value: '7', label: '1週間' },
 ]
 
 /**
  * Budget options
  */
 export const BUDGET_OPTIONS = [
-  { value: 'economy', label: 'Economy' },
-  { value: 'standard', label: 'Standard' },
-  { value: 'luxury', label: 'Luxury' },
+  { value: 'economy', label: 'エコノミー' },
+  { value: 'standard', label: 'スタンダード' },
+  { value: 'luxury', label: 'プレミアム' },
 ]

@@ -38,10 +38,10 @@ export default async function PlansPage({ searchParams }: PlansPageProps) {
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <header className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            All Travel Plans
+            全ての旅行プラン
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Browse all AI-generated travel itineraries
+            AI生成された旅行プランを閲覧
           </p>
         </header>
 
@@ -49,20 +49,20 @@ export default async function PlansPage({ searchParams }: PlansPageProps) {
           <Link href="/">
             <Button variant="outline">
               <ChevronLeft className="h-4 w-4 mr-2" />
-              Back to Home
+              ホームに戻る
             </Button>
           </Link>
           <p className="text-sm text-muted-foreground">
-            {totalCount} {totalCount === 1 ? 'plan' : 'plans'} total
+            全{totalCount}件のプラン
           </p>
         </div>
 
         {plans.length === 0 ? (
           <div className="text-center text-muted-foreground py-12">
-            <p className="text-lg mb-2">No plans available</p>
+            <p className="text-lg mb-2">プランがありません</p>
             <p className="text-sm">
               <Link href="/" className="text-primary hover:underline">
-                Create the first travel plan
+                最初の旅行プランを作成
               </Link>
             </p>
           </div>
@@ -83,13 +83,13 @@ export default async function PlansPage({ searchParams }: PlansPageProps) {
                 >
                   <Button variant="outline" disabled={!hasPrevious}>
                     <ChevronLeft className="h-4 w-4 mr-2" />
-                    Previous
+                    前へ
                   </Button>
                 </Link>
 
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">
-                    Page {currentPage} of {totalPages}
+                    {currentPage} / {totalPages} ページ
                   </span>
                 </div>
 
@@ -98,7 +98,7 @@ export default async function PlansPage({ searchParams }: PlansPageProps) {
                   className={!hasNext ? 'pointer-events-none' : ''}
                 >
                   <Button variant="outline" disabled={!hasNext}>
-                    Next
+                    次へ
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
                 </Link>
@@ -126,14 +126,12 @@ function PlanCard({ plan }: { plan: PlanMetadata }) {
             </div>
             <div className="flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              <span>{plan.days} days</span>
+              <span>{plan.days}日間</span>
             </div>
             <div className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               <span>
-                {plan.target === 'engineer'
-                  ? 'Tech Professional'
-                  : 'General Travel'}
+                {plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}
               </span>
             </div>
             <div className="text-xs text-muted-foreground/60 mt-2">

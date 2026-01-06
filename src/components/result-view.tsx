@@ -60,11 +60,11 @@ export function ResultView({ plan, destination }: ResultViewProps) {
     if (!plan.title || !plan.days) return
 
     let markdown = `# ${plan.title}\n\n`
-    markdown += `**Target:** ${plan.target || 'General'}\n\n`
+    markdown += `**対象:** ${plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}\n\n`
 
     plan.days.forEach((day, dayIndex) => {
       if (!day) return
-      markdown += `## Day ${day.day || dayIndex + 1}\n\n`
+      markdown += `## ${day.day || dayIndex + 1}日目\n\n`
       day.events?.forEach((event, eventIndex) => {
         const evt = getEvent(dayIndex, eventIndex) || event
         if (!evt || !evt.type || !evt.time || !evt.name) return
@@ -106,7 +106,7 @@ export function ResultView({ plan, destination }: ResultViewProps) {
   }
 
   const shareToTwitter = () => {
-    const text = `${plan.title || 'My Travel Plan'} - Created with Trip Plan Architect ✈️`
+    const text = `${plan.title || '旅行プラン'} - Trip Plan Architectで生成 ✈️`
     const url = window.location.href
     const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`
     window.open(twitterUrl, '_blank', 'noopener,noreferrer')
@@ -152,7 +152,9 @@ export function ResultView({ plan, destination }: ResultViewProps) {
           <div className="flex items-start justify-between">
             <div>
               <CardTitle className="text-2xl mb-2">{plan.title}</CardTitle>
-              <Badge variant="outline">{plan.target}</Badge>
+              <Badge variant="outline">
+                {plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}
+              </Badge>
             </div>
             <div className="flex gap-2">
               <Button

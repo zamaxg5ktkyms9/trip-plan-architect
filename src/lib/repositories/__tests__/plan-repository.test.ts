@@ -48,6 +48,7 @@ describe('PlanRepository', () => {
             activity: 'Visit Shibuya Crossing',
             type: 'spot',
             note: 'Famous scramble crossing',
+            imageSearchQuery: 'Shibuya Crossing Tokyo',
           },
           {
             time: '12:00',
@@ -55,6 +56,7 @@ describe('PlanRepository', () => {
             activity: 'Lunch at Ramen Shop',
             type: 'food',
             note: 'Try tonkotsu ramen',
+            imageSearchQuery: '',
           },
         ],
       },
@@ -67,6 +69,7 @@ describe('PlanRepository', () => {
             activity: 'Visit Tokyo Tower',
             type: 'spot',
             note: 'Great city views',
+            imageSearchQuery: 'Tokyo Tower',
           },
         ],
       },

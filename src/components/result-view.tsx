@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,7 +25,6 @@ const EVENT_ICONS = {
 }
 
 export function ResultView({ plan, destination }: ResultViewProps) {
-  const router = useRouter()
   const [editingEvent, setEditingEvent] = useState<string | null>(null)
   const [editedEvents, setEditedEvents] = useState<Record<string, Event>>({})
 
@@ -189,7 +187,7 @@ export function ResultView({ plan, destination }: ResultViewProps) {
           <div className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
             <Info className="w-3 h-3" />
             <span>
-              編集内容は一時的でエクスポート用のみです。共有URLには元のプランが表示されます。
+              編集内容はNotion/LINEエクスポートに反映されます。履歴への保存には反映されません。
             </span>
           </div>
         </CardHeader>
@@ -309,7 +307,7 @@ export function ResultView({ plan, destination }: ResultViewProps) {
       <div className="flex justify-center">
         <Button
           variant="outline"
-          onClick={() => router.push('/')}
+          onClick={() => (window.location.href = '/')}
           className="w-full max-w-md"
         >
           別のプランを作成

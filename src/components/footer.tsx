@@ -9,7 +9,14 @@ export function Footer() {
         <div className="flex flex-col items-center justify-center gap-4 text-sm text-muted-foreground md:flex-row md:justify-between">
           {/* Links */}
           <nav className="flex gap-6">
-            <Link href="/" className="hover:text-foreground transition-colors">
+            <Link
+              href="/"
+              className="hover:text-foreground transition-colors"
+              onClick={e => {
+                e.preventDefault()
+                window.location.href = '/'
+              }}
+            >
               ホーム
             </Link>
             <Link

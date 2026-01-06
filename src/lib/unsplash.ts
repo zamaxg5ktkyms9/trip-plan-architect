@@ -77,9 +77,12 @@ export async function getUnsplashImage(query: string): Promise<string | null> {
     })
 
     if (!response.ok) {
-      debugLog(
-        `[Unsplash] API error: ${response.status} ${response.statusText}`
+      const errorText = await response.text()
+      console.error(
+        `[Unsplash] ❌ API error: ${response.status} ${response.statusText}`
       )
+      console.error(`[Unsplash] Error details:`, errorText)
+      console.error(`[Unsplash] Query was: "${sanitizedQuery}"`)
       return null
     }
 

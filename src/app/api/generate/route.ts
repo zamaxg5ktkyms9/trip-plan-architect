@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
-import { GenerateInputSchema } from '@/types/plan'
+import { streamObject } from 'ai'
+import { GenerateInputSchema, PlanSchema } from '@/types/plan'
 import {
   checkRateLimit,
   getClientIP,
@@ -97,7 +98,13 @@ ${input.options ? `Additional options: ${JSON.stringify(input.options)}` : ''}
 
 Please generate a complete travel itinerary with daily events including times, activities, types (spot/food/work/move), and notes.`
 
-    const result = llmClient.streamPlan(systemPrompt, userPrompt)
+    // Use AI SDK's streamObject for compatibility with useObject hook
+    const result = streamObject({
+      model: llmClient.getModel(),
+      schema: PlanSchema,
+      system: systemPrompt,
+      prompt: userPrompt,
+    })
 
     // Return streaming response without saving
     // Client will call POST /api/plans to save the plan after receiving it

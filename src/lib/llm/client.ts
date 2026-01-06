@@ -1,6 +1,7 @@
 import type { LLMProvider } from './types'
 import { OpenAIProvider } from './providers/openai'
 import { GoogleProvider } from './providers/google'
+import { env } from '@/env'
 
 /**
  * Factory function to get the appropriate LLM client based on environment configuration
@@ -17,10 +18,7 @@ export function getLLMClient(): LLMProvider {
           'OPENAI_API_KEY environment variable is required when using OpenAI provider'
         )
       }
-      return new OpenAIProvider(
-        process.env.OPENAI_API_KEY,
-        process.env.OPENAI_MODEL
-      )
+      return new OpenAIProvider(process.env.OPENAI_API_KEY, env.OPENAI_MODEL)
 
     case 'google':
       if (!process.env.GEMINI_API_KEY) {
@@ -28,10 +26,7 @@ export function getLLMClient(): LLMProvider {
           'GEMINI_API_KEY environment variable is required when using Google provider'
         )
       }
-      return new GoogleProvider(
-        process.env.GEMINI_API_KEY,
-        process.env.GEMINI_MODEL
-      )
+      return new GoogleProvider(process.env.GEMINI_API_KEY, env.GEMINI_MODEL)
 
     default:
       throw new Error(

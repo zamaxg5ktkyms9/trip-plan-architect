@@ -135,12 +135,19 @@ ${input.options ? `Additional options: ${JSON.stringify(input.options)}` : ''}
 Please generate a complete travel itinerary with daily events including times, activities, types (spot/food/work/move), and notes.`
 
     // Use AI SDK's streamObject for compatibility with useObject hook
+    console.log('[Timing] Starting LLM API call...')
+    const startTime = Date.now()
+
     const result = streamObject({
       model: llmClient.getModel(),
       schema: PlanSchema,
       system: systemPrompt,
       prompt: userPrompt,
     })
+
+    console.log(
+      `[Timing] streamObject created in ${Date.now() - startTime}ms (note: streaming starts async)`
+    )
 
     // Return streaming response without saving
     // Client will call POST /api/plans to save the plan after receiving it

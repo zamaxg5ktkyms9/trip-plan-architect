@@ -39,4 +39,10 @@ export interface LLMProvider {
    * Provider name for logging and debugging
    */
   readonly name: string
+
+  /**
+   * Get the model name being used (for logging and debugging)
+   * @returns Model identifier (e.g., "gpt-4o-mini", "gemini-2.0-flash-exp")
+   */
+  getModelName(): string
 }

@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy - Trip Plan Architect',
+  title: 'プライバシーポリシー - Trip Plan Architect',
   description:
-    'Privacy Policy for Trip Plan Architect - Learn how we collect, use, and protect your data.',
+    'Trip Plan Architectのプライバシーポリシー。個人情報の収集、利用、保護、およびAI生成コンテンツの免責事項について説明します。',
 }
 
 export default function PrivacyPage() {
@@ -17,360 +17,207 @@ export default function PrivacyPage() {
           <Link href="/">
             <Button variant="ghost" className="gap-2">
               <ArrowLeft className="h-4 w-4" />
-              Back to Home
+              ホームに戻る
             </Button>
           </Link>
         </div>
 
         <article className="prose prose-slate max-w-none">
-          <h1 className="text-4xl font-bold text-gray-900 mb-8">
-            Privacy Policy
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">
+            プライバシーポリシー
           </h1>
 
-          <p className="text-sm text-gray-500 mb-8">
-            Last Updated: {new Date().toLocaleDateString('en-US')}
-          </p>
+          <p className="text-sm text-gray-500 mb-8">最終更新日: 2026年1月6日</p>
 
+          {/* 1. はじめに */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              1. Introduction
+              1. はじめに
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              Welcome to Trip Plan Architect (&quot;we,&quot; &quot;our,&quot;
-              or &quot;us&quot;). We are committed to protecting your privacy
-              and ensuring transparency about how we collect, use, and protect
-              your information.
-            </p>
-            <p className="text-gray-700 leading-relaxed">
-              This Privacy Policy explains our practices regarding data
-              collection and usage when you use our AI-powered travel itinerary
-              generation service.
+              Trip Plan
+              Architect（以下、「当サービス」といいます）は、ユーザーの個人情報の取り扱いについて、以下の通りプライバシーポリシー（以下、「本ポリシー」といいます）を定めます。当サービスは、ユーザーのプライバシーを尊重し、個人情報の保護に努めます。
             </p>
           </section>
 
+          {/* 2. 収集する情報 */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              2. Information We Collect
+              2. 収集する情報
             </h2>
-            <h3 className="text-xl font-medium text-gray-800 mb-3">
-              2.1 Information You Provide
-            </h3>
             <p className="text-gray-700 leading-relaxed mb-4">
-              When you use our service to generate travel itineraries, we
-              collect:
+              当サービスでは、以下の情報を収集・利用する場合があります。
             </p>
+
+            <h3 className="text-xl font-medium text-gray-800 mb-3">
+              2.1 ユーザーが提供する情報
+            </h3>
             <ul className="list-disc pl-6 text-gray-700 mb-4">
-              <li>Destination preferences</li>
-              <li>Travel style and template selections</li>
-              <li>Trip duration and budget preferences</li>
-              <li>Any custom requirements you input</li>
+              <li>旅行先の希望条件（エリア、日数、予算等）</li>
+              <li>旅行スタイル（開発合宿、温泉、家族旅行等）</li>
+              <li>その他、プラン生成のために入力されたテキスト情報</li>
             </ul>
 
             <h3 className="text-xl font-medium text-gray-800 mb-3">
-              2.2 Automatically Collected Information
+              2.2 自動的に収集される情報
             </h3>
             <p className="text-gray-700 leading-relaxed mb-4">
-              We automatically collect certain information through Google
-              Analytics and similar technologies:
+              当サービスは、サービス向上のためにGoogle
+              Analytics等の解析ツールを使用しており、以下の情報を自動的に収集する場合があります。
             </p>
             <ul className="list-disc pl-6 text-gray-700 mb-4">
+              <li>IPアドレス（匿名化処理済み）</li>
+              <li>ブラウザの種類・デバイス情報</li>
+              <li>アクセス日時・滞在時間</li>
+              <li>Cookie（クッキー）および類似技術による識別データ</li>
+            </ul>
+          </section>
+
+          {/* 3. 利用目的 */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              3. 利用目的
+            </h2>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              収集した情報は、以下の目的で利用します。
+            </p>
+            <ol className="list-decimal pl-6 text-gray-700 mb-4 space-y-2">
+              <li>AIによる旅行プランの生成および本サービスの提供</li>
+              <li>利用状況の分析によるサービス改善・新機能開発</li>
+              <li>不正アクセス・スパム行為の防止（Rate Limiting等）</li>
+              <li>お問い合わせへの対応</li>
+            </ol>
+          </section>
+
+          {/* 4. 第三者サービスの利用 */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              4. 第三者サービスの利用
+            </h2>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              当サービスは、以下の第三者サービスを利用して機能を提供しています。各サービスにおけるデータ取り扱いについては、各社のプライバシーポリシーをご参照ください。
+            </p>
+            <ul className="list-disc pl-6 text-gray-700 mb-4 space-y-2">
               <li>
-                <strong>Analytics Data:</strong> We use Google Analytics (GA4)
-                to understand how visitors interact with our website. This
-                includes page views, session duration, device information,
-                browser type, and general geographic location (country/region).
+                <strong>Google Analytics (GA4):</strong>{' '}
+                アクセス解析のために使用。
               </li>
               <li>
-                <strong>Cookies:</strong> Google Analytics uses cookies to track
-                user sessions and behavior patterns. You can control cookies
-                through your browser settings.
+                <strong>OpenAI API:</strong>{' '}
+                旅行プラン生成のAIエンジンとして使用。入力された旅行条件はOpenAIに送信されますが、学習データとしての利用を制限する設定を行っています。
               </li>
               <li>
-                <strong>IP Addresses:</strong> Your IP address is collected for
-                rate limiting, abuse prevention, and geographic analytics (but
-                is anonymized in Google Analytics).
+                <strong>Vercel:</strong>{' '}
+                サーバーホスティングおよびデプロイのために使用。
+              </li>
+              <li>
+                <strong>Unsplash API:</strong> 旅行先の画像表示のために使用。
               </li>
             </ul>
           </section>
 
+          {/* 5. 広告・アフィリエイトについて */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              3. How We Use Your Information
+              5. 広告・アフィリエイトについて
             </h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              We use the collected information for the following purposes:
-            </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-4">
-              <li>
-                <strong>Service Delivery:</strong> To generate personalized
-                travel itineraries using AI based on your inputs.
-              </li>
-              <li>
-                <strong>Analytics:</strong> To understand usage patterns,
-                improve our service, and optimize user experience.
-              </li>
-              <li>
-                <strong>Rate Limiting:</strong> To prevent abuse and ensure fair
-                usage of our service.
-              </li>
-              <li>
-                <strong>Legal Compliance:</strong> To comply with applicable
-                laws and regulations.
-              </li>
-            </ul>
-          </section>
 
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              4. Third-Party Services
-            </h2>
+            <h3 className="text-xl font-medium text-gray-800 mb-3">
+              5.1 Amazonアソシエイト・プログラム
+            </h3>
             <p className="text-gray-700 leading-relaxed mb-4">
-              We use the following third-party services that may collect and
-              process your data:
+              当サービス（Trip Plan
+              Architect）は、Amazon.co.jpを宣伝しリンクすることによってサイトが紹介料を獲得できる手段を提供することを目的に設定されたアフィリエイトプログラムである、Amazonアソシエイト・プログラムの参加者です。
             </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-4">
-              <li>
-                <strong>Google Analytics (GA4):</strong> For website analytics
-                and user behavior tracking. Learn more at{' '}
-                <a
-                  href="https://policies.google.com/privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  Google Privacy Policy
-                </a>
-                .
-              </li>
-              <li>
-                <strong>OpenAI API:</strong> For AI-powered itinerary
-                generation. Your travel preferences are sent to OpenAI&apos;s
-                API to generate personalized plans. See{' '}
-                <a
-                  href="https://openai.com/privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  OpenAI Privacy Policy
-                </a>
-                .
-              </li>
-              <li>
-                <strong>Unsplash API:</strong> For travel destination images.
-                See{' '}
-                <a
-                  href="https://unsplash.com/privacy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  Unsplash Privacy Policy
-                </a>
-                .
-              </li>
-              <li>
-                <strong>Vercel:</strong> For hosting and deployment. See{' '}
-                <a
-                  href="https://vercel.com/legal/privacy-policy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  Vercel Privacy Policy
-                </a>
-                .
-              </li>
-            </ul>
-          </section>
 
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              5. Advertising and Affiliate Links
-            </h2>
+            <h3 className="text-xl font-medium text-gray-800 mb-3">
+              5.2 Google AdSense（およびその他広告配信）
+            </h3>
             <p className="text-gray-700 leading-relaxed mb-4">
-              Our website may display advertisements and affiliate links:
+              当サービスでは、第三者配信の広告サービス（Google
+              AdSense等）を利用する場合があり、ユーザーの興味に応じた商品やサービスの広告を表示するため、Cookie（クッキー）を使用することがあります。
+              Cookieを使用することで、当サイトはお客様のコンピュータを識別できるようになりますが、お客様個人を特定できるものではありません。
             </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-4">
-              <li>
-                <strong>Affiliate Marketing:</strong> We may display affiliate
-                links to travel-related products and services. If you make a
-                purchase through these links, we may earn a commission at no
-                extra cost to you.
-              </li>
-              <li>
-                <strong>Google AdSense (Future):</strong> We may implement
-                Google AdSense or similar advertising services in the future.
-                These services may use cookies to display personalized ads based
-                on your browsing history.
-              </li>
-            </ul>
             <p className="text-gray-700 leading-relaxed">
-              You can opt out of personalized advertising by visiting{' '}
+              Cookieを無効にする方法や、Googleアドセンスに関する詳細は「
               <a
-                href="https://www.google.com/settings/ads"
+                href="https://policies.google.com/technologies/ads?hl=ja"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:underline"
               >
-                Google Ad Settings
+                Googleポリシーと規約 – 広告
               </a>
-              .
+              」をご確認ください。
             </p>
           </section>
 
+          {/* 6. 免責事項 */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              6. Data Storage and Security
+              6. 免責事項（AI生成コンテンツについて）
             </h2>
             <p className="text-gray-700 leading-relaxed mb-4">
-              We take reasonable measures to protect your information:
+              当サービスの旅行プランは、人工知能（AI）によって自動生成されたものです。
+            </p>
+            <ol className="list-decimal pl-6 text-gray-700 mb-4 space-y-2">
+              <li>
+                <strong>情報の正確性:</strong>{' '}
+                生成されたプランに含まれる施設情報（営業時間、価格、存続状況等）の正確性・完全性を保証するものではありません。
+                <span className="font-bold text-red-600">
+                  ご出発前に、必ず公式サイトやGoogleマップ等で最新情報をご確認ください。
+                </span>
+              </li>
+              <li>
+                <strong>責任の所在:</strong>{' '}
+                AIが生成したプランに基づいて生じた損害、トラブル、不利益について、当サービスおよび運営者は一切の責任を負いません。
+              </li>
+              <li>
+                <strong>安全性:</strong>{' '}
+                提案された旅行先の現在の安全性や気象状況については、ユーザーご自身で判断し、自己責任で行動してください。
+              </li>
+            </ol>
+          </section>
+
+          {/* 7. 個人情報の管理とセキュリティ */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              7. 個人情報の管理とセキュリティ
+            </h2>
+            <p className="text-gray-700 leading-relaxed">
+              当サービスは、ユーザー情報の安全管理のために必要かつ適切な措置（HTTPS暗号化通信等）を講じます。生成されたプランデータは一時的にデータベース（Redis）に保存されますが、ユーザーの要求に応じて削除可能です。
+            </p>
+          </section>
+
+          {/* 8. プライバシーポリシーの変更 */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              8. プライバシーポリシーの変更
+            </h2>
+            <p className="text-gray-700 leading-relaxed">
+              本ポリシーの内容は、法令改正やサービス変更に伴い、ユーザーに通知することなく変更することができるものとします。変更後のプライバシーポリシーは、本ページに掲載したときから効力を生じるものとします。
+            </p>
+          </section>
+
+          {/* 9. お問い合わせ */}
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+              9. お問い合わせ
+            </h2>
+            <p className="text-gray-700 leading-relaxed mb-4">
+              本ポリシーに関するお問い合わせは、以下の窓口までお願いいたします。
             </p>
             <ul className="list-disc pl-6 text-gray-700 mb-4">
               <li>
-                Generated travel plans are stored temporarily in our database
-                (Redis) for quick access and sharing.
+                <strong>運営者:</strong> Trip Plan Architect 運営事務局
               </li>
               <li>
-                We implement industry-standard security measures, including
-                HTTPS encryption for data transmission.
-              </li>
-              <li>
-                However, no method of transmission over the Internet is 100%
-                secure. We cannot guarantee absolute security.
-              </li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              7. Data Retention
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              Generated travel plans are stored indefinitely unless you request
-              deletion. Analytics data is retained according to Google
-              Analytics&apos; default retention policies (typically 14-26
-              months).
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              8. Your Rights
-            </h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              Depending on your location, you may have certain rights regarding
-              your personal data:
-            </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-4">
-              <li>
-                <strong>Access:</strong> Request access to the personal data we
-                hold about you.
-              </li>
-              <li>
-                <strong>Deletion:</strong> Request deletion of your generated
-                travel plans.
-              </li>
-              <li>
-                <strong>Opt-Out:</strong> Opt out of cookies by adjusting your
-                browser settings.
-              </li>
-            </ul>
-            <p className="text-gray-700 leading-relaxed">
-              To exercise these rights, please contact us using the information
-              in Section 12.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              9. Children&apos;s Privacy
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              Our service is not intended for children under 13 years of age. We
-              do not knowingly collect personal information from children under
-              13. If you believe we have collected information from a child
-              under 13, please contact us immediately.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              10. Disclaimer and Limitation of Liability
-            </h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              <strong>AI-Generated Content:</strong> All travel itineraries are
-              generated using AI and are provided &quot;as is&quot; without
-              warranties of any kind:
-            </p>
-            <ul className="list-disc pl-6 text-gray-700 mb-4">
-              <li>
-                Information may be inaccurate, outdated, or incomplete. Always
-                verify details (opening hours, prices, availability) before your
-                trip.
-              </li>
-              <li>
-                We are not responsible for any damages, losses, or
-                inconveniences resulting from reliance on AI-generated
-                itineraries.
-              </li>
-              <li>
-                Travel recommendations are general suggestions and may not
-                account for current events, closures, or safety concerns.
-              </li>
-            </ul>
-            <p className="text-gray-700 leading-relaxed">
-              You are solely responsible for planning and executing your travel
-              arrangements. Please conduct your own research and consult
-              official sources before traveling.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              11. Changes to This Privacy Policy
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              We may update this Privacy Policy from time to time. Changes will
-              be posted on this page with an updated &quot;Last Updated&quot;
-              date. We encourage you to review this policy periodically.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              12. Contact Us
-            </h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              If you have questions, concerns, or requests regarding this
-              Privacy Policy or your personal data, please contact us:
-            </p>
-            <ul className="list-none text-gray-700">
-              <li className="mb-2">
-                <strong>Twitter/X:</strong> See contact link in the footer
-              </li>
-              <li>
-                <strong>Website:</strong>{' '}
-                <a
-                  href="https://www.trip-plan-architect.com"
-                  className="text-blue-600 hover:underline"
-                >
-                  https://www.trip-plan-architect.com
+                <strong>お問い合わせ:</strong>{' '}
+                <a href="#" className="text-blue-600 hover:underline">
+                  お問い合わせフォーム または 公式X(Twitter)
                 </a>
               </li>
             </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-              13. International Users
-            </h2>
-            <p className="text-gray-700 leading-relaxed">
-              Our service is hosted in the United States. By using our service,
-              you consent to the transfer of your data to the United States,
-              which may have different data protection laws than your country of
-              residence.
-            </p>
           </section>
         </article>
       </div>

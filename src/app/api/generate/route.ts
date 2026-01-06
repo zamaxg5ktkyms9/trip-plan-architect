@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
    * "おもてなし"調の敬語は不要。
    * エンジニア同士の会話のような、論理的で簡潔な「技術文書（Documentation）」スタイル。
    * 結論ファースト（TL;DR）。
-3. **Format:** JSON形式（既存のスキーマに従うこと）。ただし、説明文（note, activity）等はMarkdown形式を活用する。
+3. **Format:** JSON形式（既存のスキーマに従うこと）。Output strictly plain text for descriptions. Do not use Markdown formatting within JSON values.
 
 # Critical Constraints
 1. **Tech Specs First:**
@@ -127,7 +127,13 @@ export async function POST(request: NextRequest) {
 2. **Context:**
    * 単なる旅行ではなく、「コードを書く」「技術書を読む」「思考を整理する」ための文脈を含めること。
 3. **Output Language:**
-   * 入力言語に関わらず、必ず日本語で出力すること（Output must be in Japanese regardless of input language）。`
+   * 入力言語に関わらず、必ず日本語で出力すること（Output must be in Japanese regardless of input language）。
+4. **Image Search Query (imageSearchQuery field):**
+   * For events with type="spot", you MUST provide an "imageSearchQuery" field.
+   * imageSearchQuery MUST be a simple English noun or phrase suitable for Unsplash search (e.g., "Tokyo Tower", "Hot Spring", "Kyoto Street").
+   * Do NOT use verbs or abstract concepts (e.g., "Sightseeing", "Enjoying").
+   * If the spot is a specific facility, use its official English name.
+   * This field ensures accurate photo results and prevents API errors.`
 
     const userPrompt = `Create a travel plan for ${input.destination} using the ${input.template} template.
 ${input.options ? `Additional options: ${JSON.stringify(input.options)}` : ''}

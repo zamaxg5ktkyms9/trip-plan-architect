@@ -6,15 +6,15 @@ import { getPlaceholderGradient } from '@/lib/unsplash'
 import { debugLog } from '@/lib/debug'
 
 interface SpotImageProps {
+  query: string
   spotName: string
-  destination: string
 }
 
 /**
  * Client-side component that fetches and displays Unsplash images
  * Falls back to gradient placeholder if image is unavailable
  */
-export function SpotImage({ spotName, destination }: SpotImageProps) {
+export function SpotImage({ query, spotName }: SpotImageProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -22,7 +22,6 @@ export function SpotImage({ spotName, destination }: SpotImageProps) {
   useEffect(() => {
     const fetchImage = async () => {
       try {
-        const query = `${spotName} ${destination}`
         const response = await fetch(
           `/api/unsplash?query=${encodeURIComponent(query)}`
         )
@@ -46,7 +45,7 @@ export function SpotImage({ spotName, destination }: SpotImageProps) {
     }
 
     fetchImage()
-  }, [spotName, destination])
+  }, [query])
 
   if (isLoading) {
     return (

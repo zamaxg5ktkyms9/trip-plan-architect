@@ -15,7 +15,6 @@ import { SpotImage } from './spot-image'
 
 interface ResultViewProps {
   plan: DeepPartial<Plan>
-  destination: string
 }
 
 const EVENT_ICONS = {
@@ -25,7 +24,7 @@ const EVENT_ICONS = {
   move: '🚶',
 }
 
-export function ResultView({ plan, destination }: ResultViewProps) {
+export function ResultView({ plan }: ResultViewProps) {
   const router = useRouter()
   const [editingEvent, setEditingEvent] = useState<string | null>(null)
   const [editedEvents, setEditedEvents] = useState<Record<string, Event>>({})
@@ -220,8 +219,8 @@ export function ResultView({ plan, destination }: ResultViewProps) {
                     {/* Event Image */}
                     {evt.type === 'spot' && evt.name && (
                       <SpotImage
+                        query={evt.imageSearchQuery || evt.name}
                         spotName={evt.name}
-                        destination={destination}
                       />
                     )}
 

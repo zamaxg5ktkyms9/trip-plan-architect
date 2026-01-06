@@ -35,7 +35,7 @@ export function TripGenerator() {
   const [arrivalTime, setArrivalTime] = useState('10:00')
   const [budget, setBudget] = useState('standard')
 
-  const { object, submit, isLoading, error } = useObject({
+  const { object, submit, isLoading } = useObject({
     api: '/api/generate',
     schema: PlanSchema,
     onError: error => {
@@ -124,15 +124,9 @@ export function TripGenerator() {
     savePlan()
   }, [object, isLoading])
 
-  useEffect(() => {
-    debugLog('[DEBUG] State Update:')
-    debugLog('  - object:', object)
-    debugLog('  - object type:', typeof object)
-    debugLog('  - object keys:', object ? Object.keys(object) : 'null')
-    debugLog('  - isLoading:', isLoading)
-    debugLog('  - error:', error)
-    debugLog('  - Current Mode:', !object ? 'INPUT FORM' : 'RESULT VIEW')
-  }, [object, isLoading, error])
+  // Debug logging removed - was causing performance issues during streaming
+  // The object updates frequently during streaming, logging on every update
+  // caused significant slowdown (15+ seconds vs 100ms)
 
   const handleGenerate = async () => {
     debugLog('[DEBUG] handleGenerate called')

@@ -121,11 +121,16 @@ export async function POST(request: NextRequest) {
    * エンジニア同士の会話のような、論理的で簡潔な「技術文書（Documentation）」スタイル。
    * 結論ファースト（TL;DR）。
 3. **Format:** JSON形式（既存のスキーマに従うこと）。Output strictly plain text for descriptions. Do not use Markdown formatting within JSON values.
+4. **Output Volume (CRITICAL):**
+   * DESCRIPTIONS MUST BE UNDER 40 CHARACTERS (Japanese). Keep it extremely concise.
+   * Use short tags for specs instead of long sentences: [WiFi:高速] [電源:全席] [静寂]
+   * Example: "カフェXYZ [WiFi:高速] [電源:全席] [静寂]" instead of "Wi-Fi速度が速く、全席に電源があり、静かな環境のカフェ"
 
 # Critical Constraints
 1. **Tech Specs First:**
    * 観光情報よりも「スペック」を優先して記述すること。
    * 施設説明には必ず「Wi-Fi速度」「電源可用性」「静寂度」に関する言及（推測可）を含めること。
+   * Use compact tag notation: [WiFi:高速] [電源:Yes] [静寂] instead of full sentences.
 2. **Context:**
    * 単なる旅行ではなく、「コードを書く」「技術書を読む」「思考を整理する」ための文脈を含めること。
 3. **Output Language:**
@@ -151,6 +156,31 @@ Please generate a complete travel itinerary with daily events including times, a
       schema: PlanSchema,
       system: systemPrompt,
       prompt: userPrompt,
+      onFinish: ({ object, usage, error }) => {
+        const elapsedTime = Date.now() - startTime
+        console.log(
+          `[Timing] ✅ Stream completed in ${elapsedTime}ms (${(elapsedTime / 1000).toFixed(2)}s)`
+        )
+
+        if (usage) {
+          const totalTokens =
+            (usage.inputTokens || 0) + (usage.outputTokens || 0)
+          console.log(
+            `[Token Usage] Input: ${usage.inputTokens || 0}, Output: ${usage.outputTokens || 0}, Total: ${totalTokens}`
+          )
+        }
+
+        if (error) {
+          console.error('[Timing] ❌ Stream finished with error:', error)
+        }
+
+        // Log a summary of the generated plan
+        if (object && !error) {
+          console.log(
+            `[Plan Summary] Generated ${object.days?.length || 0} days, Title: "${object.title || 'N/A'}"`
+          )
+        }
+      },
     })
 
     console.log(

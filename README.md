@@ -1,6 +1,41 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+## プロジェクト概要
+
+このアプリケーションは、旅行プランを自動生成するためのツールです。ユーザーの指定した条件に基づいて、最適な旅行プランを生成し、視覚的に表示します。
+
+## 技術スタック
+
+- **Next.js**: Reactベースのフレームワークで、サーバーサイドレンダリングや静的サイト生成をサポートします。
+- **Vercel**: Next.jsアプリケーションのホスティングプラットフォーム。
+- **OpenAI API**: 自然言語処理を利用して、旅行プランを生成します。
+- **Unsplash API**: 高品質な画像を取得するために使用します。
+- **Redis**: データのキャッシュやセッション管理に使用します。
+
+## セットアップ手順
+
+1. リポジトリをクローンします。
+2. 必要なパッケージをインストールします。
+
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+3. 開発サーバーを起動します。
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+```
+
+4. ブラウザで [http://localhost:3000](http://localhost:3000) を開いて結果を確認します。
 
 First, run the development server:
 

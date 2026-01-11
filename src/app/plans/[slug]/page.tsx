@@ -13,16 +13,6 @@ interface PageProps {
 // Force dynamic rendering since we use Redis (not compatible with static generation)
 export const dynamic = 'force-dynamic'
 
-// Generate static paths for recent plans (limit to 50 for build performance)
-export async function generateStaticParams() {
-  const repository = new PlanRepository()
-  const slugs = await repository.getRecent(50)
-
-  return slugs.map(slug => ({
-    slug,
-  }))
-}
-
 // Generate metadata for SEO
 export async function generateMetadata({
   params,

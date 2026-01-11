@@ -13,6 +13,10 @@ interface PageProps {
 // Force dynamic rendering since we use Redis (not compatible with static generation)
 export const dynamic = 'force-dynamic'
 
+// Disable static params generation for Redis-backed routes
+// All plan pages are generated on-demand at runtime
+export const dynamicParams = true
+
 // Generate metadata for SEO
 export async function generateMetadata({
   params,

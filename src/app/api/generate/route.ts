@@ -145,25 +145,127 @@ Please generate a complete travel itinerary with daily events including times, a
       schema: PlanSchema,
       system: systemPrompt,
       prompt: userPrompt,
-      onFinish: ({ object, usage, error }) => {
-        const elapsedTime = Date.now() - startTime
+      onFinish: ({ object, usage, error, response }) => {
+        const duration = Date.now() - startTime
+
+        // === [DeepDive] Performance Metrics ===
+        console.log('[DeepDive] 🏁 Stream Completed')
         console.log(
-          `[Timing] ✅ Stream completed in ${elapsedTime}ms (${(elapsedTime / 1000).toFixed(2)}s)`
+          `[DeepDive] Duration: ${duration}ms (${(duration / 1000).toFixed(2)}s)`
         )
 
+        // Token usage and TPS calculation
         if (usage) {
-          const totalTokens =
-            (usage.inputTokens || 0) + (usage.outputTokens || 0)
+          const inputTokens = usage.inputTokens || 0
+          const outputTokens = usage.outputTokens || 0
+          const totalTokens = inputTokens + outputTokens
+          const tps =
+            outputTokens > 0
+              ? (outputTokens / (duration / 1000)).toFixed(2)
+              : 'N/A'
+
+          console.log(`[DeepDive] Token Usage:`)
+          console.log(`[DeepDive]   - Input: ${inputTokens} tokens`)
+          console.log(`[DeepDive]   - Output: ${outputTokens} tokens`)
+          console.log(`[DeepDive]   - Total: ${totalTokens} tokens`)
+          console.log(`[DeepDive] TPS (Tokens Per Second): ${tps} tokens/sec`)
+
+          // Token efficiency
+          if (outputTokens > 0 && duration > 0) {
+            const msPerToken = (duration / outputTokens).toFixed(2)
+            console.log(
+              `[DeepDive] Generation Speed: ${msPerToken}ms per token`
+            )
+          }
+        } else {
+          console.log('[DeepDive] ⚠️ No usage data available')
+        }
+
+        // === Object Structure Analysis ===
+        if (object) {
+          console.log('[DeepDive] 📦 Generated Object Analysis:')
           console.log(
-            `[Token Usage] Input: ${usage.inputTokens || 0}, Output: ${usage.outputTokens || 0}, Total: ${totalTokens}`
+            `[DeepDive]   - Top-level keys: ${Object.keys(object).join(', ')}`
+          )
+          console.log(`[DeepDive]   - Title: "${object.title || 'N/A'}"`)
+          console.log(`[DeepDive]   - Days count: ${object.days?.length || 0}`)
+
+          // Analyze events structure
+          if (object.days && object.days.length > 0) {
+            const totalEvents = object.days.reduce(
+              (sum, day) => sum + (day.events?.length || 0),
+              0
+            )
+            console.log(`[DeepDive]   - Total events: ${totalEvents}`)
+
+            // Check first event structure
+            const firstDay = object.days[0]
+            if (firstDay?.events && firstDay.events.length > 0) {
+              const firstEvent = firstDay.events[0]
+              console.log(
+                `[DeepDive]   - First event keys: ${Object.keys(firstEvent).join(', ')}`
+              )
+              console.log(
+                `[DeepDive]   - First event sample: ${JSON.stringify(firstEvent).substring(0, 100)}...`
+              )
+            }
+          }
+
+          // Serialize to check for unexpected data
+          try {
+            const jsonString = JSON.stringify(object)
+            console.log(
+              `[DeepDive]   - Total JSON size: ${jsonString.length} characters`
+            )
+            console.log(
+              `[DeepDive]   - JSON start (50 chars): ${jsonString.substring(0, 50)}...`
+            )
+            console.log(
+              `[DeepDive]   - JSON end (50 chars): ...${jsonString.substring(jsonString.length - 50)}`
+            )
+
+            // Check for markdown artifacts
+            if (jsonString.includes('```')) {
+              console.log(
+                '[DeepDive] ⚠️ WARNING: Markdown code blocks detected in output'
+              )
+            }
+          } catch (e) {
+            console.error('[DeepDive] ❌ Failed to stringify object:', e)
+          }
+        } else {
+          console.log('[DeepDive] ⚠️ No object generated')
+        }
+
+        // === Error Analysis ===
+        if (error) {
+          console.error('[DeepDive] ❌ Stream Error Details:')
+          console.error('[DeepDive]   - Error type:', error?.constructor?.name)
+          console.error('[DeepDive]   - Error message:', error)
+
+          // Try to extract raw response if available
+          if (response) {
+            console.log('[DeepDive] 📄 Raw Response Available')
+            try {
+              console.log(
+                '[DeepDive]   - Response keys:',
+                Object.keys(response).join(', ')
+              )
+            } catch (e) {
+              console.log('[DeepDive]   - Unable to inspect response')
+            }
+          }
+        }
+
+        // === Legacy logs (for compatibility) ===
+        console.log(
+          `[Timing] ✅ Stream completed in ${duration}ms (${(duration / 1000).toFixed(2)}s)`
+        )
+        if (usage) {
+          console.log(
+            `[Token Usage] Input: ${usage.inputTokens || 0}, Output: ${usage.outputTokens || 0}, Total: ${(usage.inputTokens || 0) + (usage.outputTokens || 0)}`
           )
         }
-
-        if (error) {
-          console.error('[Timing] ❌ Stream finished with error:', error)
-        }
-
-        // Log a summary of the generated plan
         if (object && !error) {
           console.log(
             `[Plan Summary] Generated ${object.days?.length || 0} days, Title: "${object.title || 'N/A'}"`

@@ -9,12 +9,20 @@
       "source": "/api/generate",
       "headers": [
         {
+          "key": "Content-Type",
+          "value": "text/event-stream"
+        },
+        {
           "key": "Cache-Control",
           "value": "no-cache, no-transform"
         },
         {
           "key": "X-Content-Type-Options",
           "value": "nosniff"
+        },
+        {
+          "key": "X-Accel-Buffering",
+          "value": "no"
         }
       ]
     }

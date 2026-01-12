@@ -317,15 +317,15 @@ Please generate a complete travel itinerary with daily events including times, a
 
     // Return streaming response without saving
     // Client will call POST /api/plans to save the plan after receiving it
-    const response = result.toTextStreamResponse()
-
-    // Force proper streaming headers to prevent buffering
-    response.headers.set('Content-Type', 'text/plain; charset=utf-8')
-    response.headers.set('Cache-Control', 'no-cache, no-transform')
-    response.headers.set('X-Content-Type-Options', 'nosniff')
-    response.headers.delete('Content-Encoding') // Prevent compression
-
-    return response
+    // CRITICAL: Pass headers directly to toTextStreamResponse to prevent Vercel compression
+    return result.toTextStreamResponse({
+      headers: {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Accel-Buffering': 'no', // Disable nginx buffering
+      },
+    })
   } catch (error) {
     console.error('Error generating plan:', error)
 

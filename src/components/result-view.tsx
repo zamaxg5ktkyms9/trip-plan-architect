@@ -56,12 +56,12 @@ export function ResultView({ plan }: ResultViewProps) {
   }
 
   const copyAsNotionMarkdown = () => {
-    if (!plan.title || !plan.days) return
+    if (!plan.title || !plan.days || plan.days.length === 0) return
 
     let markdown = `# ${plan.title}\n\n`
     markdown += `**対象:** ${plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}\n\n`
 
-    plan.days.forEach((day, dayIndex) => {
+    plan.days?.forEach((day, dayIndex) => {
       if (!day) return
       markdown += `## ${day.day || dayIndex + 1}日目\n\n`
       day.events?.forEach((event, eventIndex) => {
@@ -81,12 +81,12 @@ export function ResultView({ plan }: ResultViewProps) {
   }
 
   const copyAsLineText = () => {
-    if (!plan.title || !plan.days) return
+    if (!plan.title || !plan.days || plan.days.length === 0) return
 
     let text = `${plan.title}\n\n`
     text += `対象: ${plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}\n\n`
 
-    plan.days.forEach((day, dayIndex) => {
+    plan.days?.forEach((day, dayIndex) => {
       if (!day) return
       text += `【${day.day || dayIndex + 1}日目】\n`
       day.events?.forEach((event, eventIndex) => {
@@ -166,6 +166,7 @@ export function ResultView({ plan }: ResultViewProps) {
                 variant="outline"
                 size="sm"
                 onClick={copyAsNotionMarkdown}
+                disabled={!plan.title || !plan.days || plan.days.length === 0}
                 title="Copy as Notion Markdown"
               >
                 <Copy className="h-4 w-4 mr-1" />
@@ -175,6 +176,7 @@ export function ResultView({ plan }: ResultViewProps) {
                 variant="outline"
                 size="sm"
                 onClick={copyAsLineText}
+                disabled={!plan.title || !plan.days || plan.days.length === 0}
                 title="Copy as LINE text"
               >
                 <Copy className="h-4 w-4 mr-1" />
@@ -184,6 +186,7 @@ export function ResultView({ plan }: ResultViewProps) {
                 variant="outline"
                 size="sm"
                 onClick={shareToTwitter}
+                disabled={!plan.title}
                 title="Share to X (Twitter)"
               >
                 <Share2 className="h-4 w-4 mr-1" />X

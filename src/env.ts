@@ -10,7 +10,8 @@ const envSchema = z.object({
   // LLM Model Configuration (optional, with defaults)
   // Using gpt-4o-mini for faster generation speed (2x faster than gpt-4o)
   OPENAI_MODEL: z.string().default('gpt-4o-mini'),
-  GEMINI_MODEL: z.string().default('gemini-2.0-flash-exp'),
+  // Using gemini-2.5-flash for stable, fast, and long-term supported model
+  GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
 
   // Rate Limit Configuration (coerce string to number, with defaults)
   // Global rate limit: Total requests allowed across all users per day

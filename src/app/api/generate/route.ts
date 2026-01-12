@@ -138,6 +138,13 @@ Please generate a complete travel itinerary with daily events including times, a
 
     // Use AI SDK's streamObject for compatibility with useObject hook
     console.log('[Timing] Starting LLM API call...')
+    console.log('[Debug] Model:', llmClient.getModelName())
+    console.log('[Debug] System prompt length:', systemPrompt.length, 'chars')
+    console.log('[Debug] User prompt length:', userPrompt.length, 'chars')
+    console.log(
+      '[Debug] Schema keys:',
+      Object.keys(PlanSchema.shape).join(', ')
+    )
     const startTime = Date.now()
 
     const result = streamObject({
@@ -251,8 +258,28 @@ Please generate a complete travel itinerary with daily events including times, a
                 '[DeepDive]   - Response keys:',
                 Object.keys(response).join(', ')
               )
+              console.log('[DeepDive]   - Model ID:', response.modelId)
+              console.log('[DeepDive]   - Response ID:', response.id)
+              console.log('[DeepDive]   - Timestamp:', response.timestamp)
+              if (response.headers) {
+                console.log(
+                  '[DeepDive]   - Headers:',
+                  JSON.stringify(response.headers)
+                )
+              }
             } catch (e) {
-              console.log('[DeepDive]   - Unable to inspect response')
+              console.log('[DeepDive]   - Unable to inspect response:', e)
+            }
+          }
+
+          // Log error cause chain for debugging
+          if (error?.cause) {
+            console.error('[DeepDive]   - Error cause:', error.cause)
+            if (error.cause?.text !== undefined) {
+              console.error(
+                '[DeepDive]   - Raw text from cause:',
+                JSON.stringify(error.cause.text)
+              )
             }
           }
         }

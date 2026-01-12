@@ -49,9 +49,12 @@ export function TripGenerator() {
 
       const errorMessage = error.message || '予期しないエラーが発生しました'
 
-      if (errorMessage.includes('Rate limit exceeded')) {
-        toast.error('レート制限に達しました', {
-          description: errorMessage,
+      if (
+        errorMessage.includes('Rate limit exceeded') ||
+        errorMessage.includes('429')
+      ) {
+        toast.error('アクセス集中により混み合っています', {
+          description: 'しばらく待ってから再度お試しください',
           duration: 5000,
         })
       } else if (
@@ -61,11 +64,6 @@ export function TripGenerator() {
         toast.error('リクエストタイムアウト', {
           description:
             '処理に時間がかかりすぎました。より短い日程で再試行してください。',
-          duration: 5000,
-        })
-      } else if (errorMessage.includes('429')) {
-        toast.error('リクエスト過多', {
-          description: 'しばらく待ってから再度お試しください。',
           duration: 5000,
         })
       } else {

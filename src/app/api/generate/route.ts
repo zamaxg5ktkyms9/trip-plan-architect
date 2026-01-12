@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
-import { streamObject } from 'ai'
-import { GenerateInputSchema, PlanSchema } from '@/types/plan'
+import { streamText } from 'ai'
+import { GenerateInputSchema } from '@/types/plan'
 import {
   checkRateLimit,
   getClientIP,
@@ -147,23 +147,18 @@ ${input.options ? `Additional options: ${JSON.stringify(input.options)}` : ''}
 
 Please generate a complete travel itinerary with daily events including times, activities, types (spot/food/work/move), and notes.`
 
-    // Use AI SDK's streamObject for compatibility with useObject hook
+    // Use AI SDK's streamText for immediate token streaming (no JSON parsing delay)
     console.log('[Timing] Starting LLM API call...')
     console.log('[Debug] Model:', llmClient.getModelName())
     console.log('[Debug] System prompt length:', systemPrompt.length, 'chars')
     console.log('[Debug] User prompt length:', userPrompt.length, 'chars')
-    console.log(
-      '[Debug] Schema keys:',
-      Object.keys(PlanSchema.shape).join(', ')
-    )
     const startTime = Date.now()
 
-    const result = await streamObject({
+    const result = streamText({
       model: llmClient.getModel(),
-      schema: PlanSchema,
       system: systemPrompt,
       prompt: userPrompt,
-      onFinish: ({ object, usage, error, response }) => {
+      onFinish: ({ text, usage }) => {
         const duration = Date.now() - startTime
 
         // === [DeepDive] Performance Metrics ===
@@ -199,101 +194,42 @@ Please generate a complete travel itinerary with daily events including times, a
           console.log('[DeepDive] ⚠️ No usage data available')
         }
 
-        // === Object Structure Analysis ===
-        if (object) {
-          console.log('[DeepDive] 📦 Generated Object Analysis:')
+        // === Text Output Analysis ===
+        if (text) {
+          console.log('[DeepDive] 📦 Generated Text Analysis:')
+          console.log(`[DeepDive]   - Text length: ${text.length} characters`)
           console.log(
-            `[DeepDive]   - Top-level keys: ${Object.keys(object).join(', ')}`
+            `[DeepDive]   - Text start (100 chars): ${text.substring(0, 100)}...`
           )
-          console.log(`[DeepDive]   - Title: "${object.title || 'N/A'}"`)
-          console.log(`[DeepDive]   - Days count: ${object.days?.length || 0}`)
+          console.log(
+            `[DeepDive]   - Text end (100 chars): ...${text.substring(text.length - 100)}`
+          )
 
-          // Analyze events structure
-          if (object.days && object.days.length > 0) {
-            const totalEvents = object.days.reduce(
-              (sum, day) => sum + (day.events?.length || 0),
-              0
+          // Check for markdown artifacts
+          if (text.includes('```')) {
+            console.log(
+              '[DeepDive] ⚠️ WARNING: Markdown code blocks detected in output'
             )
-            console.log(`[DeepDive]   - Total events: ${totalEvents}`)
-
-            // Check first event structure
-            const firstDay = object.days[0]
-            if (firstDay?.events && firstDay.events.length > 0) {
-              const firstEvent = firstDay.events[0]
-              console.log(
-                `[DeepDive]   - First event keys: ${Object.keys(firstEvent).join(', ')}`
-              )
-              console.log(
-                `[DeepDive]   - First event sample: ${JSON.stringify(firstEvent).substring(0, 100)}...`
-              )
-            }
           }
 
-          // Serialize to check for unexpected data
+          // Validate JSON structure
           try {
-            const jsonString = JSON.stringify(object)
+            const parsed = JSON.parse(text)
+            console.log('[DeepDive] ✅ Valid JSON detected')
             console.log(
-              `[DeepDive]   - Total JSON size: ${jsonString.length} characters`
+              `[DeepDive]   - Top-level keys: ${Object.keys(parsed).join(', ')}`
             )
-            console.log(
-              `[DeepDive]   - JSON start (50 chars): ${jsonString.substring(0, 50)}...`
-            )
-            console.log(
-              `[DeepDive]   - JSON end (50 chars): ...${jsonString.substring(jsonString.length - 50)}`
-            )
-
-            // Check for markdown artifacts
-            if (jsonString.includes('```')) {
-              console.log(
-                '[DeepDive] ⚠️ WARNING: Markdown code blocks detected in output'
-              )
+            if (parsed.title) {
+              console.log(`[DeepDive]   - Title: "${parsed.title}"`)
+            }
+            if (parsed.days) {
+              console.log(`[DeepDive]   - Days count: ${parsed.days.length}`)
             }
           } catch (e) {
-            console.error('[DeepDive] ❌ Failed to stringify object:', e)
+            console.error('[DeepDive] ⚠️ Invalid JSON in output:', e)
           }
         } else {
-          console.log('[DeepDive] ⚠️ No object generated')
-        }
-
-        // === Error Analysis ===
-        if (error) {
-          console.error('[DeepDive] ❌ Stream Error Details:')
-          console.error('[DeepDive]   - Error type:', error?.constructor?.name)
-          console.error('[DeepDive]   - Error message:', error)
-
-          // Try to extract raw response if available
-          if (response) {
-            console.log('[DeepDive] 📄 Raw Response Available')
-            try {
-              console.log(
-                '[DeepDive]   - Response keys:',
-                Object.keys(response).join(', ')
-              )
-              console.log('[DeepDive]   - Model ID:', response.modelId)
-              console.log('[DeepDive]   - Response ID:', response.id)
-              console.log('[DeepDive]   - Timestamp:', response.timestamp)
-              if (response.headers) {
-                console.log(
-                  '[DeepDive]   - Headers:',
-                  JSON.stringify(response.headers)
-                )
-              }
-            } catch (e) {
-              console.log('[DeepDive]   - Unable to inspect response:', e)
-            }
-          }
-
-          // Log error cause chain for debugging
-          if (error && typeof error === 'object' && 'cause' in error) {
-            console.error('[DeepDive]   - Error cause:', error.cause)
-            const cause = error.cause as { text?: string }
-            if (cause?.text !== undefined) {
-              console.error(
-                '[DeepDive]   - Raw text from cause:',
-                JSON.stringify(cause.text)
-              )
-            }
-          }
+          console.log('[DeepDive] ⚠️ No text generated')
         }
 
         // === Legacy logs (for compatibility) ===
@@ -305,16 +241,14 @@ Please generate a complete travel itinerary with daily events including times, a
             `[Token Usage] Input: ${usage.inputTokens || 0}, Output: ${usage.outputTokens || 0}, Total: ${(usage.inputTokens || 0) + (usage.outputTokens || 0)}`
           )
         }
-        if (object && !error) {
-          console.log(
-            `[Plan Summary] Generated ${object.days?.length || 0} days, Title: "${object.title || 'N/A'}"`
-          )
+        if (text) {
+          console.log(`[Text Summary] Generated ${text.length} characters`)
         }
       },
     })
 
     console.log(
-      `[Timing] streamObject created in ${Date.now() - startTime}ms (note: streaming starts async)`
+      `[Timing] streamText created in ${Date.now() - startTime}ms (note: streaming starts async)`
     )
 
     // Return streaming response without saving

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { experimental_useObject as useObject } from '@ai-sdk/react'
+import { useState, useEffect, useMemo } from 'react'
+import { useCompletion } from '@ai-sdk/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,7 +23,7 @@ import {
   PERIOD_OPTIONS,
   BUDGET_OPTIONS,
 } from '@/lib/constants/templates'
-import { PlanSchema } from '@/types/plan'
+import { type Plan } from '@/types/plan'
 import { ResultView } from '@/components/result-view'
 import { toast } from 'sonner'
 import { debugLog, debugError } from '@/lib/debug'
@@ -35,16 +35,16 @@ export function TripGenerator() {
   const [arrivalTime, setArrivalTime] = useState('10:00')
   const [budget, setBudget] = useState('standard')
 
-  const { object, submit, isLoading, stop } = useObject({
+  const { completion, complete, isLoading } = useCompletion({
     api: '/api/generate',
-    schema: PlanSchema,
-    onFinish: finishedObject => {
-      console.log('[Streaming] ✅ Finished:', finishedObject)
-      debugLog('[DEBUG] Stream finished with complete object')
+    onFinish: (prompt, completion) => {
+      console.log('[Streaming] ✅ Finished')
+      debugLog('[DEBUG] Stream finished with complete text')
+      debugLog('[DEBUG] Completion length:', completion.length)
     },
     onError: error => {
       debugError('[DEBUG] Generation error:', error)
-      debugError('[DEBUG] Error type:', error.constructor.name)
+      debugError('[DEBUG] Error type:', error.constructor?.name)
       debugError('[DEBUG] Error message:', error.message)
 
       const errorMessage = error.message || '予期しないエラーが発生しました'
@@ -75,16 +75,37 @@ export function TripGenerator() {
     },
   })
 
+  // Parse JSON as it streams in (using useMemo to avoid setState in effect)
+  const parsedPlan = useMemo(() => {
+    if (!completion) {
+      return null
+    }
+
+    try {
+      const parsed = JSON.parse(completion) as Plan
+      console.log('[Streaming] 📊 Parsed update:', {
+        hasTitle: !!parsed.title,
+        daysCount: parsed.days?.length || 0,
+        hasTarget: !!parsed.target,
+      })
+      return parsed
+    } catch {
+      // JSON not complete yet, ignore parse errors during streaming
+      debugLog('[Streaming] Waiting for complete JSON...')
+      return null
+    }
+  }, [completion])
+
   // Save plan when generation completes successfully
   useEffect(() => {
     const savePlan = async () => {
       // Only save when we have a complete plan and loading has finished
       if (
-        object &&
+        parsedPlan &&
         !isLoading &&
-        object.title &&
-        object.days &&
-        object.target
+        parsedPlan.title &&
+        parsedPlan.days &&
+        parsedPlan.target
       ) {
         debugLog('[DEBUG] Saving plan to database...')
         try {
@@ -93,7 +114,7 @@ export function TripGenerator() {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(object),
+            body: JSON.stringify(parsedPlan),
           })
 
           const result = await response.json()
@@ -124,20 +145,7 @@ export function TripGenerator() {
     }
 
     savePlan()
-  }, [object, isLoading])
-
-  // Streaming debug logging
-  useEffect(() => {
-    if (isLoading) {
-      console.log('[Streaming] 📊 Update:', {
-        isLoading,
-        hasObject: !!object,
-        hasTitle: !!object?.title,
-        daysCount: object?.days?.length || 0,
-        hasTarget: !!object?.target,
-      })
-    }
-  }, [object, isLoading])
+  }, [parsedPlan, isLoading])
 
   const handleGenerate = async () => {
     debugLog('[DEBUG] handleGenerate called')
@@ -155,14 +163,16 @@ export function TripGenerator() {
     }
 
     try {
-      debugLog('[DEBUG] Calling submit()...')
-      await submit({
-        destination,
-        template: selectedTemplate,
-        options: {
-          period,
-          arrivalTime,
-          budget,
+      debugLog('[DEBUG] Calling complete()...')
+      await complete('', {
+        body: {
+          destination,
+          template: selectedTemplate,
+          options: {
+            period,
+            arrivalTime,
+            budget,
+          },
         },
       })
       debugLog('[DEBUG] submit() completed')
@@ -173,7 +183,7 @@ export function TripGenerator() {
 
   return (
     <>
-      {!object ? (
+      {!parsedPlan ? (
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>旅行プランを構築</CardTitle>
@@ -330,7 +340,7 @@ export function TripGenerator() {
           </CardContent>
         </Card>
       ) : (
-        <ResultView plan={object} />
+        <ResultView plan={parsedPlan} />
       )}
     </>
   )

@@ -111,7 +111,9 @@ export function ResultView({ plan }: ResultViewProps) {
     window.open(twitterUrl, '_blank', 'noopener,noreferrer')
   }
 
-  if (!plan.title || !plan.days) {
+  // Allow rendering with partial data for streaming display
+  const hasAnyContent = plan.title || plan.days?.length
+  if (!hasAnyContent) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -150,10 +152,14 @@ export function ResultView({ plan }: ResultViewProps) {
         <CardHeader>
           <div className="flex items-start justify-between">
             <div>
-              <CardTitle className="text-2xl mb-2">{plan.title}</CardTitle>
-              <Badge variant="outline">
-                {plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}
-              </Badge>
+              <CardTitle className="text-2xl mb-2">
+                {plan.title || '生成中...'}
+              </CardTitle>
+              {plan.target && (
+                <Badge variant="outline">
+                  {plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}
+                </Badge>
+              )}
             </div>
             <div className="flex gap-2">
               <Button
@@ -195,7 +201,7 @@ export function ResultView({ plan }: ResultViewProps) {
       </Card>
 
       {/* Daily Itinerary */}
-      {plan.days.map((day, dayIndex) => {
+      {plan.days?.map((day, dayIndex) => {
         if (!day) return null
         return (
           <Card key={dayIndex} className="shadow-lg">

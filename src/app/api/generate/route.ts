@@ -273,12 +273,13 @@ Please generate a complete travel itinerary with daily events including times, a
           }
 
           // Log error cause chain for debugging
-          if (error?.cause) {
+          if (error && 'cause' in error) {
             console.error('[DeepDive]   - Error cause:', error.cause)
-            if (error.cause?.text !== undefined) {
+            const cause = error.cause as { text?: string }
+            if (cause?.text !== undefined) {
               console.error(
                 '[DeepDive]   - Raw text from cause:',
-                JSON.stringify(error.cause.text)
+                JSON.stringify(cause.text)
               )
             }
           }

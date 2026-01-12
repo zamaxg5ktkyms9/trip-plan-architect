@@ -23,9 +23,9 @@ export const EventSchema = z.object({
   note: z.string().describe('Additional notes or details'),
   imageSearchQuery: z
     .string()
-    .nullable()
+    .optional()
     .describe(
-      'English search query optimized for Unsplash API (only for type="spot", null for other types)'
+      'English search query optimized for Unsplash API (only for type="spot", omit for other types)'
     ),
 })
 export type Event = z.infer<typeof EventSchema>

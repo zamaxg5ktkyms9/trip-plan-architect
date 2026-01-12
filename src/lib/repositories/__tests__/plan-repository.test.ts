@@ -56,7 +56,6 @@ describe('PlanRepository', () => {
             activity: 'Lunch at Ramen Shop',
             type: 'food',
             note: 'Try tonkotsu ramen',
-            imageSearchQuery: null,
           },
         ],
       },

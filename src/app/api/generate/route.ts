@@ -106,7 +106,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const systemPrompt = `# CRITICAL: JSON OUTPUT ONLY
+    const systemPrompt = `Output ONLY JSON. Do not include "Here is" or any markdown formatting.
+
+# CRITICAL: JSON OUTPUT ONLY
 You MUST output ONLY valid JSON matching the provided schema. Do NOT output:
 - Any introductory text (e.g., "Here is...", "I'll create...")
 - Any markdown code blocks (\`\`\`json)

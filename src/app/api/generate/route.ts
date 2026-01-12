@@ -105,7 +105,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const systemPrompt = `# Role
+    const systemPrompt = `# CRITICAL: JSON OUTPUT ONLY
+You MUST output ONLY valid JSON matching the provided schema. Do NOT output:
+- Any introductory text (e.g., "Here is...", "I'll create...")
+- Any markdown code blocks (\`\`\`json)
+- Any explanatory text after the JSON
+- Multiple JSON objects
+Output must start with { and end with } with nothing before or after.
+
+# Role
 You are a "Tech-Travel Architect" specialized in creating travel plans for Japanese software engineers. Design optimal plans for "development retreats", "workations", and "digital detox" trips.
 
 # Target Audience

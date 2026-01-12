@@ -317,7 +317,15 @@ Please generate a complete travel itinerary with daily events including times, a
 
     // Return streaming response without saving
     // Client will call POST /api/plans to save the plan after receiving it
-    return result.toTextStreamResponse()
+    const response = result.toTextStreamResponse()
+
+    // Force proper streaming headers to prevent buffering
+    response.headers.set('Content-Type', 'text/plain; charset=utf-8')
+    response.headers.set('Cache-Control', 'no-cache, no-transform')
+    response.headers.set('X-Content-Type-Options', 'nosniff')
+    response.headers.delete('Content-Encoding') // Prevent compression
+
+    return response
   } catch (error) {
     console.error('Error generating plan:', error)
 

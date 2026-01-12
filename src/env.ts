@@ -74,29 +74,27 @@ export const env = parseEnv()
 
 /**
  * Log configuration on startup (server-side only, development mode only)
- * NOTE: Disabled for Edge Runtime compatibility
- * Edge Runtime does not support module-level process.env access
  */
 // Use globalThis to safely check for window in both Node.js and browser
-// const isServer =
-//   typeof globalThis === 'undefined' ||
-//   !('window' in globalThis) ||
-//   (globalThis as { window?: unknown }).window === undefined
+const isServer =
+  typeof globalThis === 'undefined' ||
+  !('window' in globalThis) ||
+  (globalThis as { window?: unknown }).window === undefined
 
-// if (
-//   isServer &&
-//   (process.env.NODE_ENV === 'development' ||
-//     process.env.NEXT_PUBLIC_IS_DEBUG === 'true')
-// ) {
-//   console.log('\n[Config] ✅ Loaded Configuration:')
-//   console.log(`  - Environment: ${env.NODE_ENV}`)
-//   console.log(
-//     `  - Global Rate Limit: ${env.GLOBAL_RATE_LIMIT_REQUESTS} requests/day`
-//   )
-//   console.log(`  - IP Rate Limit: ${env.IP_RATE_LIMIT_REQUESTS} requests/day`)
-//   console.log(`  - Debug Mode: ${env.NEXT_PUBLIC_IS_DEBUG || false}`)
-//   console.log(
-//     `  - Unsplash API Key: ${env.UNSPLASH_ACCESS_KEY ? `Set (${env.UNSPLASH_ACCESS_KEY.substring(0, 4)}***)` : 'NOT SET'}`
-//   )
-//   console.log('')
-// }
+if (
+  isServer &&
+  (process.env.NODE_ENV === 'development' ||
+    process.env.NEXT_PUBLIC_IS_DEBUG === 'true')
+) {
+  console.log('\n[Config] ✅ Loaded Configuration:')
+  console.log(`  - Environment: ${env.NODE_ENV}`)
+  console.log(
+    `  - Global Rate Limit: ${env.GLOBAL_RATE_LIMIT_REQUESTS} requests/day`
+  )
+  console.log(`  - IP Rate Limit: ${env.IP_RATE_LIMIT_REQUESTS} requests/day`)
+  console.log(`  - Debug Mode: ${env.NEXT_PUBLIC_IS_DEBUG || false}`)
+  console.log(
+    `  - Unsplash API Key: ${env.UNSPLASH_ACCESS_KEY ? `Set (${env.UNSPLASH_ACCESS_KEY.substring(0, 4)}***)` : 'NOT SET'}`
+  )
+  console.log('')
+}

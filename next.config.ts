@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Disable compression for streaming API routes to prevent buffering
+  compress: false,
 }
 
 export default nextConfig

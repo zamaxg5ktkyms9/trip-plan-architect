@@ -9,7 +9,7 @@ import {
 } from '@/lib/rate-limit'
 import { getLLMClient } from '@/lib/llm/client'
 
-export const runtime = 'nodejs'
+export const runtime = 'edge'
 export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
 
 /**
@@ -155,7 +155,7 @@ Please generate a complete travel itinerary with daily events including times, a
     )
     const startTime = Date.now()
 
-    const result = streamObject({
+    const result = await streamObject({
       model: llmClient.getModel(),
       schema: PlanSchema,
       system: systemPrompt,

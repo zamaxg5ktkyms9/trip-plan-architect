@@ -9,7 +9,8 @@ import {
 } from '@/lib/rate-limit'
 import { getLLMClient } from '@/lib/llm/client'
 
-export const runtime = 'edge'
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic' // Disable Next.js buffering for true streaming
 export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
 
 /**

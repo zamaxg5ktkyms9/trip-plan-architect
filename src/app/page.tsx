@@ -5,6 +5,9 @@ import { FooterAd } from '@/components/footer-ad'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
 
+// Force dynamic rendering because RecentPlans fetches from Upstash with no-store
+export const dynamic = 'force-dynamic'
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
-import { streamText } from 'ai'
-import { GenerateInputSchema } from '@/types/plan'
+import { streamObject } from 'ai'
+import { GenerateInputSchema, PlanSchema } from '@/types/plan'
 import {
   checkRateLimit,
   getClientIP,
@@ -106,54 +106,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const systemPrompt = `Output ONLY JSON. Do not include "Here is" or any markdown formatting.
-
-# CRITICAL: STRICT JSON SYNTAX REQUIREMENTS
-IMPORTANT: Output valid JSON only with these rules:
-1. All property names MUST be enclosed in DOUBLE QUOTES (not single quotes)
-2. All string values MUST use DOUBLE QUOTES (not single quotes)
-3. NO trailing commas allowed after last property
-4. NO comments allowed in JSON
-5. NO markdown code blocks (\`\`\`json)
-6. Use compact format (minimize whitespace to reduce tokens and latency)
-
-# CRITICAL: JSON OUTPUT ONLY
-You MUST output ONLY valid JSON matching the provided schema. Do NOT output:
-- Any introductory text (e.g., "Here is...", "I'll create...")
-- Any markdown code blocks (\`\`\`json)
-- Any explanatory text after the JSON
-- Multiple JSON objects
-Output must start with { and end with } with nothing before or after.
-
-# CRITICAL: EXACT JSON STRUCTURE REQUIRED
-Output MUST follow this JSON structure EXACTLY. Do NOT change key names:
-
-{
-  "title": "タイトル (日本語)",
-  "target": "engineer" or "general",
-  "days": [
-    {
-      "day": 1,
-      "events": [
-        {
-          "time": "10:00",
-          "name": "場所名 (日本語)",
-          "activity": "活動内容 (日本語)",
-          "type": "spot" or "food" or "work" or "move",
-          "note": "メモ (日本語)",
-          "imageSearchQuery": "English search term (ONLY for type=spot, omit for other types)"
-        }
-      ]
-    }
-  ]
-}
-
-CRITICAL KEY NAMES (DO NOT CHANGE):
-- Top level: "title", "target", "days"
-- Day object: "day", "events"
-- Event object: "time", "name", "activity", "type", "note", "imageSearchQuery" (optional)
-
-# Role
+    const systemPrompt = `# Role
 You are a "Tech-Travel Architect" specialized in creating travel plans for Japanese software engineers. Design optimal plans for "development retreats", "workations", and "digital detox" trips.
 
 # Target Audience
@@ -182,18 +135,19 @@ ${input.options ? `Additional options: ${JSON.stringify(input.options)}` : ''}
 
 Please generate a complete travel itinerary with daily events including times, activities, types (spot/food/work/move), and notes.`
 
-    // Use AI SDK's streamText for immediate token streaming (no JSON parsing delay)
+    // Use AI SDK's streamObject for immediate partial object streaming (real-time rendering)
     console.log('[Timing] Starting LLM API call...')
     console.log('[Debug] Model:', llmClient.getModelName())
     console.log('[Debug] System prompt length:', systemPrompt.length, 'chars')
     console.log('[Debug] User prompt length:', userPrompt.length, 'chars')
     const startTime = Date.now()
 
-    const result = streamText({
+    const result = streamObject({
       model: llmClient.getModel(),
       system: systemPrompt,
       prompt: userPrompt,
-      onFinish: ({ text, usage }) => {
+      schema: PlanSchema,
+      onFinish: ({ object, usage }) => {
         const duration = Date.now() - startTime
 
         // === [DeepDive] Performance Metrics ===
@@ -229,42 +183,28 @@ Please generate a complete travel itinerary with daily events including times, a
           console.log('[DeepDive] ⚠️ No usage data available')
         }
 
-        // === Text Output Analysis ===
-        if (text) {
-          console.log('[DeepDive] 📦 Generated Text Analysis:')
-          console.log(`[DeepDive]   - Text length: ${text.length} characters`)
+        // === Object Output Analysis ===
+        if (object) {
+          console.log('[DeepDive] 📦 Generated Object Analysis:')
           console.log(
-            `[DeepDive]   - Text start (100 chars): ${text.substring(0, 100)}...`
+            `[DeepDive]   - Top-level keys: ${Object.keys(object).join(', ')}`
           )
-          console.log(
-            `[DeepDive]   - Text end (100 chars): ...${text.substring(text.length - 100)}`
-          )
-
-          // Check for markdown artifacts
-          if (text.includes('```')) {
-            console.log(
-              '[DeepDive] ⚠️ WARNING: Markdown code blocks detected in output'
-            )
+          if (object.title) {
+            console.log(`[DeepDive]   - Title: "${object.title}"`)
           }
-
-          // Validate JSON structure
-          try {
-            const parsed = JSON.parse(text)
-            console.log('[DeepDive] ✅ Valid JSON detected')
-            console.log(
-              `[DeepDive]   - Top-level keys: ${Object.keys(parsed).join(', ')}`
+          if (object.days) {
+            console.log(`[DeepDive]   - Days count: ${object.days.length}`)
+            const totalEvents = object.days.reduce(
+              (sum, day) => sum + (day.events?.length || 0),
+              0
             )
-            if (parsed.title) {
-              console.log(`[DeepDive]   - Title: "${parsed.title}"`)
-            }
-            if (parsed.days) {
-              console.log(`[DeepDive]   - Days count: ${parsed.days.length}`)
-            }
-          } catch (e) {
-            console.error('[DeepDive] ⚠️ Invalid JSON in output:', e)
+            console.log(`[DeepDive]   - Total events: ${totalEvents}`)
+          }
+          if (object.target) {
+            console.log(`[DeepDive]   - Target: "${object.target}"`)
           }
         } else {
-          console.log('[DeepDive] ⚠️ No text generated')
+          console.log('[DeepDive] ⚠️ No object generated')
         }
 
         // === Legacy logs (for compatibility) ===
@@ -276,19 +216,21 @@ Please generate a complete travel itinerary with daily events including times, a
             `[Token Usage] Input: ${usage.inputTokens || 0}, Output: ${usage.outputTokens || 0}, Total: ${(usage.inputTokens || 0) + (usage.outputTokens || 0)}`
           )
         }
-        if (text) {
-          console.log(`[Text Summary] Generated ${text.length} characters`)
+        if (object) {
+          console.log(
+            `[Object Summary] Generated object with ${object.days?.length || 0} days`
+          )
         }
       },
     })
 
     console.log(
-      `[Timing] streamText created in ${Date.now() - startTime}ms (note: streaming starts async)`
+      `[Timing] streamObject created in ${Date.now() - startTime}ms (note: streaming starts async)`
     )
 
     // Return streaming response without saving
     // Client will call POST /api/plans to save the plan after receiving it
-    // CRITICAL: Pass headers directly to toTextStreamResponse to prevent Vercel compression
+    // CRITICAL: Pass headers to prevent Vercel compression and enable true streaming
     return result.toTextStreamResponse({
       headers: {
         'Content-Type': 'text/event-stream; charset=utf-8',

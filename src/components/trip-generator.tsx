@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
-import { useCompletion } from '@ai-sdk/react'
+import { useState, useEffect } from 'react'
+import { experimental_useObject as useObject } from '@ai-sdk/react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,7 +23,7 @@ import {
   PERIOD_OPTIONS,
   BUDGET_OPTIONS,
 } from '@/lib/constants/templates'
-import { type Plan } from '@/types/plan'
+import { type Plan, PlanSchema } from '@/types/plan'
 import { ResultView } from '@/components/result-view'
 import { toast } from 'sonner'
 import { debugLog, debugError } from '@/lib/debug'
@@ -35,12 +35,13 @@ export function TripGenerator() {
   const [arrivalTime, setArrivalTime] = useState('10:00')
   const [budget, setBudget] = useState('standard')
 
-  const { completion, complete, isLoading } = useCompletion({
+  const { object, submit, isLoading } = useObject({
     api: '/api/generate',
-    onFinish: (prompt, completion) => {
+    schema: PlanSchema,
+    onFinish: ({ object }) => {
       console.log('[Streaming] ✅ Finished')
-      debugLog('[DEBUG] Stream finished with complete text')
-      debugLog('[DEBUG] Completion length:', completion.length)
+      debugLog('[DEBUG] Stream finished with complete object')
+      debugLog('[DEBUG] Object:', object)
     },
     onError: error => {
       debugError('[DEBUG] Generation error:', error)
@@ -75,55 +76,41 @@ export function TripGenerator() {
     },
   })
 
-  // Parse JSON as it streams in (using useMemo to avoid setState in effect)
-  const parsedPlan = useMemo(() => {
-    if (!completion) {
-      return null
-    }
-
-    try {
-      const parsed = JSON.parse(completion) as Plan
-
-      // Fix empty imageSearchQuery to prevent Unsplash API errors
-      if (parsed.days) {
-        parsed.days.forEach(day => {
-          if (day.events) {
-            day.events.forEach(event => {
-              if (event.type === 'spot' && !event.imageSearchQuery) {
-                // Fallback: use event name or plan title as search query
-                event.imageSearchQuery = event.name || parsed.title || 'Travel'
-                debugLog(
-                  `[Fix] Empty imageSearchQuery replaced with: ${event.imageSearchQuery}`
-                )
+  // Process the streamed object and fix empty imageSearchQuery
+  const processedPlan = object
+    ? ({
+        ...object,
+        days: object.days?.map(day =>
+          day
+            ? {
+                ...day,
+                events: day.events?.map(event =>
+                  event
+                    ? event.type === 'spot' && !event.imageSearchQuery
+                      ? {
+                          ...event,
+                          imageSearchQuery:
+                            event.name || object.title || 'Travel',
+                        }
+                      : event
+                    : event
+                ),
               }
-            })
-          }
-        })
-      }
-
-      console.log('[Streaming] 📊 Parsed update:', {
-        hasTitle: !!parsed.title,
-        daysCount: parsed.days?.length || 0,
-        hasTarget: !!parsed.target,
-      })
-      return parsed
-    } catch {
-      // JSON not complete yet, ignore parse errors during streaming
-      debugLog('[Streaming] Waiting for complete JSON...')
-      return null
-    }
-  }, [completion])
+            : day
+        ),
+      } as Plan)
+    : null
 
   // Save plan when generation completes successfully
   useEffect(() => {
     const savePlan = async () => {
       // Only save when we have a complete plan and loading has finished
       if (
-        parsedPlan &&
+        processedPlan &&
         !isLoading &&
-        parsedPlan.title &&
-        parsedPlan.days &&
-        parsedPlan.target
+        processedPlan.title &&
+        processedPlan.days &&
+        processedPlan.target
       ) {
         debugLog('[DEBUG] Saving plan to database...')
         try {
@@ -132,7 +119,7 @@ export function TripGenerator() {
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(parsedPlan),
+            body: JSON.stringify(processedPlan),
           })
 
           const result = await response.json()
@@ -163,7 +150,7 @@ export function TripGenerator() {
     }
 
     savePlan()
-  }, [parsedPlan, isLoading])
+  }, [processedPlan, isLoading])
 
   const handleGenerate = async () => {
     debugLog('[DEBUG] handleGenerate called')
@@ -181,19 +168,17 @@ export function TripGenerator() {
     }
 
     try {
-      debugLog('[DEBUG] Calling complete()...')
-      await complete('', {
-        body: {
-          destination,
-          template: selectedTemplate,
-          options: {
-            period,
-            arrivalTime,
-            budget,
-          },
+      debugLog('[DEBUG] Calling submit()...')
+      submit({
+        destination,
+        template: selectedTemplate,
+        options: {
+          period,
+          arrivalTime,
+          budget,
         },
       })
-      debugLog('[DEBUG] submit() completed')
+      debugLog('[DEBUG] submit() called')
     } catch (err) {
       debugError('[DEBUG] Submit error:', err)
     }
@@ -201,7 +186,7 @@ export function TripGenerator() {
 
   return (
     <>
-      {!parsedPlan && !isLoading ? (
+      {!processedPlan && !isLoading ? (
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle>旅行プランを構築</CardTitle>
@@ -357,7 +342,7 @@ export function TripGenerator() {
             </Accordion>
           </CardContent>
         </Card>
-      ) : isLoading && !parsedPlan ? (
+      ) : isLoading && !processedPlan ? (
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -387,21 +372,13 @@ export function TripGenerator() {
           <CardContent>
             <div className="space-y-4">
               <p className="text-sm text-gray-600">
-                AIが旅行プランを生成しています。このプロセスには30-60秒かかる場合があります。
+                AIが旅行プランを生成しています。リアルタイムでデータが表示されます。
               </p>
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                <p className="text-xs text-gray-500 mb-2 font-mono">
-                  ストリーミング出力:
-                </p>
-                <pre className="text-xs text-gray-600 dark:text-gray-300 font-mono whitespace-pre-wrap max-h-96 overflow-y-auto">
-                  {completion || '接続中...'}
-                </pre>
-              </div>
             </div>
           </CardContent>
         </Card>
-      ) : parsedPlan ? (
-        <ResultView plan={parsedPlan} />
+      ) : processedPlan ? (
+        <ResultView plan={processedPlan} />
       ) : null}
     </>
   )

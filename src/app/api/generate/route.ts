@@ -126,7 +126,7 @@ You are a "Tech-Travel Architect" specialized in creating travel plans for Japan
 
 # Image Search Query Rule
 * For events with type="spot": Provide a simple English noun or phrase in the \`imageSearchQuery\` field for Unsplash search (e.g., "Tokyo Tower", "Hot Spring", "Kyoto Street")
-* For events with type="food", "work", or "move": Omit the \`imageSearchQuery\` field entirely (do not include it in the JSON)
+* For events with type="food", "work", or "move": Set \`imageSearchQuery\` to **null** (not omit, must be explicitly null)
 * Use specific facility names in English when applicable
 * Avoid verbs or abstract concepts (e.g., NOT "Sightseeing" or "Enjoying")`
 

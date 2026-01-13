@@ -76,7 +76,7 @@ export function TripGenerator() {
     },
   })
 
-  // Process the streamed object and fix empty imageSearchQuery
+  // Process the streamed object and fix empty/null imageSearchQuery for spots
   const processedPlan = object
     ? ({
         ...object,
@@ -86,7 +86,9 @@ export function TripGenerator() {
                 ...day,
                 events: day.events?.map(event =>
                   event
-                    ? event.type === 'spot' && !event.imageSearchQuery
+                    ? event.type === 'spot' &&
+                      (event.imageSearchQuery === null ||
+                        !event.imageSearchQuery)
                       ? {
                           ...event,
                           imageSearchQuery:

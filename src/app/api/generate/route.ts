@@ -108,6 +108,15 @@ export async function POST(request: NextRequest) {
 
     const systemPrompt = `Output ONLY JSON. Do not include "Here is" or any markdown formatting.
 
+# CRITICAL: STRICT JSON SYNTAX REQUIREMENTS
+IMPORTANT: Output valid JSON only with these rules:
+1. All property names MUST be enclosed in DOUBLE QUOTES (not single quotes)
+2. All string values MUST use DOUBLE QUOTES (not single quotes)
+3. NO trailing commas allowed after last property
+4. NO comments allowed in JSON
+5. NO markdown code blocks (\`\`\`json)
+6. Use compact format (minimize whitespace to reduce tokens and latency)
+
 # CRITICAL: JSON OUTPUT ONLY
 You MUST output ONLY valid JSON matching the provided schema. Do NOT output:
 - Any introductory text (e.g., "Here is...", "I'll create...")

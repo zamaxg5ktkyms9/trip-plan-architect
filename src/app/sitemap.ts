@@ -1,6 +1,9 @@
 import { MetadataRoute } from 'next'
 import { planRepository } from '@/lib/repositories/plan-repository'
 
+// Force dynamic rendering because planRepository fetches from Upstash with no-store
+export const dynamic = 'force-dynamic'
+
 /**
  * Generates sitemap.xml dynamically
  * Includes static pages and all dynamic plan pages from Redis

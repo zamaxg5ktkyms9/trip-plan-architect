@@ -110,6 +110,7 @@ export function TripGenerator() {
         processedPlan &&
         !isLoading &&
         processedPlan.title &&
+        processedPlan.intro &&
         processedPlan.days &&
         processedPlan.target
       ) {

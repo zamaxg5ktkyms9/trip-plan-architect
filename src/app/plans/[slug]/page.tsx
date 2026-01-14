@@ -31,7 +31,9 @@ export async function generateMetadata({
     }
   }
 
-  const description = `${plan.days.length} day itinerary for ${plan.title}. Perfect for ${plan.target === 'engineer' ? 'engineers' : 'travelers'}.`
+  const description =
+    plan.intro ||
+    `${plan.days.length} day itinerary for ${plan.title}. Perfect for ${plan.target === 'engineer' ? 'engineers' : 'travelers'}.`
 
   return {
     title: plan.title,

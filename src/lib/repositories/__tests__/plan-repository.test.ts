@@ -37,6 +37,8 @@ describe('PlanRepository', () => {
 
   const mockPlan: Plan = {
     title: 'Test Tokyo Trip',
+    intro:
+      'エンジニアのための東京旅行プラン。効率的な移動と集中できる環境を重視し、技術の街・渋谷を中心に巡ります。Wi-Fi完備のカフェやコワーキングスペースを厳選しました。',
     target: 'engineer',
     days: [
       {

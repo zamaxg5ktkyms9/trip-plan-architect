@@ -51,15 +51,16 @@ export interface EventFields {
 
 /**
  * Convert tuple to object for easier manipulation
+ * Includes safety checks for streaming scenarios where tuple may be incomplete
  */
 export function eventToFields(event: Event): EventFields {
   return {
-    time: event[0],
-    name: event[1],
-    activity: event[2],
-    type: event[3],
-    note: event[4],
-    imageSearchQuery: event[5],
+    time: event[0] ?? '',
+    name: event[1] ?? '',
+    activity: event[2] ?? '',
+    type: event[3] ?? 'spot',
+    note: event[4] ?? '',
+    imageSearchQuery: event[5] ?? null,
   }
 }
 

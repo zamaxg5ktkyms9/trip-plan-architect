@@ -42,7 +42,11 @@ export function ResultView({ plan }: ResultViewProps) {
     const rawEvent = plan.days?.[dayIndex]?.events?.[eventIndex] as
       | Event
       | undefined
-    return rawEvent ? eventToFields(rawEvent) : undefined
+    // Ensure the tuple has minimum required data before converting
+    if (!rawEvent || !Array.isArray(rawEvent) || rawEvent.length < 4) {
+      return undefined
+    }
+    return eventToFields(rawEvent)
   }
 
   const updateEvent = (

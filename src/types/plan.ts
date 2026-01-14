@@ -53,6 +53,11 @@ export type Day = z.infer<typeof DaySchema>
  */
 export const PlanSchema = z.object({
   title: z.string().describe('Title of the travel plan'),
+  intro: z
+    .string()
+    .describe(
+      'Engaging introduction text (150-200 Japanese characters) explaining why this plan is ideal for the target audience, highlighting the trip theme and appeal'
+    ),
   target: TargetTypeSchema.describe('Target audience for this plan'),
   days: z.array(DaySchema).describe('Array of daily itineraries'),
 })

@@ -60,6 +60,9 @@ export function ResultView({ plan }: ResultViewProps) {
 
     let markdown = `# ${plan.title}\n\n`
     markdown += `**対象:** ${plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}\n\n`
+    if (plan.intro) {
+      markdown += `> ${plan.intro}\n\n`
+    }
 
     plan.days?.forEach((day, dayIndex) => {
       if (!day) return
@@ -85,6 +88,9 @@ export function ResultView({ plan }: ResultViewProps) {
 
     let text = `${plan.title}\n\n`
     text += `対象: ${plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}\n\n`
+    if (plan.intro) {
+      text += `${plan.intro}\n\n`
+    }
 
     plan.days?.forEach((day, dayIndex) => {
       if (!day) return
@@ -151,7 +157,7 @@ export function ResultView({ plan }: ResultViewProps) {
       <Card className="shadow-lg">
         <CardHeader>
           <div className="flex items-start justify-between">
-            <div>
+            <div className="flex-1">
               <CardTitle className="text-2xl mb-2">
                 {plan.title || '生成中...'}
               </CardTitle>
@@ -159,6 +165,11 @@ export function ResultView({ plan }: ResultViewProps) {
                 <Badge variant="outline">
                   {plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}
                 </Badge>
+              )}
+              {plan.intro && (
+                <p className="mt-4 text-base text-gray-700 dark:text-gray-300 italic leading-relaxed border-l-4 border-blue-400 pl-4 py-2 bg-blue-50 dark:bg-blue-900/20 rounded-r">
+                  {plan.intro}
+                </p>
               )}
             </div>
             <div className="flex gap-2">

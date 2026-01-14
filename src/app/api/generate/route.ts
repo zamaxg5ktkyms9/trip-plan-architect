@@ -29,6 +29,8 @@ export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
  * @returns Streaming JSON response with the generated plan
  */
 export async function POST(request: NextRequest) {
+  console.log('🚀 [DEBUG] VERSION CHECK: SCHEMA_INLINE_FIX_V2')
+
   try {
     // Validate LLM client configuration
     let llmClient

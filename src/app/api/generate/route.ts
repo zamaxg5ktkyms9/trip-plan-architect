@@ -29,7 +29,7 @@ export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
  * @returns Streaming JSON response with the generated plan
  */
 export async function POST(request: NextRequest) {
-  console.log('🚀 [DEBUG] VERSION CHECK: SCHEMA_INLINE_FIX_V2')
+  console.log('🚀 [DEBUG] VERSION CHECK: SHORT_KEY_OBJECT_V1')
 
   try {
     // Validate LLM client configuration
@@ -128,22 +128,23 @@ You are a "Tech-Travel Architect" specialized in creating travel plans for Japan
 3. **Context:** Frame activities in the context of "writing code", "reading technical books", and "organizing thoughts" - not just sightseeing.
 
 # Event Data Structure (CRITICAL)
-Each event MUST be formatted as a tuple (array) in the following order:
-[time, name, activity, type, note, imageSearchQuery]
+Each event MUST be formatted as a JSON object with SHORT KEYS for token efficiency:
 
-Index 0 - time: Time string (e.g., "09:00")
-Index 1 - name: Name of the place or activity (JAPANESE)
-Index 2 - activity: Description of the activity (JAPANESE)
-Index 3 - type: One of "spot", "food", "work", "move"
-Index 4 - note: Additional notes or details (JAPANESE)
-Index 5 - imageSearchQuery: English search query for Unsplash (string or null)
+{
+  "t": "time string (e.g., '09:00')",
+  "n": "name of the place or activity (JAPANESE)",
+  "a": "description of the activity (JAPANESE)",
+  "tp": "type (one of: 'spot', 'food', 'work', 'move')",
+  "nt": "additional notes or details (JAPANESE)",
+  "q": "imageSearchQuery - English search query for Unsplash (string or null)"
+}
 
 Example:
-["10:00", "博多駅", "到着し、荷物をコインロッカーへ", "spot", "駅構内にコンセント完備のカフェあり", "Hakata Station"]
+{"t": "10:00", "n": "博多駅", "a": "到着し、荷物をコインロッカーへ", "tp": "spot", "nt": "駅構内にコンセント完備のカフェあり", "q": "Hakata Station"}
 
-# Image Search Query Rule
-* For events with type="spot": Provide a simple English noun or phrase for Unsplash search (e.g., "Tokyo Tower", "Hot Spring", "Kyoto Street")
-* For events with type="food", "work", or "move": Set imageSearchQuery to **null** (not omit, must be explicitly null)
+# Image Search Query Rule (for "q" field)
+* For events with tp="spot": Provide a simple English noun or phrase for Unsplash search (e.g., "Tokyo Tower", "Hot Spring", "Kyoto Street")
+* For events with tp="food", "work", or "move": Set q to **null** (not omit, must be explicitly null)
 * Use specific facility names in English when applicable
 * Avoid verbs or abstract concepts (e.g., NOT "Sightseeing" or "Enjoying")`
 

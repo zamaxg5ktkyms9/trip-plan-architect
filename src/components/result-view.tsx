@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Plan, Event, EventFields, eventToFields } from '@/types/plan'
+import { Plan, Event } from '@/types/plan'
 import { Copy, Share2, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import type { DeepPartial } from 'ai'
@@ -27,32 +27,23 @@ const EVENT_ICONS = {
 export function ResultView({ plan }: ResultViewProps) {
   const router = useRouter()
   const [editingEvent, setEditingEvent] = useState<string | null>(null)
-  const [editedEvents, setEditedEvents] = useState<Record<string, EventFields>>(
-    {}
-  )
+  const [editedEvents, setEditedEvents] = useState<Record<string, Event>>({})
 
   const getEvent = (
     dayIndex: number,
     eventIndex: number
-  ): EventFields | undefined => {
+  ): Event | undefined => {
     const eventKey = `${dayIndex}-${eventIndex}`
     if (editedEvents[eventKey]) {
       return editedEvents[eventKey]
     }
-    const rawEvent = plan.days?.[dayIndex]?.events?.[eventIndex] as
-      | Event
-      | undefined
-    // Ensure the tuple has minimum required data before converting
-    if (!rawEvent || !Array.isArray(rawEvent) || rawEvent.length < 4) {
-      return undefined
-    }
-    return eventToFields(rawEvent)
+    return plan.days?.[dayIndex]?.events?.[eventIndex] as Event | undefined
   }
 
   const updateEvent = (
     dayIndex: number,
     eventIndex: number,
-    updates: Partial<EventFields>
+    updates: Partial<Event>
   ) => {
     const eventKey = `${dayIndex}-${eventIndex}`
     const currentEvent = getEvent(dayIndex, eventIndex)
@@ -75,10 +66,10 @@ export function ResultView({ plan }: ResultViewProps) {
       markdown += `## ${day.day || dayIndex + 1}日目\n\n`
       day.events?.forEach((event, eventIndex) => {
         const evt = getEvent(dayIndex, eventIndex)
-        if (!evt || !evt.type || !evt.time || !evt.name) return
-        markdown += `### ${EVENT_ICONS[evt.type]} ${evt.time} - ${evt.name}\n\n`
-        if (evt.activity) {
-          markdown += `${evt.activity}\n\n`
+        if (!evt || !evt.tp || !evt.t || !evt.n) return
+        markdown += `### ${EVENT_ICONS[evt.tp]} ${evt.t} - ${evt.n}\n\n`
+        if (evt.a) {
+          markdown += `${evt.a}\n\n`
         }
       })
     })
@@ -100,10 +91,10 @@ export function ResultView({ plan }: ResultViewProps) {
       text += `【${day.day || dayIndex + 1}日目】\n`
       day.events?.forEach((event, eventIndex) => {
         const evt = getEvent(dayIndex, eventIndex)
-        if (!evt || !evt.time || !evt.name) return
-        text += `${evt.time} ${evt.name}\n`
-        if (evt.activity) {
-          text += `${evt.activity}\n`
+        if (!evt || !evt.t || !evt.n) return
+        text += `${evt.t} ${evt.n}\n`
+        if (evt.a) {
+          text += `${evt.a}\n`
         }
         text += `\n`
       })
@@ -225,7 +216,7 @@ export function ResultView({ plan }: ResultViewProps) {
             <CardContent className="space-y-4">
               {day.events?.map((event, eventIndex) => {
                 const evt = getEvent(dayIndex, eventIndex)
-                if (!evt || !evt.type || !evt.time || !evt.name) return null
+                if (!evt || !evt.tp || !evt.t || !evt.n) return null
                 const eventKey = `${dayIndex}-${eventIndex}`
                 const isEditing = editingEvent === eventKey
 
@@ -235,25 +226,20 @@ export function ResultView({ plan }: ResultViewProps) {
                     className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
                   >
                     {/* Event Image */}
-                    {evt.type === 'spot' && evt.name && (
-                      <SpotImage
-                        query={evt.imageSearchQuery || evt.name}
-                        spotName={evt.name}
-                      />
+                    {evt.tp === 'spot' && evt.n && (
+                      <SpotImage query={evt.q || evt.n} spotName={evt.n} />
                     )}
 
                     {/* Event Content */}
                     <div className="p-4 space-y-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-2xl">
-                          {EVENT_ICONS[evt.type]}
-                        </span>
+                        <span className="text-2xl">{EVENT_ICONS[evt.tp]}</span>
                         {isEditing ? (
                           <Input
-                            value={evt.time}
+                            value={evt.t}
                             onChange={e =>
                               updateEvent(dayIndex, eventIndex, {
-                                time: e.target.value,
+                                t: e.target.value,
                               })
                             }
                             className="w-24"
@@ -264,16 +250,16 @@ export function ResultView({ plan }: ResultViewProps) {
                             className="font-semibold cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
                             onClick={() => setEditingEvent(eventKey)}
                           >
-                            {evt.time}
+                            {evt.t}
                           </span>
                         )}
                         <span className="text-gray-400">-</span>
                         {isEditing ? (
                           <Input
-                            value={evt.name}
+                            value={evt.n}
                             onChange={e =>
                               updateEvent(dayIndex, eventIndex, {
-                                name: e.target.value,
+                                n: e.target.value,
                               })
                             }
                             className="flex-1"
@@ -285,19 +271,19 @@ export function ResultView({ plan }: ResultViewProps) {
                             className="font-semibold cursor-pointer hover:bg-gray-100 px-2 py-1 rounded flex-1"
                             onClick={() => setEditingEvent(eventKey)}
                           >
-                            {evt.name}
+                            {evt.n}
                           </span>
                         )}
                       </div>
 
-                      {evt.activity && (
+                      {evt.a && (
                         <div className="ml-10">
                           {isEditing ? (
                             <Textarea
-                              value={evt.activity}
+                              value={evt.a}
                               onChange={e =>
                                 updateEvent(dayIndex, eventIndex, {
-                                  activity: e.target.value,
+                                  a: e.target.value,
                                 })
                               }
                               className="min-h-[80px]"
@@ -308,7 +294,7 @@ export function ResultView({ plan }: ResultViewProps) {
                               className="text-gray-600 cursor-pointer hover:bg-gray-50 p-2 rounded"
                               onClick={() => setEditingEvent(eventKey)}
                             >
-                              {evt.activity}
+                              {evt.a}
                             </p>
                           )}
                         </div>

@@ -86,29 +86,13 @@ export function TripGenerator() {
                 ...day,
                 events: day.events?.map(event => {
                   if (!event) return event
-                  // Event is now a tuple: [time, name, activity, type, note, imageSearchQuery]
-                  // Use safe destructuring with defaults for streaming scenarios
-                  const [
-                    time = '',
-                    name = '',
-                    activity = '',
-                    type = 'spot',
-                    note = '',
-                    imageSearchQuery = null,
-                  ] = event
+                  // Event is now an object with short keys: {t, n, a, tp, nt, q}
                   // Fix empty imageSearchQuery for spots
-                  if (
-                    type === 'spot' &&
-                    (imageSearchQuery === null || !imageSearchQuery)
-                  ) {
-                    return [
-                      time,
-                      name,
-                      activity,
-                      type,
-                      note,
-                      name || object.title || 'Travel',
-                    ]
+                  if (event.tp === 'spot' && (event.q === null || !event.q)) {
+                    return {
+                      ...event,
+                      q: event.n || object.title || 'Travel',
+                    }
                   }
                   return event
                 }),

@@ -166,7 +166,14 @@ Example:
 * For events with tp="spot": Provide a simple English noun or phrase for Unsplash search (e.g., "Tokyo Tower", "Hot Spring", "Kyoto Street")
 * For events with tp="food", "work", or "move": Set q to **null** (not omit, must be explicitly null)
 * Use specific facility names in English when applicable
-* Avoid verbs or abstract concepts (e.g., NOT "Sightseeing" or "Enjoying")`
+* Avoid verbs or abstract concepts (e.g., NOT "Sightseeing" or "Enjoying")
+
+# CRITICAL: Hallucination Prevention Rule
+**When suggesting activities (places, shops, restaurants), ONLY use specific proper nouns if you are CERTAIN they actually exist in that city.**
+**If you are not confident about the existence of a specific establishment, use generic descriptions instead.**
+* Good: "地元の人気カフェ" (local popular cafe), "老舗の喫茶店" (established coffee shop), "長崎市内で楽しめる佐世保バーガー店" (Sasebo burger shop in Nagasaki city)
+* Bad: Placing "カフェ・ド・ランブル" (a Tokyo-based cafe) in Nagasaki
+**This is CRITICAL for content credibility. Never hallucinate shop names or locations.**`
 
     const userPrompt = `Create a travel plan for ${input.destination} using the ${input.template} template.
 ${input.options ? `Additional options: ${JSON.stringify(input.options)}` : ''}

@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { TripGenerator } from '@/components/trip-generator'
 import { RecentPlans } from '@/components/recent-plans'
-import { FooterAd } from '@/components/footer-ad'
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
 
@@ -33,8 +32,6 @@ export default function Home() {
             </Button>
           </Link>
         </div>
-
-        <FooterAd />
       </div>
     </div>
   )

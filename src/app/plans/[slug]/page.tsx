@@ -2,7 +2,6 @@ import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { PlanRepository } from '@/lib/repositories/plan-repository'
 import { ResultView } from '@/components/result-view'
-import { FooterAd } from '@/components/footer-ad'
 
 interface PageProps {
   params: Promise<{
@@ -75,7 +74,6 @@ export default async function PlanPage({ params }: PageProps) {
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       <div className="container mx-auto px-4 py-8">
         <ResultView plan={plan} />
-        <FooterAd />
       </div>
     </div>
   )

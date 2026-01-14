@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Plan, Event } from '@/types/plan'
+import { Plan, Event, EventFields, eventToFields } from '@/types/plan'
 import { Copy, Share2, Info } from 'lucide-react'
 import { toast } from 'sonner'
 import type { DeepPartial } from 'ai'
@@ -27,23 +27,28 @@ const EVENT_ICONS = {
 export function ResultView({ plan }: ResultViewProps) {
   const router = useRouter()
   const [editingEvent, setEditingEvent] = useState<string | null>(null)
-  const [editedEvents, setEditedEvents] = useState<Record<string, Event>>({})
+  const [editedEvents, setEditedEvents] = useState<Record<string, EventFields>>(
+    {}
+  )
 
   const getEvent = (
     dayIndex: number,
     eventIndex: number
-  ): Event | undefined => {
+  ): EventFields | undefined => {
     const eventKey = `${dayIndex}-${eventIndex}`
     if (editedEvents[eventKey]) {
       return editedEvents[eventKey]
     }
-    return plan.days?.[dayIndex]?.events?.[eventIndex] as Event | undefined
+    const rawEvent = plan.days?.[dayIndex]?.events?.[eventIndex] as
+      | Event
+      | undefined
+    return rawEvent ? eventToFields(rawEvent) : undefined
   }
 
   const updateEvent = (
     dayIndex: number,
     eventIndex: number,
-    updates: Partial<Event>
+    updates: Partial<EventFields>
   ) => {
     const eventKey = `${dayIndex}-${eventIndex}`
     const currentEvent = getEvent(dayIndex, eventIndex)
@@ -65,7 +70,7 @@ export function ResultView({ plan }: ResultViewProps) {
       if (!day) return
       markdown += `## ${day.day || dayIndex + 1}日目\n\n`
       day.events?.forEach((event, eventIndex) => {
-        const evt = getEvent(dayIndex, eventIndex) || event
+        const evt = getEvent(dayIndex, eventIndex)
         if (!evt || !evt.type || !evt.time || !evt.name) return
         markdown += `### ${EVENT_ICONS[evt.type]} ${evt.time} - ${evt.name}\n\n`
         if (evt.activity) {
@@ -90,7 +95,7 @@ export function ResultView({ plan }: ResultViewProps) {
       if (!day) return
       text += `【${day.day || dayIndex + 1}日目】\n`
       day.events?.forEach((event, eventIndex) => {
-        const evt = getEvent(dayIndex, eventIndex) || event
+        const evt = getEvent(dayIndex, eventIndex)
         if (!evt || !evt.time || !evt.name) return
         text += `${evt.time} ${evt.name}\n`
         if (evt.activity) {
@@ -215,7 +220,7 @@ export function ResultView({ plan }: ResultViewProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               {day.events?.map((event, eventIndex) => {
-                const evt = getEvent(dayIndex, eventIndex) || event
+                const evt = getEvent(dayIndex, eventIndex)
                 if (!evt || !evt.type || !evt.time || !evt.name) return null
                 const eventKey = `${dayIndex}-${eventIndex}`
                 const isEditing = editingEvent === eventKey

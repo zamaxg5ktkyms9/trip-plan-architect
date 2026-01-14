@@ -84,19 +84,27 @@ export function TripGenerator() {
           day
             ? {
                 ...day,
-                events: day.events?.map(event =>
-                  event
-                    ? event.type === 'spot' &&
-                      (event.imageSearchQuery === null ||
-                        !event.imageSearchQuery)
-                      ? {
-                          ...event,
-                          imageSearchQuery:
-                            event.name || object.title || 'Travel',
-                        }
-                      : event
-                    : event
-                ),
+                events: day.events?.map(event => {
+                  if (!event) return event
+                  // Event is now a tuple: [time, name, activity, type, note, imageSearchQuery]
+                  const [time, name, activity, type, note, imageSearchQuery] =
+                    event
+                  // Fix empty imageSearchQuery for spots
+                  if (
+                    type === 'spot' &&
+                    (imageSearchQuery === null || !imageSearchQuery)
+                  ) {
+                    return [
+                      time,
+                      name,
+                      activity,
+                      type,
+                      note,
+                      name || object.title || 'Travel',
+                    ]
+                  }
+                  return event
+                }),
               }
             : day
         ),

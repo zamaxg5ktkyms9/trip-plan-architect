@@ -18,14 +18,14 @@ describe('POST /api/plans', () => {
       {
         day: 1,
         events: [
-          {
-            time: '09:00',
-            name: 'Shibuya Crossing',
-            activity: 'Visit Shibuya Crossing',
-            type: 'spot',
-            note: 'Famous scramble crossing',
-            imageSearchQuery: 'Shibuya Crossing Tokyo',
-          },
+          [
+            '09:00',
+            'Shibuya Crossing',
+            'Visit Shibuya Crossing',
+            'spot',
+            'Famous scramble crossing',
+            'Shibuya Crossing Tokyo',
+          ],
         ],
       },
     ],

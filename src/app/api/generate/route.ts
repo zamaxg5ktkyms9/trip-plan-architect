@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server'
 import { streamObject } from 'ai'
-import { GenerateInputSchema, PlanSchema } from '@/types/plan'
+import { z } from 'zod'
+import { GenerateInputSchema, EventSchema } from '@/types/plan'
 import {
   checkRateLimit,
   getClientIP,
@@ -160,7 +161,18 @@ Please generate a complete travel itinerary with daily events including times, a
       model: llmClient.getModel(),
       system: systemPrompt,
       prompt: userPrompt,
-      schema: PlanSchema,
+      schema: z.object({
+        title: z.string().describe('Title of the travel plan'),
+        target: z.enum(['engineer', 'general']).describe('Target audience'),
+        days: z
+          .array(
+            z.object({
+              day: z.number(),
+              events: z.array(EventSchema),
+            })
+          )
+          .describe('Daily itinerary'),
+      }),
       onFinish: ({ object, usage }) => {
         const duration = Date.now() - startTime
 

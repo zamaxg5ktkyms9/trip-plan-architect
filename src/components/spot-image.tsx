@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useDebounce } from 'use-debounce'
 import Image from 'next/image'
 import { getPlaceholderGradient } from '@/lib/unsplash'
 import { debugLog } from '@/lib/debug'
@@ -19,11 +20,23 @@ export function SpotImage({ query, spotName }: SpotImageProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(false)
 
+  // Debounce the query to prevent multiple API calls during streaming
+  // Wait 1000ms (1 second) after the query stops changing before making the API request
+  const [debouncedQuery] = useDebounce(query, 1000)
+
   useEffect(() => {
+    // Skip if debounced query is empty
+    if (!debouncedQuery) {
+      return
+    }
+
     const fetchImage = async () => {
+      setIsLoading(true)
+      setError(false)
+
       try {
         const response = await fetch(
-          `/api/unsplash?query=${encodeURIComponent(query)}`
+          `/api/unsplash?query=${encodeURIComponent(debouncedQuery)}`
         )
 
         if (!response.ok) {
@@ -45,7 +58,7 @@ export function SpotImage({ query, spotName }: SpotImageProps) {
     }
 
     fetchImage()
-  }, [query])
+  }, [debouncedQuery])
 
   if (isLoading) {
     return (

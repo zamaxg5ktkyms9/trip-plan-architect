@@ -1,12 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { experimental_useObject as useObject } from '@ai-sdk/react'
-import {
-  type Plan,
-  type ScouterResponse,
-  ScouterResponseSchema,
-} from '@/types/plan'
+import { type ScouterResponse, ScouterResponseSchema } from '@/types/plan'
 import { scouterResponseToPlan } from '@/lib/adapters/scouter-to-plan'
 import { MissionBriefing } from '@/components/mission-briefing'
 import { toast } from 'sonner'
@@ -36,10 +32,48 @@ export function TripGenerator() {
   const { object, submit, isLoading } = useObject({
     api: '/api/generate',
     schema: ScouterResponseSchema,
-    onFinish: ({ object }) => {
+    onFinish: async ({ object }) => {
       console.log('[Streaming] ✅ Finished')
       debugLog('[DEBUG] Stream finished with complete scouter response')
       debugLog('[DEBUG] Object:', object)
+
+      // Convert complete ScouterResponse to Plan and save
+      if (object) {
+        try {
+          const plan = scouterResponseToPlan(object as ScouterResponse)
+          debugLog('[DEBUG] Saving plan to database...')
+
+          const response = await fetch('/api/plans', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(plan),
+          })
+
+          const result = await response.json()
+
+          if (result.success) {
+            debugLog('[DEBUG] Plan saved successfully:', result.slug)
+            toast.success('MISSION ARCHIVED', {
+              description: 'Data stored in database.',
+              duration: 3000,
+            })
+          } else {
+            debugError('[DEBUG] Failed to save plan:', result.error)
+            toast.error('ARCHIVE FAILED', {
+              description: 'Mission generated but not saved.',
+              duration: 5000,
+            })
+          }
+        } catch (error) {
+          debugError('[DEBUG] Error saving plan:', error)
+          toast.error('ARCHIVE ERROR', {
+            description: 'Mission generated but not saved.',
+            duration: 5000,
+          })
+        }
+      }
     },
     onError: error => {
       debugError('[DEBUG] Generation error:', error)
@@ -72,61 +106,6 @@ export function TripGenerator() {
       }
     },
   })
-
-  // Convert ScouterResponse to Plan for storage (adapter for Phase 1)
-  const processedPlan: Plan | null = object
-    ? scouterResponseToPlan(object as ScouterResponse)
-    : null
-
-  // Save plan when generation completes successfully
-  useEffect(() => {
-    const savePlan = async () => {
-      // Only save when we have a complete plan and loading has finished
-      if (
-        processedPlan &&
-        !isLoading &&
-        processedPlan.title &&
-        processedPlan.intro &&
-        processedPlan.days &&
-        processedPlan.target
-      ) {
-        debugLog('[DEBUG] Saving plan to database...')
-        try {
-          const response = await fetch('/api/plans', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(processedPlan),
-          })
-
-          const result = await response.json()
-
-          if (result.success) {
-            debugLog('[DEBUG] Plan saved successfully:', result.slug)
-            toast.success('MISSION ARCHIVED', {
-              description: 'Data stored in database.',
-              duration: 3000,
-            })
-          } else {
-            debugError('[DEBUG] Failed to save plan:', result.error)
-            toast.error('ARCHIVE FAILED', {
-              description: 'Mission generated but not saved.',
-              duration: 5000,
-            })
-          }
-        } catch (error) {
-          debugError('[DEBUG] Error saving plan:', error)
-          toast.error('ARCHIVE ERROR', {
-            description: 'Mission generated but not saved.',
-            duration: 5000,
-          })
-        }
-      }
-    }
-
-    savePlan()
-  }, [processedPlan, isLoading])
 
   const handleGenerate = async () => {
     debugLog('[DEBUG] handleGenerate called')

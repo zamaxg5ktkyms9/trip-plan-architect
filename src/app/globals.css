@@ -123,3 +123,101 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ============================================
+   SF Terminal Theme (Phase 2)
+   ============================================ */
+@layer components {
+  .terminal-theme {
+    @apply bg-black text-green-400 font-mono;
+  }
+
+  .terminal-border {
+    @apply border border-green-500/50 rounded-none;
+  }
+
+  .terminal-button {
+    @apply border border-green-500 bg-transparent text-green-400 px-4 py-2 rounded-none font-mono uppercase text-sm tracking-wider hover:bg-green-500/10 active:bg-green-500/20 transition-colors;
+  }
+
+  .terminal-button-amber {
+    @apply border border-amber-500 bg-transparent text-amber-400 px-4 py-2 rounded-none font-mono uppercase text-sm tracking-wider hover:bg-amber-500/10 active:bg-amber-500/20 transition-colors;
+  }
+
+  .terminal-input {
+    @apply bg-black border border-green-500/50 text-green-400 font-mono px-3 py-2 rounded-none focus:border-green-500 focus:ring-1 focus:ring-green-500 placeholder:text-green-700;
+  }
+
+  .terminal-select {
+    @apply bg-black border border-green-500/50 text-green-400 font-mono px-3 py-2 rounded-none focus:border-green-500 focus:ring-1 focus:ring-green-500;
+  }
+
+  .terminal-panel {
+    @apply bg-black border border-green-500/30 p-4 rounded-none;
+  }
+
+  .terminal-text-primary {
+    @apply text-green-400;
+  }
+
+  .terminal-text-secondary {
+    @apply text-green-600;
+  }
+
+  .terminal-text-amber {
+    @apply text-amber-400;
+  }
+
+  .terminal-divider {
+    @apply border-t border-green-500/30 my-4;
+  }
+
+  /* Mobile-optimized sizing */
+  .terminal-heading {
+    @apply text-lg sm:text-xl font-mono uppercase tracking-wide text-green-400;
+  }
+
+  .terminal-subheading {
+    @apply text-base sm:text-lg font-mono uppercase tracking-wide text-green-500;
+  }
+
+  .terminal-body {
+    @apply text-sm sm:text-base font-mono leading-relaxed text-green-400/90;
+  }
+
+  /* Scanline effect (subtle) */
+  .terminal-scanlines {
+    @apply relative;
+  }
+
+  .terminal-scanlines::before {
+    content: '';
+    @apply absolute inset-0 pointer-events-none;
+    background: linear-gradient(
+      to bottom,
+      transparent 50%,
+      rgba(0, 255, 0, 0.02) 50%
+    );
+    background-size: 100% 4px;
+    z-index: 1;
+  }
+
+  /* HUD corner brackets */
+  .hud-corners {
+    @apply relative;
+  }
+
+  .hud-corners::before,
+  .hud-corners::after {
+    content: '';
+    @apply absolute w-4 h-4 border-green-500;
+  }
+
+  .hud-corners::before {
+    @apply top-0 left-0 border-t-2 border-l-2;
+  }
+
+  .hud-corners::after {
+    @apply bottom-0 right-0 border-b-2 border-r-2;
+  }
+}

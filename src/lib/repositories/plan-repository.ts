@@ -3,6 +3,20 @@ import type { Plan } from '@/types/plan'
 import { debugLog } from '@/lib/debug'
 
 /**
+ * Redis key patterns for V2 (namespace-isolated from V1)
+ * V1 uses: plan:slugs, plan:meta:{id}, plan:{id}
+ * V2 uses: v2:mission:slugs, v2:mission:meta:{id}, v2:mission:data:{id}
+ */
+export const REDIS_KEYS_V2 = {
+  /** Sorted set of all mission IDs (score = timestamp) */
+  SLUGS: 'v2:mission:slugs',
+  /** Metadata key pattern (replace {id} with actual ID) */
+  META: (id: string) => `v2:mission:meta:${id}`,
+  /** Full mission data key pattern (replace {id} with actual ID) */
+  DATA: (id: string) => `v2:mission:data:${id}`,
+} as const
+
+/**
  * Plan metadata for listing pages
  */
 export interface PlanMetadata {
@@ -64,7 +78,7 @@ export class PlanRepository implements IPlanRepository {
   }
 
   /**
-   * Saves a plan to Redis
+   * Saves a plan to Redis (V2 namespace)
    * @param plan - The plan to save
    * @returns The slug of the saved plan
    */
@@ -88,17 +102,17 @@ export class PlanRepository implements IPlanRepository {
       createdAt: timestamp,
     }
 
-    // Use pipeline to save everything atomically
+    // Use pipeline to save everything atomically (V2 namespace)
     const pipeline = this.redis.pipeline()
 
-    // Save full plan data (for detail page)
-    pipeline.set(`plan:${fullSlug}`, JSON.stringify(plan))
+    // Save full plan data (for detail page) - V2 key pattern
+    pipeline.set(REDIS_KEYS_V2.DATA(fullSlug), JSON.stringify(plan))
 
-    // Save lightweight metadata (for listing pages)
-    pipeline.set(`plan:meta:${fullSlug}`, JSON.stringify(metadata))
+    // Save lightweight metadata (for listing pages) - V2 key pattern
+    pipeline.set(REDIS_KEYS_V2.META(fullSlug), JSON.stringify(metadata))
 
-    // Add to sorted set for chronological ordering
-    pipeline.zadd('plan:slugs', { score: timestamp, member: fullSlug })
+    // Add to sorted set for chronological ordering - V2 key pattern
+    pipeline.zadd(REDIS_KEYS_V2.SLUGS, { score: timestamp, member: fullSlug })
 
     await pipeline.exec()
 
@@ -106,7 +120,7 @@ export class PlanRepository implements IPlanRepository {
   }
 
   /**
-   * Retrieves a plan by its slug
+   * Retrieves a plan by its slug (V2 namespace only)
    * @param slug - The slug of the plan
    * @returns The plan if found, null otherwise
    */
@@ -116,7 +130,8 @@ export class PlanRepository implements IPlanRepository {
     }
 
     try {
-      const data = await this.redis.get(`plan:${slug}`)
+      // V2 key pattern - will NOT read V1 data
+      const data = await this.redis.get(REDIS_KEYS_V2.DATA(slug))
       if (!data) return null
 
       // Upstash Redis SDK may auto-parse JSON, so check the type
@@ -139,7 +154,7 @@ export class PlanRepository implements IPlanRepository {
   }
 
   /**
-   * Lists all available plan slugs
+   * Lists all available plan slugs (V2 namespace only)
    * @returns Array of plan slugs (newest first)
    */
   async list(): Promise<string[]> {
@@ -148,10 +163,15 @@ export class PlanRepository implements IPlanRepository {
     }
 
     try {
-      // Get all slugs from sorted set, newest first
-      const slugs = await this.redis.zrange<string[]>('plan:slugs', 0, -1, {
-        rev: true,
-      })
+      // Get all slugs from V2 sorted set, newest first
+      const slugs = await this.redis.zrange<string[]>(
+        REDIS_KEYS_V2.SLUGS,
+        0,
+        -1,
+        {
+          rev: true,
+        }
+      )
       return slugs
     } catch (error) {
       debugLog('Error listing plans:', error)
@@ -160,7 +180,7 @@ export class PlanRepository implements IPlanRepository {
   }
 
   /**
-   * Gets recent plan slugs
+   * Gets recent plan slugs (V2 namespace only)
    * @param limit - Maximum number of slugs to return (default: 10)
    * @returns Array of recent plan slugs (newest first)
    */
@@ -170,9 +190,9 @@ export class PlanRepository implements IPlanRepository {
     }
 
     try {
-      // Get most recent slugs from sorted set
+      // Get most recent slugs from V2 sorted set
       const slugs = await this.redis.zrange<string[]>(
-        'plan:slugs',
+        REDIS_KEYS_V2.SLUGS,
         0,
         limit - 1,
         {
@@ -187,7 +207,7 @@ export class PlanRepository implements IPlanRepository {
   }
 
   /**
-   * Gets recent plans with metadata
+   * Gets recent plans with metadata (V2 namespace only)
    * @param limit - Maximum number of plans to return (default: 20, max: 100)
    * @param offset - Number of plans to skip (default: 0)
    * @returns Array of plan metadata (newest first)
@@ -211,9 +231,9 @@ export class PlanRepository implements IPlanRepository {
       const end = offset + actualLimit - 1
 
       console.time('[PERF] getRecentPlans:zrange')
-      // Get recent slugs (DB-level pagination)
+      // Get recent slugs from V2 namespace (DB-level pagination)
       const slugs = await this.redis.zrange<string[]>(
-        'plan:slugs',
+        REDIS_KEYS_V2.SLUGS,
         start,
         end,
         {
@@ -228,10 +248,10 @@ export class PlanRepository implements IPlanRepository {
       }
 
       console.time('[PERF] getRecentPlans:pipeline')
-      // Use pipeline to fetch lightweight metadata (not full plans)
+      // Use pipeline to fetch lightweight metadata (not full plans) - V2 keys
       const pipeline = this.redis.pipeline()
       slugs.forEach(slug => {
-        pipeline.get(`plan:meta:${slug}`)
+        pipeline.get(REDIS_KEYS_V2.META(slug))
       })
 
       const metadataResults = await pipeline.exec<(PlanMetadata | null)[]>()
@@ -264,12 +284,12 @@ export class PlanRepository implements IPlanRepository {
       }
       console.timeEnd('[PERF] getRecentPlans:parse')
 
-      // Fallback: fetch full plans for legacy data without metadata
+      // Fallback: fetch full plans for legacy data without metadata (V2 keys)
       if (slugsNeedingFallback.length > 0) {
         console.time('[PERF] getRecentPlans:fallback')
         const fallbackPipeline = this.redis.pipeline()
         slugsNeedingFallback.forEach(slug => {
-          fallbackPipeline.get(`plan:${slug}`)
+          fallbackPipeline.get(REDIS_KEYS_V2.DATA(slug))
         })
 
         const planResults = await fallbackPipeline.exec<(Plan | null)[]>()
@@ -310,7 +330,7 @@ export class PlanRepository implements IPlanRepository {
   }
 
   /**
-   * Gets the total number of plans stored
+   * Gets the total number of plans stored (V2 namespace only)
    * @returns Total count of plans
    */
   async getTotalCount(): Promise<number> {
@@ -319,7 +339,7 @@ export class PlanRepository implements IPlanRepository {
     }
 
     try {
-      const count = await this.redis.zcard('plan:slugs')
+      const count = await this.redis.zcard(REDIS_KEYS_V2.SLUGS)
       return count
     } catch (error) {
       debugLog('Error getting total plan count:', error)

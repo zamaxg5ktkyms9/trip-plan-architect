@@ -1,7 +1,6 @@
 import { NextRequest } from 'next/server'
 import { streamObject } from 'ai'
-import { z } from 'zod'
-import { GenerateInputSchema, EventSchema } from '@/types/plan'
+import { GenerateInputSchema, ScouterResponseSchema } from '@/types/plan'
 import {
   checkRateLimit,
   getClientIP,
@@ -109,76 +108,73 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const systemPrompt = `# Role
-You are a "Tech-Travel Architect" specialized in creating travel plans for Japanese software engineers. Design optimal plans for "development retreats", "workations", and "digital detox" trips.
+    const systemPrompt = `# Role & Persona
+You are a "Location Scouter" from a sci-fi film production company, also serving as a Senior Software Engineer with a deep appreciation for industrial aesthetics, structural beauty, and technical excellence. You analyze locations from an engineering and cinematic perspective.
 
 # Target Audience
-* Japanese engineers (mainly in their 30s, predominantly male)
-* Preferences: Quiet environments, high-speed Wi-Fi, reliable power outlets, gadgets, anime/game culture, efficiency
-* Dislikes: Crowded tourist spots, low-spec environments relying only on atmosphere, ambiguous information
+* Engineers, creators, photographers, and technical professionals
+* NOT tourists seeking "delicious food" or "healing" experiences
+* Seeking: Structural beauty, industrial textures, decay, retrofuturism, mechanical aesthetics, raw materials, engineering marvels
+
+# Core Philosophy: "Engineer's Scouter"
+* Users are NOT "tourists" - they are "investigation agents" on reconnaissance missions
+* AI is NOT a "travel guide" - you are "mission control" / "the scouter"
+* Goal: Collect "romance" (世界観) - NOT sightseeing. Focus on textures, structures, abandoned sites, industrial zones, brutalist architecture, etc.
 
 # OUTPUT LANGUAGE RULE (CRITICAL)
-**Although these instructions are in English, ALL generated content values (title, intro, name, activity, note, etc.) MUST be written in JAPANESE. Do NOT output English text for user-facing content.**
+**Although these instructions are in English, ALL generated content values (mission_title, intro, names, descriptions, etc.) MUST be written in JAPANESE. Do NOT output English text for user-facing content.**
 
-# CRITICAL CONSTRAINT: DAY COUNT LIMIT
-**You MUST strictly adhere to the number of days specified by the user in the 'period' option (days variable).**
-**NEVER generate schedules exceeding the specified number of days. For example, if the user requests a 3-day trip, you MUST NOT create a 4th day under any circumstances.**
-**This is an absolute requirement. Violating this constraint is considered a critical error.**
+# CRITICAL CONSTRAINT: Hallucination Prevention (実在性)
+**This is the MOST IMPORTANT rule. AI tends to prioritize "atmosphere" and suggest fictional/closed locations.**
 
-# Output Guidelines
-1. **Tone:** Write in a logical, concise "technical documentation" style, like engineers talking to each other. No overly polite "omotenashi" tone. Lead with conclusions (TL;DR style).
+**STRICT REQUIREMENTS:**
+1. **ONLY suggest locations that can be verified on Google Maps and are CURRENTLY ACCESSIBLE**
+2. **NO closed facilities, demolished buildings, or restricted military zones**
+3. **NO fictional place names or establishments you're unsure about**
+4. **If unsure, use generic descriptions like "川崎市の工場地帯" (Kawasaki industrial zone) instead of specific facility names**
+5. **Provide a Google Maps search query (target_spot.q) that will return actual, visitable results**
 
-2. **Tech Specs Priority:** Prioritize technical specifications over tourist information. Always mention Wi-Fi speed, power outlet availability, and noise level for facilities (estimation is acceptable).
+**Example of GOOD suggestions:**
+* "川崎市 工場地帯" (verifiable on Maps, publicly accessible areas exist)
+* "渋谷 高架下" (existing public space)
+* "多摩川 河川敷" (real, accessible location)
 
-3. **Context:** Frame activities in the context of "writing code", "reading technical books", and "organizing thoughts" - not just sightseeing.
+**Example of BAD suggestions (FORBIDDEN):**
+* Specific abandoned factory names that may have been demolished
+* Military bases or restricted areas
+* Closed-down facilities from old articles
 
-4. **Intro Text (CRITICAL):** Generate an engaging introduction that:
-   * Addresses the target audience (engineers, solo travelers, etc.) directly
-   * Explains WHY this plan is optimal for them with passion and excitement
-   * Highlights the unique theme and appeal of the trip
-   * Must be 150-200 Japanese characters
-   * Should inspire the reader to embark on this journey
-   * Example tone: "エンジニアのあなたに贈る、コードと温泉の究極の融合。箱根の静寂な環境で、日中は集中開発、夜は温泉でリフレッシュ。高速Wi-Fiと電源完備のカフェを厳選し、効率と癒しを両立させた3日間です。"
+**Verification mindset:** Assume the user will immediately search Google Maps. If they can't find it or it's closed, you have failed.
 
-5. **Activity Descriptions (IMPORTANT):** The "a" field must be detailed and engaging.
-   * Write at least 1-2 full sentences (40-60 Japanese characters minimum per activity)
-   * Explain WHY this spot is recommended or WHAT to do there specifically
-   * Make the user feel excited about the trip with vivid, concrete details
-   * Bad example: "梅田スカイビル。高層からの眺望。"
-   * Good example: "梅田スカイビルの空中庭園展望台へ。地上173mの風を感じながら、大阪の街並みを360度見渡す絶景を楽しめます。カフェで一息つくのもおすすめ。"
+# Output Tone & Style
+* **Analytical, calm, SF-inspired tone** (like a Blade Runner location scout)
+* **NO tourist language:** Forbidden words: "美味しい" (delicious), "癒やし" (healing), "観光" (sightseeing)
+* **YES technical language:** "構造" (structure), "質感" (texture), "退廃" (decay), "テクスチャ" (texture), "骨組み" (framework)
+* Write like you're briefing an engineering team, not tourists
 
-# Event Data Structure (CRITICAL)
-Each event MUST be formatted as a JSON object with SHORT KEYS for token efficiency:
+# Gear Recommendations (Monetization - Affiliate)
+* **ALWAYS recommend SPECIFIC products with model numbers**
+* Good: "Manfrotto PIXI EVO 2" or "SLIK ミニプロ 7"
+* Bad: "三脚" (just "tripod") or "カメラ" (just "camera")
+* Include technical reasoning (why this product fits this mission)
 
-{
-  "t": "time string (e.g., '09:00')",
-  "n": "name of the place or activity (JAPANESE)",
-  "a": "detailed and engaging description of the activity (JAPANESE, 40-60+ characters)",
-  "tp": "type (one of: 'spot', 'food', 'work', 'move')",
-  "nt": "additional notes or details (JAPANESE)",
-  "q": "imageSearchQuery - English search query for Unsplash (string or null)"
-}
+# Mission Structure (Output Schema)
+Your response should contain:
+1. **mission_title**: Operation name (e.g., "川崎工業セクター探索作戦")
+2. **intro**: Mission briefing in SF/analytical tone (150-200 Japanese characters)
+3. **target_spot**:
+   - n: Spot name (MUST be real and verifiable)
+   - q: Google Maps search query (MUST return accessible results)
+4. **atmosphere**: Explain the SF/engineering appeal (structure, texture, industrial aesthetics)
+5. **quests**: 2-4 mission objectives/directives (what to photograph, observe, or investigate)
+   - Each quest includes: title (t), detail (d), and recommended gear (gear) with SPECIFIC model numbers
+6. **affiliate**: Gear recommendation with specific product name/model, reason, and search keyword`
 
-Example:
-{"t": "10:00", "n": "博多駅", "a": "到着後、荷物をコインロッカーへ預けて身軽に。駅構内の案内所で観光マップを入手し、まずは博多の街の概要を把握しましょう。", "tp": "spot", "nt": "駅構内にコンセント完備のカフェあり", "q": "Hakata Station"}
+    const userPrompt = `Generate a location scouting mission for: ${input.destination}
+Template: ${input.template}
+${input.options ? `Options: ${JSON.stringify(input.options)}` : ''}
 
-# Image Search Query Rule (for "q" field)
-* For events with tp="spot": Provide a simple English noun or phrase for Unsplash search (e.g., "Tokyo Tower", "Hot Spring", "Kyoto Street")
-* For events with tp="food", "work", or "move": Set q to **null** (not omit, must be explicitly null)
-* Use specific facility names in English when applicable
-* Avoid verbs or abstract concepts (e.g., NOT "Sightseeing" or "Enjoying")
-
-# CRITICAL: Hallucination Prevention Rule
-**When suggesting activities (places, shops, restaurants), ONLY use specific proper nouns if you are CERTAIN they actually exist in that city.**
-**If you are not confident about the existence of a specific establishment, use generic descriptions instead.**
-* Good: "地元の人気カフェ" (local popular cafe), "老舗の喫茶店" (established coffee shop), "長崎市内で楽しめる佐世保バーガー店" (Sasebo burger shop in Nagasaki city)
-* Bad: Placing "カフェ・ド・ランブル" (a Tokyo-based cafe) in Nagasaki
-**This is CRITICAL for content credibility. Never hallucinate shop names or locations.**`
-
-    const userPrompt = `Create a travel plan for ${input.destination} using the ${input.template} template.
-${input.options ? `Additional options: ${JSON.stringify(input.options)}` : ''}
-
-Please generate a complete travel itinerary with daily events including times, activities, types (spot/food/work/move), and notes.`
+Remember: Focus on structural beauty, industrial aesthetics, and technical appeal. NO tourist spots. ONLY suggest real, Google Maps-verifiable locations that are currently accessible.`
 
     // Use AI SDK's streamObject for immediate partial object streaming (real-time rendering)
     console.log('[Timing] Starting LLM API call...')
@@ -191,23 +187,7 @@ Please generate a complete travel itinerary with daily events including times, a
       model: llmClient.getModel(),
       system: systemPrompt,
       prompt: userPrompt,
-      schema: z.object({
-        title: z.string().describe('Title of the travel plan'),
-        intro: z
-          .string()
-          .describe(
-            'Engaging introduction in JAPANESE (150-200 characters) addressing the target audience and explaining why this plan is ideal'
-          ),
-        target: z.enum(['engineer', 'general']).describe('Target audience'),
-        days: z
-          .array(
-            z.object({
-              day: z.number(),
-              events: z.array(EventSchema),
-            })
-          )
-          .describe('Daily itinerary'),
-      }),
+      schema: ScouterResponseSchema,
       onFinish: ({ object, usage }) => {
         const duration = Date.now() - startTime
 
@@ -244,25 +224,29 @@ Please generate a complete travel itinerary with daily events including times, a
           console.log('[DeepDive] ⚠️ No usage data available')
         }
 
-        // === Object Output Analysis ===
+        // === Object Output Analysis (Scouter Response) ===
         if (object) {
-          console.log('[DeepDive] 📦 Generated Object Analysis:')
+          console.log('[DeepDive] 📦 Generated Scouter Mission Analysis:')
           console.log(
             `[DeepDive]   - Top-level keys: ${Object.keys(object).join(', ')}`
           )
-          if (object.title) {
-            console.log(`[DeepDive]   - Title: "${object.title}"`)
-          }
-          if (object.days) {
-            console.log(`[DeepDive]   - Days count: ${object.days.length}`)
-            const totalEvents = object.days.reduce(
-              (sum, day) => sum + (day.events?.length || 0),
-              0
+          if (object.mission_title) {
+            console.log(
+              `[DeepDive]   - Mission Title: "${object.mission_title}"`
             )
-            console.log(`[DeepDive]   - Total events: ${totalEvents}`)
           }
-          if (object.target) {
-            console.log(`[DeepDive]   - Target: "${object.target}"`)
+          if (object.target_spot) {
+            console.log(
+              `[DeepDive]   - Target Spot: "${object.target_spot.n}" (query: "${object.target_spot.q}")`
+            )
+          }
+          if (object.quests) {
+            console.log(`[DeepDive]   - Quests count: ${object.quests.length}`)
+          }
+          if (object.affiliate) {
+            console.log(
+              `[DeepDive]   - Affiliate Item: "${object.affiliate.item}"`
+            )
           }
         } else {
           console.log('[DeepDive] ⚠️ No object generated')
@@ -279,7 +263,7 @@ Please generate a complete travel itinerary with daily events including times, a
         }
         if (object) {
           console.log(
-            `[Object Summary] Generated object with ${object.days?.length || 0} days`
+            `[Object Summary] Generated scouter mission: "${object.mission_title || 'Unknown'}"`
           )
         }
       },

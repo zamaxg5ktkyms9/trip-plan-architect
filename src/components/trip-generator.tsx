@@ -23,7 +23,12 @@ import {
   PERIOD_OPTIONS,
   BUDGET_OPTIONS,
 } from '@/lib/constants/templates'
-import { type Plan, PlanSchema } from '@/types/plan'
+import {
+  type Plan,
+  type ScouterResponse,
+  ScouterResponseSchema,
+} from '@/types/plan'
+import { scouterResponseToPlan } from '@/lib/adapters/scouter-to-plan'
 import { ResultView } from '@/components/result-view'
 import { toast } from 'sonner'
 import { debugLog, debugError } from '@/lib/debug'
@@ -37,10 +42,10 @@ export function TripGenerator() {
 
   const { object, submit, isLoading } = useObject({
     api: '/api/generate',
-    schema: PlanSchema,
+    schema: ScouterResponseSchema,
     onFinish: ({ object }) => {
       console.log('[Streaming] ✅ Finished')
-      debugLog('[DEBUG] Stream finished with complete object')
+      debugLog('[DEBUG] Stream finished with complete scouter response')
       debugLog('[DEBUG] Object:', object)
     },
     onError: error => {
@@ -76,30 +81,9 @@ export function TripGenerator() {
     },
   })
 
-  // Process the streamed object and fix empty/null imageSearchQuery for spots
-  const processedPlan = object
-    ? ({
-        ...object,
-        days: object.days?.map(day =>
-          day
-            ? {
-                ...day,
-                events: day.events?.map(event => {
-                  if (!event) return event
-                  // Event is now an object with short keys: {t, n, a, tp, nt, q}
-                  // Fix empty imageSearchQuery for spots
-                  if (event.tp === 'spot' && (event.q === null || !event.q)) {
-                    return {
-                      ...event,
-                      q: event.n || object.title || 'Travel',
-                    }
-                  }
-                  return event
-                }),
-              }
-            : day
-        ),
-      } as Plan)
+  // Convert ScouterResponse to Plan for display (adapter for Phase 1)
+  const processedPlan: Plan | null = object
+    ? scouterResponseToPlan(object as ScouterResponse)
     : null
 
   // Save plan when generation completes successfully

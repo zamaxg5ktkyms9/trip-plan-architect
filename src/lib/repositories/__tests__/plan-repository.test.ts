@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { PlanRepository } from '../plan-repository'
+import { PlanRepository, REDIS_KEYS_V2 } from '../plan-repository'
 import type { Plan } from '@/types/plan'
 
 // Mock Redis with pipeline support
@@ -91,7 +91,6 @@ describe('PlanRepository', () => {
       const slug = await repository.save(mockPlan)
 
       expect(slug).toBeTruthy()
-      // Slug format changed to plan-{timestamp} to support Japanese titles
       expect(slug).toMatch(/^plan-\d+$/)
 
       // Verify pipeline was used
@@ -122,7 +121,7 @@ describe('PlanRepository', () => {
       const retrievedPlan = await repository.get(slug)
 
       expect(retrievedPlan).toEqual(mockPlan)
-      expect(mockRedis.get).toHaveBeenCalledWith(`plan:${slug}`)
+      expect(mockRedis.get).toHaveBeenCalledWith(REDIS_KEYS_V2.DATA(slug))
     })
 
     it('should return null for non-existent plan', async () => {
@@ -157,9 +156,14 @@ describe('PlanRepository', () => {
       const plans = await repository.list()
 
       expect(plans).toEqual(slugs)
-      expect(mockRedis.zrange).toHaveBeenCalledWith('plan:slugs', 0, -1, {
-        rev: true,
-      })
+      expect(mockRedis.zrange).toHaveBeenCalledWith(
+        REDIS_KEYS_V2.SLUGS,
+        0,
+        -1,
+        {
+          rev: true,
+        }
+      )
     })
   })
 
@@ -171,7 +175,7 @@ describe('PlanRepository', () => {
       const recent = await repository.getRecent()
 
       expect(recent).toEqual(slugs)
-      expect(mockRedis.zrange).toHaveBeenCalledWith('plan:slugs', 0, 9, {
+      expect(mockRedis.zrange).toHaveBeenCalledWith(REDIS_KEYS_V2.SLUGS, 0, 9, {
         rev: true,
       })
     })
@@ -183,7 +187,7 @@ describe('PlanRepository', () => {
       const recent = await repository.getRecent(5)
 
       expect(recent).toEqual(slugs)
-      expect(mockRedis.zrange).toHaveBeenCalledWith('plan:slugs', 0, 4, {
+      expect(mockRedis.zrange).toHaveBeenCalledWith(REDIS_KEYS_V2.SLUGS, 0, 4, {
         rev: true,
       })
     })

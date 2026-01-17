@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { POST } from '../route'
 import { planRepository } from '@/lib/repositories/plan-repository'
-import type { Plan } from '@/types/plan'
+import type { ScouterResponse } from '@/types/plan'
 
 // Mock the plan repository
 vi.mock('@/lib/repositories/plan-repository', () => ({
@@ -11,34 +11,41 @@ vi.mock('@/lib/repositories/plan-repository', () => ({
 }))
 
 describe('POST /api/plans', () => {
-  const mockPlan: Plan = {
-    title: 'Test Tokyo Trip',
-    intro:
-      'エンジニアのための東京旅行プラン。効率的な移動と集中できる環境を重視し、技術の街・渋谷を中心に巡ります。Wi-Fi完備のカフェやコワーキングスペースを厳選しました。',
-    target: 'engineer',
-    days: [
+  // V2 format: ScouterResponse (quests requires minimum 2 items)
+  const mockScouterResponse: ScouterResponse = {
+    mission_title: 'Test Tokyo Mission',
+    intro: 'エンジニアのための東京調査ミッション。',
+    target_spot: {
+      n: '渋谷スクランブル交差点',
+      q: 'Shibuya Crossing Tokyo',
+    },
+    atmosphere:
+      '世界最大級のスクランブル交差点。1回の青信号で最大3000人が交差する。',
+    quests: [
       {
-        day: 1,
-        events: [
-          {
-            t: '09:00',
-            n: 'Shibuya Crossing',
-            a: 'Visit Shibuya Crossing',
-            tp: 'spot',
-            nt: 'Famous scramble crossing',
-            q: 'Shibuya Crossing Tokyo',
-          },
-        ],
+        t: '人流観察',
+        d: '青信号1回あたりの横断者数をカウントせよ',
+        gear: 'カウンター、ストップウォッチ',
+      },
+      {
+        t: '信号パターン分析',
+        d: '青信号の間隔と継続時間を記録せよ',
+        gear: 'ストップウォッチ、ノート',
       },
     ],
+    affiliate: {
+      item: 'ポータブルチェア',
+      q: 'ポータブルチェア 軽量',
+      reason: '長時間の観察に必要',
+    },
   }
 
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('should save a valid plan and return success with slug', async () => {
-    const mockSlug = 'test-tokyo-trip-1234567890'
+  it('should save a valid ScouterResponse and return success with slug', async () => {
+    const mockSlug = 'plan-1234567890'
     vi.mocked(planRepository.save).mockResolvedValue(mockSlug)
 
     const request = new Request('http://localhost:3000/api/plans', {
@@ -46,7 +53,7 @@ describe('POST /api/plans', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(mockPlan),
+      body: JSON.stringify(mockScouterResponse),
     })
 
     const response = await POST(request as never)
@@ -55,13 +62,13 @@ describe('POST /api/plans', () => {
     expect(response.status).toBe(200)
     expect(data.success).toBe(true)
     expect(data.slug).toBe(mockSlug)
-    expect(planRepository.save).toHaveBeenCalledWith(mockPlan)
+    expect(planRepository.save).toHaveBeenCalledWith(mockScouterResponse)
   })
 
-  it('should return 500 if plan validation fails', async () => {
-    const invalidPlan = {
-      title: 'Invalid Plan',
-      // Missing required fields
+  it('should return 500 if ScouterResponse validation fails', async () => {
+    const invalidResponse = {
+      mission_title: 'Invalid Mission',
+      // Missing required fields: target_spot, atmosphere, quests
     }
 
     const request = new Request('http://localhost:3000/api/plans', {
@@ -69,7 +76,7 @@ describe('POST /api/plans', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(invalidPlan),
+      body: JSON.stringify(invalidResponse),
     })
 
     const response = await POST(request as never)
@@ -77,7 +84,7 @@ describe('POST /api/plans', () => {
 
     expect(response.status).toBe(500)
     expect(data.success).toBe(false)
-    expect(data.error).toBe('Failed to save plan')
+    expect(data.error).toBe('Failed to save ScouterResponse')
     expect(planRepository.save).not.toHaveBeenCalled()
   })
 
@@ -91,7 +98,7 @@ describe('POST /api/plans', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(mockPlan),
+      body: JSON.stringify(mockScouterResponse),
     })
 
     const response = await POST(request as never)
@@ -99,7 +106,7 @@ describe('POST /api/plans', () => {
 
     expect(response.status).toBe(500)
     expect(data.success).toBe(false)
-    expect(data.error).toBe('Failed to save plan')
+    expect(data.error).toBe('Failed to save ScouterResponse')
     expect(data.details).toBe('Redis connection failed')
   })
 
@@ -117,7 +124,7 @@ describe('POST /api/plans', () => {
 
     expect(response.status).toBe(500)
     expect(data.success).toBe(false)
-    expect(data.error).toBe('Failed to save plan')
+    expect(data.error).toBe('Failed to save ScouterResponse')
     expect(planRepository.save).not.toHaveBeenCalled()
   })
 })

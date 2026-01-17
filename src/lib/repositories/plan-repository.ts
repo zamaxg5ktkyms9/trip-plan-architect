@@ -1,5 +1,5 @@
 import { Redis } from '@upstash/redis'
-import type { Plan } from '@/types/plan'
+import type { Plan, ScouterResponse } from '@/types/plan'
 import { debugLog } from '@/lib/debug'
 
 /**
@@ -30,10 +30,11 @@ export interface PlanMetadata {
 
 /**
  * Interface for Plan repository operations
+ * Now supports both V1 (Plan) and V2 (ScouterResponse) data
  */
 export interface IPlanRepository {
-  save(plan: Plan): Promise<string>
-  get(slug: string): Promise<Plan | null>
+  save(data: Plan | ScouterResponse): Promise<string>
+  get(slug: string): Promise<Plan | ScouterResponse | null>
   list(): Promise<string[]>
   getRecent(limit?: number): Promise<string[]>
   getRecentPlans(limit?: number, offset?: number): Promise<PlanMetadata[]>
@@ -78,35 +79,60 @@ export class PlanRepository implements IPlanRepository {
   }
 
   /**
-   * Saves a plan to Redis (V2 namespace)
-   * @param plan - The plan to save
-   * @returns The slug of the saved plan
+   * Checks if data is ScouterResponse (V2) format
+   * @private
    */
-  async save(plan: Plan): Promise<string> {
+  private isScouterResponse(
+    data: Plan | ScouterResponse
+  ): data is ScouterResponse {
+    return 'mission_title' in data && 'target_spot' in data && 'quests' in data
+  }
+
+  /**
+   * Saves a plan or ScouterResponse to Redis (V2 namespace)
+   * @param data - The Plan (V1) or ScouterResponse (V2) to save
+   * @returns The slug of the saved data
+   */
+  async save(data: Plan | ScouterResponse): Promise<string> {
     const fullSlug = this.generateSlug()
     const timestamp = Date.now()
 
     if (!this.redis) {
       // For local development without Redis, just return the slug
-      debugLog('Redis not configured, plan not saved:', fullSlug)
+      debugLog('Redis not configured, data not saved:', fullSlug)
       return fullSlug
     }
 
     // Prepare metadata for fast listing (only essential fields)
-    const metadata: PlanMetadata = {
-      id: fullSlug,
-      title: plan.title,
-      destination: plan.title.split(' ')[0] || 'Travel',
-      days: plan.days.length,
-      target: plan.target,
-      createdAt: timestamp,
+    let metadata: PlanMetadata
+
+    if (this.isScouterResponse(data)) {
+      // V2: ScouterResponse format
+      metadata = {
+        id: fullSlug,
+        title: data.mission_title,
+        destination: data.target_spot.n,
+        days: 1, // V2 has no multi-day concept, using 1 as default
+        target: 'engineer', // V2 is always engineer-focused
+        createdAt: timestamp,
+      }
+    } else {
+      // V1: Plan format (legacy)
+      metadata = {
+        id: fullSlug,
+        title: data.title,
+        destination: data.title.split(' ')[0] || 'Travel',
+        days: data.days.length,
+        target: data.target,
+        createdAt: timestamp,
+      }
     }
 
     // Use pipeline to save everything atomically (V2 namespace)
     const pipeline = this.redis.pipeline()
 
-    // Save full plan data (for detail page) - V2 key pattern
-    pipeline.set(REDIS_KEYS_V2.DATA(fullSlug), JSON.stringify(plan))
+    // Save full data (for detail page) - V2 key pattern
+    pipeline.set(REDIS_KEYS_V2.DATA(fullSlug), JSON.stringify(data))
 
     // Save lightweight metadata (for listing pages) - V2 key pattern
     pipeline.set(REDIS_KEYS_V2.META(fullSlug), JSON.stringify(metadata))
@@ -120,11 +146,11 @@ export class PlanRepository implements IPlanRepository {
   }
 
   /**
-   * Retrieves a plan by its slug (V2 namespace only)
+   * Retrieves a plan or ScouterResponse by its slug (V2 namespace only)
    * @param slug - The slug of the plan
-   * @returns The plan if found, null otherwise
+   * @returns The plan/ScouterResponse if found, null otherwise
    */
-  async get(slug: string): Promise<Plan | null> {
+  async get(slug: string): Promise<Plan | ScouterResponse | null> {
     if (!this.redis) {
       return null
     }
@@ -137,12 +163,12 @@ export class PlanRepository implements IPlanRepository {
       // Upstash Redis SDK may auto-parse JSON, so check the type
       if (typeof data === 'object' && data !== null) {
         // Already parsed as object
-        return data as Plan
+        return data as Plan | ScouterResponse
       }
 
       if (typeof data === 'string') {
         // Still a string, parse it
-        return JSON.parse(data) as Plan
+        return JSON.parse(data) as Plan | ScouterResponse
       }
 
       debugLog('Unexpected data type from Redis:', typeof data)

@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { experimental_useObject as useObject } from '@ai-sdk/react'
 import { type ScouterResponse, ScouterResponseSchema } from '@/types/plan'
-import { scouterResponseToPlan } from '@/lib/adapters/scouter-to-plan'
 import { MissionBriefing } from '@/components/mission-briefing'
 import { toast } from 'sonner'
 import { debugLog, debugError } from '@/lib/debug'
@@ -37,37 +36,36 @@ export function TripGenerator() {
       debugLog('[DEBUG] Stream finished with complete scouter response')
       debugLog('[DEBUG] Object:', object)
 
-      // Convert complete ScouterResponse to Plan and save
+      // Save raw ScouterResponse (V2) to database
       if (object) {
         try {
-          const plan = scouterResponseToPlan(object as ScouterResponse)
-          debugLog('[DEBUG] Saving plan to database...')
+          debugLog('[DEBUG] Saving V2 ScouterResponse to database...')
 
           const response = await fetch('/api/plans', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(plan),
+            body: JSON.stringify(object),
           })
 
           const result = await response.json()
 
           if (result.success) {
-            debugLog('[DEBUG] Plan saved successfully:', result.slug)
+            debugLog('[DEBUG] ScouterResponse saved successfully:', result.slug)
             toast.success('MISSION ARCHIVED', {
               description: 'Data stored in database.',
               duration: 3000,
             })
           } else {
-            debugError('[DEBUG] Failed to save plan:', result.error)
+            debugError('[DEBUG] Failed to save ScouterResponse:', result.error)
             toast.error('ARCHIVE FAILED', {
               description: 'Mission generated but not saved.',
               duration: 5000,
             })
           }
         } catch (error) {
-          debugError('[DEBUG] Error saving plan:', error)
+          debugError('[DEBUG] Error saving ScouterResponse:', error)
           toast.error('ARCHIVE ERROR', {
             description: 'Mission generated but not saved.',
             duration: 5000,

@@ -2,43 +2,36 @@
 
 import { useState, useEffect } from 'react'
 import { experimental_useObject as useObject } from '@ai-sdk/react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
-import {
-  TEMPLATES,
-  PERIOD_OPTIONS,
-  BUDGET_OPTIONS,
-} from '@/lib/constants/templates'
 import {
   type Plan,
   type ScouterResponse,
   ScouterResponseSchema,
 } from '@/types/plan'
 import { scouterResponseToPlan } from '@/lib/adapters/scouter-to-plan'
-import { ResultView } from '@/components/result-view'
+import { MissionBriefing } from '@/components/mission-briefing'
 import { toast } from 'sonner'
 import { debugLog, debugError } from '@/lib/debug'
+import { Terminal, MapPin } from 'lucide-react'
+
+// Mission types for the scouter
+const MISSION_TYPES = [
+  { id: 'photo', name: 'PHOTO', icon: '📷' },
+  { id: 'sound', name: 'SOUND', icon: '🎵' },
+  { id: 'video', name: 'VIDEO', icon: '🎬' },
+  { id: 'chill', name: 'CHILL', icon: '🌿' },
+]
+
+const WORLD_LINES = [
+  { id: 'cyberpunk', name: 'CYBERPUNK', desc: 'Neon + Steel' },
+  { id: 'post-apocalypse', name: 'POST-APOCALYPSE', desc: 'Decay + Ruins' },
+  { id: 'retro-future', name: 'RETRO-FUTURE', desc: 'Vintage Tech' },
+  { id: 'nature', name: 'NATURE', desc: 'Raw Elements' },
+]
 
 export function TripGenerator() {
   const [destination, setDestination] = useState('')
-  const [selectedTemplate, setSelectedTemplate] = useState('leisure')
-  const [period, setPeriod] = useState('3')
-  const [arrivalTime, setArrivalTime] = useState('10:00')
-  const [budget, setBudget] = useState('standard')
+  const [selectedWorldLine, setSelectedWorldLine] = useState('cyberpunk')
+  const [selectedMissionType, setSelectedMissionType] = useState('photo')
 
   const { object, submit, isLoading } = useObject({
     api: '/api/generate',
@@ -53,27 +46,26 @@ export function TripGenerator() {
       debugError('[DEBUG] Error type:', error.constructor?.name)
       debugError('[DEBUG] Error message:', error.message)
 
-      const errorMessage = error.message || '予期しないエラーが発生しました'
+      const errorMessage = error.message || 'SYSTEM ERROR'
 
       if (
         errorMessage.includes('Rate limit exceeded') ||
         errorMessage.includes('429')
       ) {
-        toast.error('アクセス集中により混み合っています', {
-          description: 'しばらく待ってから再度お試しください',
+        toast.error('RATE LIMIT EXCEEDED', {
+          description: 'Too many requests. Try again later.',
           duration: 5000,
         })
       } else if (
         errorMessage.includes('timeout') ||
         errorMessage.includes('504')
       ) {
-        toast.error('リクエストタイムアウト', {
-          description:
-            '処理に時間がかかりすぎました。より短い日程で再試行してください。',
+        toast.error('REQUEST TIMEOUT', {
+          description: 'Process took too long. Please retry.',
           duration: 5000,
         })
       } else {
-        toast.error('生成に失敗しました', {
+        toast.error('GENERATION FAILED', {
           description: errorMessage,
           duration: 5000,
         })
@@ -81,7 +73,7 @@ export function TripGenerator() {
     },
   })
 
-  // Convert ScouterResponse to Plan for display (adapter for Phase 1)
+  // Convert ScouterResponse to Plan for storage (adapter for Phase 1)
   const processedPlan: Plan | null = object
     ? scouterResponseToPlan(object as ScouterResponse)
     : null
@@ -112,23 +104,21 @@ export function TripGenerator() {
 
           if (result.success) {
             debugLog('[DEBUG] Plan saved successfully:', result.slug)
-            toast.success('プランをデプロイしました', {
-              description: '旅行プランが正常に保存されました！',
+            toast.success('MISSION ARCHIVED', {
+              description: 'Data stored in database.',
               duration: 3000,
             })
           } else {
             debugError('[DEBUG] Failed to save plan:', result.error)
-            toast.error('デプロイに失敗', {
-              description:
-                'プランは生成されましたが、履歴への保存に失敗しました。',
+            toast.error('ARCHIVE FAILED', {
+              description: 'Mission generated but not saved.',
               duration: 5000,
             })
           }
         } catch (error) {
           debugError('[DEBUG] Error saving plan:', error)
-          toast.error('デプロイエラー', {
-            description:
-              'プランは生成されましたが、履歴への保存に失敗しました。',
+          toast.error('ARCHIVE ERROR', {
+            description: 'Mission generated but not saved.',
             duration: 5000,
           })
         }
@@ -142,13 +132,13 @@ export function TripGenerator() {
     debugLog('[DEBUG] handleGenerate called')
     debugLog('[DEBUG] Input data:', {
       destination,
-      template: selectedTemplate,
-      options: { period, arrivalTime, budget },
+      worldLine: selectedWorldLine,
+      missionType: selectedMissionType,
     })
 
     if (!destination.trim()) {
-      toast.error('目的地が必要です', {
-        description: 'プランを生成するには目的地を入力してください。',
+      toast.error('TARGET SECTOR REQUIRED', {
+        description: 'Enter a destination to compile mission.',
       })
       return
     }
@@ -157,11 +147,10 @@ export function TripGenerator() {
       debugLog('[DEBUG] Calling submit()...')
       submit({
         destination,
-        template: selectedTemplate,
+        template: selectedMissionType, // Use mission type as template
         options: {
-          period,
-          arrivalTime,
-          budget,
+          worldLine: selectedWorldLine,
+          missionType: selectedMissionType,
         },
       })
       debugLog('[DEBUG] submit() called')
@@ -172,199 +161,150 @@ export function TripGenerator() {
 
   return (
     <>
-      {!processedPlan && !isLoading ? (
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle>旅行プランを構築</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">目的地</label>
-              <Input
-                type="text"
-                placeholder="例: 箱根、沖縄、京都..."
-                value={destination}
-                onChange={e => setDestination(e.target.value)}
-                className="text-lg"
-              />
+      {!object && !isLoading ? (
+        <div className="terminal-theme min-h-screen p-4 sm:p-6 terminal-scanlines">
+          <div className="max-w-3xl mx-auto space-y-6">
+            {/* Header */}
+            <div className="terminal-panel hud-corners">
+              <div className="flex items-center gap-3 mb-2">
+                <Terminal className="w-6 h-6 text-green-500" />
+                <h1 className="terminal-heading">MISSION CONFIG</h1>
+              </div>
+              <div className="text-xs terminal-text-secondary">
+                [ ENGINEER&apos;S SCOUTER v2.0 - BRIEFING SYSTEM ]
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">旅行スタイル</label>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                {TEMPLATES.map(template => (
-                  <Button
-                    key={template.id}
-                    variant={
-                      selectedTemplate === template.id ? 'default' : 'outline'
-                    }
-                    className={`h-auto py-4 flex flex-col items-center gap-2 ${
-                      selectedTemplate === template.id
-                        ? 'ring-2 ring-primary'
-                        : ''
-                    }`}
-                    onClick={() => setSelectedTemplate(template.id)}
+            {/* Target Sector Input */}
+            <div className="terminal-panel">
+              <label className="text-xs terminal-text-secondary mb-2 block uppercase tracking-wider">
+                <MapPin className="inline w-3 h-3 mr-1" />
+                TARGET SECTOR
+              </label>
+              <input
+                type="text"
+                placeholder="e.g., 川崎, 池袋, 横浜..."
+                value={destination}
+                onChange={e => setDestination(e.target.value)}
+                className="terminal-input w-full text-base sm:text-lg"
+                autoFocus
+              />
+              <div className="text-xs terminal-text-secondary mt-2">
+                * Enter location name in Japanese or English
+              </div>
+            </div>
+
+            {/* World Line Selection */}
+            <div className="terminal-panel">
+              <label className="text-xs terminal-text-secondary mb-3 block uppercase tracking-wider">
+                WORLD LINE
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                {WORLD_LINES.map(world => (
+                  <button
+                    key={world.id}
+                    onClick={() => setSelectedWorldLine(world.id)}
+                    className={`
+                      border-2 p-3 rounded-none transition-all text-left
+                      ${
+                        selectedWorldLine === world.id
+                          ? 'border-green-500 bg-green-500/10 text-green-400'
+                          : 'border-green-500/30 text-green-600 hover:border-green-500/50 hover:bg-green-500/5'
+                      }
+                    `}
                   >
-                    <span className="text-2xl">{template.icon}</span>
-                    <span className="text-xs">{template.name}</span>
-                  </Button>
+                    <div className="font-mono text-sm font-bold uppercase">
+                      {world.name}
+                    </div>
+                    <div className="text-xs terminal-text-secondary mt-1">
+                      {world.desc}
+                    </div>
+                  </button>
                 ))}
               </div>
             </div>
 
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="details">
-                <AccordionTrigger>詳細オプション</AccordionTrigger>
-                <AccordionContent className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">期間</label>
-                    <Select value={period} onValueChange={setPeriod}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PERIOD_OPTIONS.map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">到着時刻</label>
-                    <Input
-                      type="time"
-                      value={arrivalTime}
-                      onChange={e => setArrivalTime(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">予算</label>
-                    <Select value={budget} onValueChange={setBudget}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {BUDGET_OPTIONS.map(option => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-
-            <Button
-              className="w-full h-12 text-lg"
-              onClick={handleGenerate}
-              disabled={!destination.trim() || isLoading}
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <svg
-                    className="animate-spin h-5 w-5"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
+            {/* Mission Type Selection */}
+            <div className="terminal-panel">
+              <label className="text-xs terminal-text-secondary mb-3 block uppercase tracking-wider">
+                MISSION TYPE
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {MISSION_TYPES.map(mission => (
+                  <button
+                    key={mission.id}
+                    onClick={() => setSelectedMissionType(mission.id)}
+                    className={`
+                      border-2 p-4 rounded-none transition-all
+                      ${
+                        selectedMissionType === mission.id
+                          ? 'border-amber-500 bg-amber-500/10 text-amber-400'
+                          : 'border-green-500/30 text-green-600 hover:border-green-500/50 hover:bg-green-500/5'
+                      }
+                    `}
                   >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Compiling Itinerary...
-                </span>
-              ) : (
-                'プランをビルドする 🔨'
-              )}
-            </Button>
-
-            <Accordion type="single" collapsible className="w-full mt-6">
-              <AccordionItem value="disclaimer">
-                <AccordionTrigger className="text-sm">
-                  利用上の注意 (Beta)
-                </AccordionTrigger>
-                <AccordionContent className="space-y-2 text-sm text-gray-600">
-                  <p>
-                    ⚠️ これは<strong>ベータ版</strong>
-                    です。AIが生成する情報は不正確または古い可能性があります。
-                  </p>
-                  <p>
-                    📊 <strong>利用制限:</strong>{' '}
-                    API制限により、1日あたり約100プランまで生成可能です。
-                  </p>
-                  <p>
-                    ✈️ <strong>重要:</strong>{' '}
-                    旅行前に必ず営業時間・料金・予約の可否などを確認してください。
-                  </p>
-                  <p className="text-xs text-gray-500 mt-4">
-                    画像提供:{' '}
-                    <a
-                      href="https://unsplash.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline hover:text-gray-700"
-                    >
-                      Unsplash
-                    </a>
-                  </p>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-          </CardContent>
-        </Card>
-      ) : isLoading && !processedPlan ? (
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <svg
-                className="animate-spin h-5 w-5 text-blue-600"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                />
-              </svg>
-              プラン生成中...
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                AIが旅行プランを生成しています。リアルタイムでデータが表示されます。
-              </p>
+                    <div className="text-2xl mb-1">{mission.icon}</div>
+                    <div className="font-mono text-xs uppercase font-bold">
+                      {mission.name}
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      ) : processedPlan ? (
-        <ResultView plan={processedPlan} />
+
+            {/* Execute Button */}
+            <div className="terminal-panel">
+              <button
+                onClick={handleGenerate}
+                disabled={!destination.trim() || isLoading}
+                className={`
+                  w-full py-4 font-mono uppercase tracking-widest text-lg font-bold
+                  border-2 rounded-none transition-all
+                  ${
+                    !destination.trim() || isLoading
+                      ? 'border-green-900 text-green-900 cursor-not-allowed bg-black'
+                      : 'border-green-500 text-green-400 hover:bg-green-500/20 active:bg-green-500/30'
+                  }
+                `}
+              >
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-3">
+                    <div className="w-2 h-2 bg-green-500 animate-pulse rounded-full" />
+                    <div className="w-2 h-2 bg-green-500 animate-pulse rounded-full animation-delay-150" />
+                    <div className="w-2 h-2 bg-green-500 animate-pulse rounded-full animation-delay-300" />
+                    <span className="ml-2">COMPILING...</span>
+                  </span>
+                ) : (
+                  '[ EXECUTE MISSION ]'
+                )}
+              </button>
+            </div>
+
+            {/* Disclaimer */}
+            <div className="terminal-panel">
+              <details className="terminal-text-secondary text-xs">
+                <summary className="cursor-pointer hover:text-green-500 uppercase tracking-wide mb-2">
+                  ⚠ System Notice (Beta)
+                </summary>
+                <div className="space-y-2 pt-2 border-t border-green-500/20 terminal-body text-xs leading-relaxed">
+                  <p>
+                    • This is a BETA system. AI-generated data may be inaccurate
+                    or outdated.
+                  </p>
+                  <p>
+                    • RATE LIMIT: ~100 missions per day due to API constraints.
+                  </p>
+                  <p>
+                    • IMPORTANT: Verify all location details (hours, fees,
+                    reservations) before deployment.
+                  </p>
+                </div>
+              </details>
+            </div>
+          </div>
+        </div>
+      ) : object ? (
+        <MissionBriefing mission={object as ScouterResponse} />
       ) : null}
     </>
   )

@@ -71,7 +71,7 @@ export default async function PlanPage({ params }: PageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="terminal-theme min-h-screen p-4 sm:p-6 terminal-scanlines">
       <div className="container mx-auto px-4 py-8">
         <ResultView plan={plan} />
       </div>

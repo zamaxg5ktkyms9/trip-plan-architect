@@ -3,8 +3,7 @@ import {
   planRepository,
   type PlanMetadata,
 } from '@/lib/repositories/plan-repository'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Calendar, MapPin, Target } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 
 interface RecentPlansProps {
   limit?: number
@@ -15,20 +14,23 @@ export async function RecentPlans({ limit = 20 }: RecentPlansProps) {
 
   return (
     <section className="mt-16">
-      <h2 className="text-3xl font-bold text-center mb-8">
-        最近生成されたプラン
-      </h2>
+      <div className="terminal-panel mb-4">
+        <h2 className="terminal-heading text-center">[ MISSION LOGS ]</h2>
+        <div className="text-center text-xs terminal-text-secondary mt-2">
+          RECENT OPERATIONS DATABASE
+        </div>
+      </div>
       {plans.length === 0 ? (
-        <div className="text-center text-muted-foreground py-12">
-          <p className="text-lg mb-2">まだプランが生成されていません</p>
-          <p className="text-sm">
-            上のフォームを使って最初の旅行プランを作成してみましょう！
+        <div className="terminal-panel text-center py-12">
+          <p className="terminal-body mb-2">NO MISSION DATA AVAILABLE</p>
+          <p className="text-xs terminal-text-secondary">
+            INITIATE FIRST OPERATION ABOVE
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-2">
           {plans.map(plan => (
-            <PlanCard key={plan.id} plan={plan} />
+            <MissionLogEntry key={plan.id} plan={plan} />
           ))}
         </div>
       )}
@@ -36,35 +38,44 @@ export async function RecentPlans({ limit = 20 }: RecentPlansProps) {
   )
 }
 
-function PlanCard({ plan }: { plan: PlanMetadata }) {
+function MissionLogEntry({ plan }: { plan: PlanMetadata }) {
+  const formatDate = (timestamp: number) => {
+    const d = new Date(timestamp)
+    return d.toISOString().slice(0, 19).replace('T', '_').replace(/[:-]/g, '')
+  }
+
+  const logId = formatDate(plan.createdAt).slice(0, 13)
+
   return (
     <Link href={`/plans/${plan.id}`}>
-      <Card className="h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer">
-        <CardHeader>
-          <CardTitle className="text-lg line-clamp-2">{plan.title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              <span>{plan.destination}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              <span>{plan.days}日間</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Target className="h-4 w-4" />
-              <span>
-                {plan.target === 'engineer' ? 'エンジニア向け' : '一般向け'}
-              </span>
-            </div>
-            <div className="text-xs text-muted-foreground/60 mt-2">
-              {new Date(plan.createdAt).toLocaleDateString()}
-            </div>
+      <div className="terminal-panel hover:bg-green-500/10 transition-colors cursor-pointer group min-h-[44px] flex items-center">
+        <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2">
+            <span className="terminal-text-secondary text-xs shrink-0">
+              &gt; [LOG_{logId}]
+            </span>
+            <span className="terminal-text-amber text-xs shrink-0">
+              {plan.target === 'engineer' ? '[ENG]' : '[GEN]'}
+            </span>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex-1 min-w-0">
+            <span className="terminal-body text-sm line-clamp-1 sm:line-clamp-none">
+              OPERATION: {plan.title.toUpperCase()}
+            </span>
+          </div>
+          <div className="flex items-center gap-3 sm:gap-4 text-xs terminal-text-secondary shrink-0">
+            <span className="hidden sm:inline">{plan.destination}</span>
+            <span className="hidden sm:inline">{plan.days}D</span>
+            <span className="text-xs">
+              {new Date(plan.createdAt).toLocaleDateString('ja-JP', {
+                month: '2-digit',
+                day: '2-digit',
+              })}
+            </span>
+            <ChevronRight className="w-4 h-4 text-green-500 group-hover:translate-x-1 transition-transform" />
+          </div>
+        </div>
+      </div>
     </Link>
   )
 }

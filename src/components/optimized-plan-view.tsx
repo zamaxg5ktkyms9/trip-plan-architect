@@ -46,64 +46,74 @@ export function OptimizedPlanView({ plan }: OptimizedPlanViewProps) {
   const [copied, setCopied] = useState(false)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
 
-  // 画像取得済みフラグ（重複リクエスト防止）
-  const imageQueryFetchedRef = useRef<string | null>(null)
+  // 英語クエリで取得済みかどうか（一度trueになったら日本語検索には戻らない）
+  const hasEnglishQueryImageRef = useRef(false)
+  // 最後に取得したクエリ（重複リクエスト防止）
+  const lastFetchedQueryRef = useRef<string | null>(null)
 
   // Fetch destination image from Unsplash
   // 優先順位: 1. plan.image_query（AI生成の英語クエリ） 2. extractLocationFromTitle（後方互換）
   useEffect(() => {
-    // image_query が届いたら即座に検索開始（最優先）
-    if (plan.image_query && plan.image_query.length >= 2) {
-      // 同じクエリで既に取得済みならスキップ
-      if (imageQueryFetchedRef.current === plan.image_query) return
+    let isActive = true // クリーンアップ用フラグ（Race Condition対策）
 
-      const fetchImage = async () => {
-        try {
-          console.log(`[Image Search] Using image_query: "${plan.image_query}"`)
-          const response = await fetch(
-            `/api/unsplash?query=${encodeURIComponent(plan.image_query!)}`
-          )
-          if (response.ok) {
-            const data = await response.json()
-            if (data.imageUrl) {
-              setImageUrl(data.imageUrl)
-              imageQueryFetchedRef.current = plan.image_query!
+    const fetchImage = async () => {
+      // 1. クエリの決定（英語クエリ最優先）
+      let query: string | null = null
+      let isEnglishQuery = false
+
+      if (plan.image_query && plan.image_query.length >= 2) {
+        query = plan.image_query
+        isEnglishQuery = true
+      } else if (plan.title && plan.title.length >= 2) {
+        // 英語クエリで既に画像取得済みなら、日本語フォールバックは実行しない
+        if (hasEnglishQueryImageRef.current) {
+          return
+        }
+        query = extractLocationFromTitle(plan.title)
+      }
+
+      if (!query) return
+
+      // 同じクエリで既に取得済みならスキップ
+      if (lastFetchedQueryRef.current === query) return
+
+      try {
+        console.log(
+          `[Image Search] Query: "${query}" (${isEnglishQuery ? 'English' : 'Japanese fallback'})`
+        )
+        const response = await fetch(
+          `/api/unsplash?query=${encodeURIComponent(query)}`
+        )
+
+        // クリーンアップ済み（新しいクエリで再実行された）なら結果を無視
+        if (!isActive) {
+          console.log(`[Image Search] Ignoring stale response for: "${query}"`)
+          return
+        }
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.imageUrl && isActive) {
+            setImageUrl(data.imageUrl)
+            lastFetchedQueryRef.current = query
+
+            // 英語クエリで取得成功したらフラグを立てる
+            if (isEnglishQuery) {
+              hasEnglishQueryImageRef.current = true
             }
           }
-        } catch (error) {
+        }
+      } catch (error) {
+        if (isActive) {
           console.error('Failed to fetch Unsplash image:', error)
         }
       }
-      fetchImage()
-      return
     }
 
-    // 後方互換性: image_query がない場合はタイトルから抽出（デバウンス付き）
-    if (!plan.image_query && plan.title && plan.title.length >= 2) {
-      const timeoutId = setTimeout(async () => {
-        // image_query が途中で届いた場合はスキップ
-        if (plan.image_query) return
+    fetchImage()
 
-        try {
-          const searchKeyword = extractLocationFromTitle(plan.title || '')
-          console.log(
-            `[Image Search] Fallback - Query: ${searchKeyword} (from title: ${plan.title})`
-          )
-          const response = await fetch(
-            `/api/unsplash?query=${encodeURIComponent(searchKeyword)}`
-          )
-          if (response.ok) {
-            const data = await response.json()
-            if (data.imageUrl) {
-              setImageUrl(data.imageUrl)
-            }
-          }
-        } catch (error) {
-          console.error('Failed to fetch Unsplash image:', error)
-        }
-      }, 1500) // フォールバックは1.5秒待つ（image_queryが届く猶予）
-
-      return () => clearTimeout(timeoutId)
+    return () => {
+      isActive = false // クリーンアップ: 古い非同期処理の結果を無視
     }
   }, [plan.image_query, plan.title])
 

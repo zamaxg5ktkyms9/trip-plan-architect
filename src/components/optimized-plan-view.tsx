@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import type { DeepPartial } from 'ai'
 import type { OptimizedPlan } from '@/types/plan'
@@ -25,28 +25,42 @@ export function OptimizedPlanView({ plan }: OptimizedPlanViewProps) {
   const [copied, setCopied] = useState(false)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
 
-  // Fetch destination image from Unsplash
-  useEffect(() => {
-    if (!plan.title) return
+  // Debounce用のref
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-    const fetchImage = async () => {
+  // Fetch destination image from Unsplash (with debounce)
+  useEffect(() => {
+    // タイトルが短すぎる場合は検索しない
+    if (!plan.title || plan.title.length < 2) return
+
+    // 既存のタイマーをクリア
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    debounceTimeoutRef.current = setTimeout(async () => {
       try {
         const response = await fetch(
           `/api/unsplash?query=${encodeURIComponent(plan.title || '')}`
         )
         if (response.ok) {
           const data = await response.json()
-          if (data.url) {
-            setImageUrl(data.url)
+          // 有効なURLが返ってきた場合のみ更新（nullの場合は既存画像を維持）
+          if (data.imageUrl) {
+            setImageUrl(data.imageUrl)
           }
         }
       } catch (error) {
         // Silently fail - image is optional
         console.error('Failed to fetch Unsplash image:', error)
       }
-    }
+    }, 1000) // 1秒のデバウンス
 
-    fetchImage()
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+    }
   }, [plan.title])
 
   const copyPlanText = () => {

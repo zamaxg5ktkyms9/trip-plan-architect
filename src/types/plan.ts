@@ -204,12 +204,14 @@ export type EventV3 = z.infer<typeof EventV3Schema>
  */
 export const ItineraryDaySchema = z.object({
   day: z.number().positive().describe('Day number (1-indexed)'),
+  // コンテンツ（events）を先に生成させる
+  events: z.array(EventV3Schema).describe('List of events for this day'),
+  // URL（google_maps_url）は最後に生成させる
   google_maps_url: z
     .string()
     .describe(
       'Google Maps directions URL for the entire day route (origin -> waypoints -> destination)'
     ),
-  events: z.array(EventV3Schema).describe('List of events for this day'),
 })
 export type ItineraryDay = z.infer<typeof ItineraryDaySchema>
 

@@ -191,16 +191,18 @@ ${plan.affiliate ? `おすすめ: ${plan.affiliate.label}` : ''}`
 
         {/* Affiliate Card */}
         {plan.affiliate?.label && (
-          <div className="bg-white rounded-xl p-6 shadow-sm">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">おすすめ</h3>
+          <div className="bg-white rounded-xl p-6 shadow-sm border-2 border-blue-100">
+            <h3 className="text-sm font-bold text-gray-500 mb-3 uppercase tracking-wider">
+              Recommended
+            </h3>
             <a
               href={plan.affiliate.url || '#'}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:underline font-medium"
+              className="flex items-center justify-center gap-2 w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold rounded-lg shadow-md hover:shadow-lg hover:from-blue-700 hover:to-blue-600 transition-all transform hover:-translate-y-0.5"
             >
               {plan.affiliate.label}
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-5 h-5" />
             </a>
           </div>
         )}

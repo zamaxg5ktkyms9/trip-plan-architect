@@ -216,7 +216,7 @@ async function validateInput(
   isValid: boolean
   correctedDestination: string
   correctedBaseArea: string
-  reason?: string
+  reason: string | null
   durationMs: number
 }> {
   const startTime = Date.now()

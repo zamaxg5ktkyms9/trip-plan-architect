@@ -269,7 +269,7 @@ export const InputValidationResultSchema = z.object({
     .describe('The corrected or validated base area (same as input if valid)'),
   reason: z
     .string()
-    .optional()
+    .nullable()
     .describe(
       'Explanation of the correction if isValid is false (e.g., "島根駅は存在しないため松江駅に変更")'
     ),

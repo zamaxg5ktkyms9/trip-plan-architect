@@ -201,17 +201,12 @@ export type EventV3 = z.infer<typeof EventV3Schema>
 
 /**
  * Single day in V3 itinerary
+ * NOTE: google_maps_url was removed - URL is now generated on the frontend
+ * from events array to ensure 100% consistency (Single Source of Truth)
  */
 export const ItineraryDaySchema = z.object({
   day: z.number().positive().describe('Day number (1-indexed)'),
-  // コンテンツ（events）を先に生成させる
   events: z.array(EventV3Schema).describe('List of events for this day'),
-  // URL（google_maps_url）は最後に生成させる
-  google_maps_url: z
-    .string()
-    .describe(
-      'Google Maps directions URL for the entire day route (origin -> waypoints -> destination)'
-    ),
 })
 export type ItineraryDay = z.infer<typeof ItineraryDaySchema>
 
@@ -227,11 +222,17 @@ export type AffiliateV3 = z.infer<typeof AffiliateV3Schema>
 /**
  * Complete V3 Optimized Plan
  * Focuses on practical route optimization for solo travelers
+ * NOTE: Google Maps URL is generated on frontend from base_area + events (Single Source of Truth)
  */
 export const OptimizedPlanSchema = z.object({
   title: z
     .string()
     .describe('Trip title (e.g., "長崎・佐世保 湾岸ドライブ周遊")'),
+  base_area: z
+    .string()
+    .describe(
+      'Base area (starting/ending point) specified by user - used for Google Maps URL generation on frontend'
+    ),
   image_query: z
     .string()
     .describe(
@@ -245,9 +246,7 @@ export const OptimizedPlanSchema = z.object({
   target: z
     .literal('general')
     .describe('Target audience (always general for V3)'),
-  itinerary: z
-    .array(ItineraryDaySchema)
-    .describe('Array of daily itineraries with Google Maps routes'),
+  itinerary: z.array(ItineraryDaySchema).describe('Array of daily itineraries'),
   affiliate: AffiliateV3Schema.describe(
     'Recommended service/product (rental car, hotel, etc.)'
   ),

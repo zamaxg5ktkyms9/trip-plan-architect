@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { DeepPartial } from 'ai'
-import type { OptimizedPlan } from '@/types/plan'
+import type { OptimizedPlan, ItineraryDay } from '@/types/plan'
 import {
   MapPin,
   Clock,
@@ -17,6 +17,34 @@ import { toast } from 'sonner'
 
 interface OptimizedPlanViewProps {
   plan: DeepPartial<OptimizedPlan>
+}
+
+/**
+ * Generate Google Maps directions URL from base_area and events
+ * Single Source of Truth: URL is always consistent with displayed events
+ */
+function generateGoogleMapsUrl(
+  baseArea: string,
+  day: DeepPartial<ItineraryDay>
+): string {
+  // Filter events that should be included as waypoints (spot or food, not move)
+  const waypoints =
+    day.events
+      ?.filter(event => event?.type === 'spot' || event?.type === 'food')
+      .map(event => event?.spot)
+      .filter((spot): spot is string => !!spot) || []
+
+  // Build URL with origin, destination (both base_area), and waypoints
+  const params = new URLSearchParams()
+  params.set('api', '1')
+  params.set('origin', baseArea)
+  params.set('destination', baseArea)
+
+  if (waypoints.length > 0) {
+    params.set('waypoints', waypoints.join('|'))
+  }
+
+  return `https://www.google.com/maps/dir/?${params.toString()}`
 }
 
 /**
@@ -226,9 +254,9 @@ ${plan.affiliate ? `おすすめ: ${plan.affiliate.label}` : ''}`
               <h2 className="text-lg font-semibold text-gray-900">
                 Day {day?.day || dayIndex + 1}
               </h2>
-              {day?.google_maps_url && (
+              {plan.base_area && day?.events && day.events.length > 0 && (
                 <a
-                  href={day.google_maps_url}
+                  href={generateGoogleMapsUrl(plan.base_area, day)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"

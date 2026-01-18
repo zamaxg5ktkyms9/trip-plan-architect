@@ -147,17 +147,6 @@ const PLAN_GENERATION_PROMPT = `# 最重要: 固有名詞の正確性（ハル�
 - **OK例（確信がない場合）:** 「このエリアは黒豚料理の名店が集まっており、とんかつや しゃぶしゃぶを堪能できます」（エリア特徴として言い切る）
 - 店名に確信が持てない場合は、無理に店名を挙げず「エリアの食の特徴」として表現すること。
 
-# Google Maps URL生成（重要）
-各日のルートに対して、実際に機能するGoogle Maps URLを生成すること。
-
-**フォーマット:**
-\`https://www.google.com/maps/dir/?api=1&origin={拠点のURLエンコード済み名}&destination={拠点のURLエンコード済み名}&waypoints={スポットA}|{スポットB}|{スポットC}\`
-
-**ルール:**
-- origin（出発地）とdestination（到着地）は両方とも拠点エリア（base_area）にする
-- waypointsは「|」（パイプ）で区切る
-- 日本語のスポット名はそのまま使用可能（ブラウザが自動エンコード）
-
 # 移動手段の考慮
 - **car（車）の場合:** 駐車場の有無を考慮、車でアクセスしやすいルートを優先
 - **transit（公共交通）の場合:** 駅・バス停からのアクセスを重視、乗り換えを最小化
@@ -167,13 +156,13 @@ const PLAN_GENERATION_PROMPT = `# 最重要: 固有名詞の正確性（ハル�
 
 # 出力構造
 - **title:** 旅のタイトル（例: 「長崎・佐世保 湾岸ドライブ周遊」）
+- **base_area:** ユーザーが指定した拠点エリアをそのまま出力すること（例: "松江駅"）。フロントエンドでGoogle Maps URLの起点・終点として使用される。
 - **image_query:** Unsplash画像検索用の英語キーワード。必ず「City, Country」形式で英語で出力すること（例: "Nagasaki, Japan", "Matsue, Japan"）。日本語禁止。
 - **intro:** 効率性と自由度をアピールする導入文（100-150文字）
 - **target:** 常に "general"
 - **itinerary:** 日ごとの旅程
   - day: 日数（1から開始）
-  - google_maps_url: その日のルート全体を示すGoogle Maps URL
-  - events: イベントの配列
+  - events: イベントの配列（※Google Maps URLはフロントエンドで自動生成されるため出力不要）
     - time: 時刻（例: "10:00"）
     - spot: スポット名
     - query: Google Maps検索クエリ

@@ -14,6 +14,7 @@ describe('POST /api/plans', () => {
   // V3 format: OptimizedPlan
   const mockOptimizedPlan: OptimizedPlan = {
     title: '長崎・佐世保 湾岸ドライブ周遊',
+    base_area: '長崎駅',
     image_query: 'Nagasaki, Japan',
     intro:
       '拠点の長崎駅から出発し、グラバー園、出島、平和公園を効率的に巡る1日プランです。',
@@ -21,8 +22,6 @@ describe('POST /api/plans', () => {
     itinerary: [
       {
         day: 1,
-        google_maps_url:
-          'https://www.google.com/maps/dir/?api=1&origin=長崎駅&destination=長崎駅&waypoints=グラバー園|出島|平和公園',
         events: [
           {
             time: '09:00',

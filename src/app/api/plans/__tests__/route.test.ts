@@ -14,6 +14,7 @@ describe('POST /api/plans', () => {
   // V3 format: OptimizedPlan
   const mockOptimizedPlan: OptimizedPlan = {
     title: '長崎・佐世保 湾岸ドライブ周遊',
+    image_query: 'Nagasaki, Japan',
     intro:
       '拠点の長崎駅から出発し、グラバー園、出島、平和公園を効率的に巡る1日プランです。',
     target: 'general',

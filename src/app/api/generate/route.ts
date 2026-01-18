@@ -175,10 +175,19 @@ export async function POST(request: NextRequest) {
   - label: 表示ラベル
   - url: リンクURL
 
-# アフィリエイト選定ロジック（重要）
-ユーザーの移動手段（transportation）に応じて、適切なサービスを提案すること。
-- **移動手段が「車 (car)」の場合:** レンタカー予約サイト、または駐車場付きホテルを提案する。
-- **移動手段が「公共交通 (transit)」の場合:** 駅近ホテル予約、交通パス（JRパス等）、または現地アクティビティ（体験予約サイト）を提案する。**レンタカーは絶対に提案しないこと。**`
+# アフィリエイトURL生成ルール（厳守）
+**URLの幻覚防止:** 架空のサイトURL、または実在確認できない特定のパス（例: /oita, /hotel/123）を生成することは**絶対禁止**。
+代わりに、以下のフォーマットに従って「Google検索結果のURL」を生成すること。
+
+1. **移動手段が "car" の場合:**
+   - label: "{目的地}周辺のレンタカー・駐車場を探す"
+   - url: \`https://www.google.com/search?q={目的地}+レンタカー+駐車場\`
+
+2. **移動手段が "transit" の場合:**
+   - label: "{拠点エリア}周辺のホテルを探す"
+   - url: \`https://www.google.com/search?q={拠点エリア}+ホテル+予約\`
+
+※ URL内の日本語はそのまま使用可能（ブラウザが自動エンコード）。フォーマットは必ず \`https://www.google.com/search?q=...\` を守ること。`
 
     const transportLabel =
       input.transportation === 'car' ? '車' : '公共交通機関'

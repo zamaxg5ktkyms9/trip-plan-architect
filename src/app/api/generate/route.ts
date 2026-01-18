@@ -167,6 +167,7 @@ const PLAN_GENERATION_PROMPT = `# 最重要: 固有名詞の正確性（ハル�
 
 # 出力構造
 - **title:** 旅のタイトル（例: 「長崎・佐世保 湾岸ドライブ周遊」）
+- **image_query:** Unsplash画像検索用の英語キーワード。必ず「City, Country」形式で英語で出力すること（例: "Nagasaki, Japan", "Matsue, Japan"）。日本語禁止。
 - **intro:** 効率性と自由度をアピールする導入文（100-150文字）
 - **target:** 常に "general"
 - **itinerary:** 日ごとの旅程

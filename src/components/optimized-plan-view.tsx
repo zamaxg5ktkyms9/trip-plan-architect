@@ -20,6 +20,28 @@ interface OptimizedPlanViewProps {
   plan: DeepPartial<OptimizedPlan>
 }
 
+/**
+ * タイトルから地名のみを抽出する
+ * 例: "松江駅周辺の魅力を巡るドライブ" -> "松江"
+ */
+function extractLocationFromTitle(title: string): string {
+  // 1. 区切り文字で分割し、先頭の要素を取得
+  const delimiters = /[・ 　の]/
+  const parts = title.split(delimiters)
+  let location = parts[0] || ''
+
+  // 2. 検索に不要な接尾辞を削除
+  const suffixes = ['駅', '周辺', '市', '県', '観光', '旅行', '旅', 'ドライブ']
+  for (const suffix of suffixes) {
+    if (location.endsWith(suffix)) {
+      location = location.slice(0, -suffix.length)
+    }
+  }
+
+  // 3. 空文字になった場合は元のタイトルを返す
+  return location.trim() || title
+}
+
 export function OptimizedPlanView({ plan }: OptimizedPlanViewProps) {
   const router = useRouter()
   const [copied, setCopied] = useState(false)
@@ -40,8 +62,12 @@ export function OptimizedPlanView({ plan }: OptimizedPlanViewProps) {
 
     debounceTimeoutRef.current = setTimeout(async () => {
       try {
+        const searchKeyword = extractLocationFromTitle(plan.title || '')
+        console.log(
+          `[Image Search] Query: ${searchKeyword} (Original: ${plan.title})`
+        )
         const response = await fetch(
-          `/api/unsplash?query=${encodeURIComponent(plan.title || '')}`
+          `/api/unsplash?query=${encodeURIComponent(searchKeyword)}`
         )
         if (response.ok) {
           const data = await response.json()

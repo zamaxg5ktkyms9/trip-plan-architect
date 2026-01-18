@@ -33,9 +33,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  // Dynamic plan pages from Redis
+  // Dynamic plan pages from Redis (V3 namespace)
   try {
-    const planSlugs = await planRepository.list()
+    const planSlugs = await planRepository.listV3()
 
     const planPages: MetadataRoute.Sitemap = planSlugs.map(slug => {
       // Extract timestamp from slug (format: "title-timestamp")

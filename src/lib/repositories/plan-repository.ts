@@ -54,6 +54,7 @@ export interface IPlanRepository {
   // V3 methods
   saveV3(data: OptimizedPlan): Promise<string>
   getV3(slug: string): Promise<OptimizedPlan | null>
+  listV3(): Promise<string[]>
   getRecentPlansV3(limit?: number, offset?: number): Promise<PlanMetadata[]>
   getTotalCountV3(): Promise<number>
 }
@@ -462,6 +463,32 @@ export class PlanRepository implements IPlanRepository {
     } catch (error) {
       debugLog('Error retrieving V3 plan:', error)
       return null
+    }
+  }
+
+  /**
+   * Lists all available V3 plan slugs
+   * @returns Array of plan slugs (newest first)
+   */
+  async listV3(): Promise<string[]> {
+    if (!this.redis) {
+      return []
+    }
+
+    try {
+      // Get all slugs from V3 sorted set, newest first
+      const slugs = await this.redis.zrange<string[]>(
+        REDIS_KEYS_V3.SLUGS,
+        0,
+        -1,
+        {
+          rev: true,
+        }
+      )
+      return slugs
+    } catch (error) {
+      debugLog('Error listing V3 plans:', error)
+      return []
     }
   }
 

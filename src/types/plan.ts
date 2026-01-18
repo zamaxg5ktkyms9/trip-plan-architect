@@ -64,11 +64,12 @@ export const PlanSchema = z.object({
 export type Plan = z.infer<typeof PlanSchema>
 
 // ============================================
-// NEW SCHEMA: Engineer's Scouter (Phase 3)
+// V2 SCHEMA: Engineer's Scouter (DEPRECATED)
 // ============================================
 
 /**
  * Target spot with Google Maps search capability
+ * @deprecated Use OptimizedPlanSchema for new implementations
  */
 export const TargetSpotSchema = z.object({
   n: z.string().describe('Spot name in Japanese'),
@@ -82,6 +83,7 @@ export type TargetSpot = z.infer<typeof TargetSpotSchema>
 
 /**
  * Quest (mission directive) for the agent
+ * @deprecated Use OptimizedPlanSchema for new implementations
  */
 export const QuestSchema = z.object({
   t: z.string().describe('Quest title/directive (e.g., "構造撮影指令")'),
@@ -100,6 +102,7 @@ export type Quest = z.infer<typeof QuestSchema>
 
 /**
  * Affiliate recommendation (monetization)
+ * @deprecated Use AffiliateV3Schema for new implementations
  */
 export const AffiliateSchema = z.object({
   item: z
@@ -123,6 +126,7 @@ export type Affiliate = z.infer<typeof AffiliateSchema>
 /**
  * Complete Scouter Response (Mission Briefing)
  * Replaces the old "travel plan" concept with "investigation mission"
+ * @deprecated Use OptimizedPlanSchema for new implementations
  */
 export const ScouterResponseSchema = z.object({
   mission_title: z

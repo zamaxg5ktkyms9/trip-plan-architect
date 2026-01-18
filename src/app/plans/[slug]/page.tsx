@@ -1,9 +1,8 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { PlanRepository } from '@/lib/repositories/plan-repository'
-import { ResultView } from '@/components/result-view'
-import { MissionBriefing } from '@/components/mission-briefing'
-import type { Plan, ScouterResponse } from '@/types/plan'
+import { OptimizedPlanView } from '@/components/optimized-plan-view'
+import type { OptimizedPlan } from '@/types/plan'
 
 interface PageProps {
   params: Promise<{
@@ -11,11 +10,14 @@ interface PageProps {
   }>
 }
 
-// Type guard to check if data is ScouterResponse (V2)
-function isScouterResponse(
-  data: Plan | ScouterResponse
-): data is ScouterResponse {
-  return 'mission_title' in data && 'target_spot' in data && 'quests' in data
+// Type guard to check if data is OptimizedPlan (V3)
+function isOptimizedPlan(data: unknown): data is OptimizedPlan {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'itinerary' in data &&
+    Array.isArray((data as OptimizedPlan).itinerary)
+  )
 }
 
 // Force dynamic rendering since we use Redis (not compatible with static generation)
@@ -31,50 +33,17 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { slug } = await params
   const repository = new PlanRepository()
-  const data = await repository.get(slug)
+  const data = await repository.getV3(slug)
 
   if (!data) {
     return {
-      title: 'Plan Not Found',
+      title: 'プランが見つかりません',
     }
   }
 
-  // Handle V2 (ScouterResponse) format
-  if (isScouterResponse(data)) {
-    const description =
-      data.intro || `Investigation mission: ${data.mission_title}`
-
-    return {
-      title: data.mission_title,
-      description,
-      openGraph: {
-        title: data.mission_title,
-        description,
-        type: 'article',
-        images: [
-          {
-            url: `/api/og?title=${encodeURIComponent(data.mission_title)}&days=1`,
-            width: 1200,
-            height: 630,
-            alt: data.mission_title,
-          },
-        ],
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: data.mission_title,
-        description,
-        images: [
-          `/api/og?title=${encodeURIComponent(data.mission_title)}&days=1`,
-        ],
-      },
-    }
-  }
-
-  // Handle V1 (Plan) format
   const description =
     data.intro ||
-    `${data.days.length} day itinerary for ${data.title}. Perfect for ${data.target === 'engineer' ? 'engineers' : 'travelers'}.`
+    `${data.itinerary.length}日間の${data.title}。効率的な一人旅のプランです。`
 
   return {
     title: data.title,
@@ -85,7 +54,7 @@ export async function generateMetadata({
       type: 'article',
       images: [
         {
-          url: `/api/og?title=${encodeURIComponent(data.title)}&days=${data.days.length}`,
+          url: `/api/og?title=${encodeURIComponent(data.title)}&days=${data.itinerary.length}`,
           width: 1200,
           height: 630,
           alt: data.title,
@@ -97,7 +66,7 @@ export async function generateMetadata({
       title: data.title,
       description,
       images: [
-        `/api/og?title=${encodeURIComponent(data.title)}&days=${data.days.length}`,
+        `/api/og?title=${encodeURIComponent(data.title)}&days=${data.itinerary.length}`,
       ],
     },
   }
@@ -106,27 +75,11 @@ export async function generateMetadata({
 export default async function PlanPage({ params }: PageProps) {
   const { slug } = await params
   const repository = new PlanRepository()
-  const data = await repository.get(slug)
+  const data = await repository.getV3(slug)
 
-  if (!data) {
+  if (!data || !isOptimizedPlan(data)) {
     notFound()
   }
 
-  // Render V2 (ScouterResponse) format with MissionBriefing component
-  if (isScouterResponse(data)) {
-    return (
-      <div className="terminal-theme min-h-screen p-4 sm:p-6 terminal-scanlines">
-        <MissionBriefing mission={data} />
-      </div>
-    )
-  }
-
-  // Render V1 (Plan) format with ResultView component
-  return (
-    <div className="terminal-theme min-h-screen p-4 sm:p-6 terminal-scanlines">
-      <div className="container mx-auto px-4 py-8">
-        <ResultView plan={data} />
-      </div>
-    </div>
-  )
+  return <OptimizedPlanView plan={data} />
 }

@@ -154,6 +154,7 @@ export type ScouterResponse = z.infer<typeof ScouterResponseSchema>
 
 /**
  * Input schema for generating a travel plan
+ * @deprecated Use GenerateInputV3Schema for new implementations
  */
 export const GenerateInputSchema = z.object({
   destination: z.string().min(1, 'Destination is required'),
@@ -161,3 +162,83 @@ export const GenerateInputSchema = z.object({
   options: z.record(z.string(), z.unknown()).optional(),
 })
 export type GenerateInput = z.infer<typeof GenerateInputSchema>
+
+// ============================================
+// V3 SCHEMA: Optimized Solo Travel
+// ============================================
+
+/**
+ * V3 Input schema for generating an optimized travel plan
+ */
+export const GenerateInputV3Schema = z.object({
+  destination: z.string().min(1, 'Destination is required'),
+  base_area: z.string().min(1, 'Base area is required'),
+  transportation: z.enum(['car', 'transit']),
+})
+export type GenerateInputV3 = z.infer<typeof GenerateInputV3Schema>
+
+/**
+ * Event type for V3 itinerary
+ */
+export const EventTypeV3Schema = z.enum(['spot', 'food', 'move'])
+export type EventTypeV3 = z.infer<typeof EventTypeV3Schema>
+
+/**
+ * Single event in V3 itinerary
+ */
+export const EventV3Schema = z.object({
+  time: z.string().describe('Time of the event (e.g., "10:00")'),
+  spot: z.string().describe('Spot name'),
+  query: z.string().describe('Google Maps search query'),
+  description: z.string().describe('Description of what to do at this spot'),
+  type: EventTypeV3Schema.describe('Event type (spot/food/move)'),
+})
+export type EventV3 = z.infer<typeof EventV3Schema>
+
+/**
+ * Single day in V3 itinerary
+ */
+export const ItineraryDaySchema = z.object({
+  day: z.number().positive().describe('Day number (1-indexed)'),
+  google_maps_url: z
+    .string()
+    .describe(
+      'Google Maps directions URL for the entire day route (origin -> waypoints -> destination)'
+    ),
+  events: z.array(EventV3Schema).describe('List of events for this day'),
+})
+export type ItineraryDay = z.infer<typeof ItineraryDaySchema>
+
+/**
+ * V3 Affiliate recommendation
+ */
+export const AffiliateV3Schema = z.object({
+  label: z.string().describe('Display label for the affiliate link'),
+  url: z.string().describe('Affiliate URL'),
+})
+export type AffiliateV3 = z.infer<typeof AffiliateV3Schema>
+
+/**
+ * Complete V3 Optimized Plan
+ * Focuses on practical route optimization for solo travelers
+ */
+export const OptimizedPlanSchema = z.object({
+  title: z
+    .string()
+    .describe('Trip title (e.g., "長崎・佐世保 湾岸ドライブ周遊")'),
+  intro: z
+    .string()
+    .describe(
+      'Introduction text emphasizing efficiency and freedom (100-150 Japanese characters)'
+    ),
+  target: z
+    .literal('general')
+    .describe('Target audience (always general for V3)'),
+  itinerary: z
+    .array(ItineraryDaySchema)
+    .describe('Array of daily itineraries with Google Maps routes'),
+  affiliate: AffiliateV3Schema.describe(
+    'Recommended service/product (rental car, hotel, etc.)'
+  ),
+})
+export type OptimizedPlan = z.infer<typeof OptimizedPlanSchema>

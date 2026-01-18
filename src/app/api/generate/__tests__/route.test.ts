@@ -1,40 +1,80 @@
 import { describe, it, expect } from 'vitest'
-import { GenerateInputSchema } from '@/types/plan'
+import { GenerateInputV3Schema } from '@/types/plan'
 import { getClientIP } from '@/lib/rate-limit'
 import { PlanRepository } from '@/lib/repositories/plan-repository'
 
 describe('API Route Components', () => {
-  describe('GenerateInputSchema', () => {
+  describe('GenerateInputV3Schema', () => {
     it('should validate correct input', () => {
       const validInput = {
-        destination: 'Tokyo',
-        template: 'tech-tour',
+        destination: '長崎',
+        base_area: '長崎駅周辺',
+        transportation: 'transit',
       }
 
-      const result = GenerateInputSchema.safeParse(validInput)
+      const result = GenerateInputV3Schema.safeParse(validInput)
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.destination).toBe('Tokyo')
-        expect(result.data.template).toBe('tech-tour')
+        expect(result.data.destination).toBe('長崎')
+        expect(result.data.base_area).toBe('長崎駅周辺')
+        expect(result.data.transportation).toBe('transit')
+      }
+    })
+
+    it('should validate car transportation', () => {
+      const validInput = {
+        destination: '金沢',
+        base_area: '金沢駅',
+        transportation: 'car',
+      }
+
+      const result = GenerateInputV3Schema.safeParse(validInput)
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.transportation).toBe('car')
       }
     })
 
     it('should reject empty destination', () => {
       const invalidInput = {
         destination: '',
-        template: 'tech-tour',
+        base_area: '長崎駅周辺',
+        transportation: 'transit',
       }
 
-      const result = GenerateInputSchema.safeParse(invalidInput)
+      const result = GenerateInputV3Schema.safeParse(invalidInput)
       expect(result.success).toBe(false)
     })
 
-    it('should reject missing template', () => {
+    it('should reject empty base_area', () => {
       const invalidInput = {
-        destination: 'Tokyo',
+        destination: '長崎',
+        base_area: '',
+        transportation: 'transit',
       }
 
-      const result = GenerateInputSchema.safeParse(invalidInput)
+      const result = GenerateInputV3Schema.safeParse(invalidInput)
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject invalid transportation', () => {
+      const invalidInput = {
+        destination: '長崎',
+        base_area: '長崎駅周辺',
+        transportation: 'bicycle',
+      }
+
+      const result = GenerateInputV3Schema.safeParse(invalidInput)
+      expect(result.success).toBe(false)
+    })
+
+    it('should reject missing transportation', () => {
+      const invalidInput = {
+        destination: '長崎',
+        base_area: '長崎駅周辺',
+      }
+
+      const result = GenerateInputV3Schema.safeParse(invalidInput)
       expect(result.success).toBe(false)
     })
   })

@@ -2,44 +2,31 @@
 
 import { useState } from 'react'
 import { experimental_useObject as useObject } from '@ai-sdk/react'
-import { type ScouterResponse, ScouterResponseSchema } from '@/types/plan'
-import { MissionBriefing } from '@/components/mission-briefing'
+import { type OptimizedPlan, OptimizedPlanSchema } from '@/types/plan'
+import { OptimizedPlanView } from '@/components/optimized-plan-view'
 import { toast } from 'sonner'
 import { debugLog, debugError } from '@/lib/debug'
-import { Terminal, MapPin } from 'lucide-react'
-
-// Mission types for the scouter
-const MISSION_TYPES = [
-  { id: 'photo', name: 'PHOTO', icon: '📷' },
-  { id: 'sound', name: 'SOUND', icon: '🎵' },
-  { id: 'video', name: 'VIDEO', icon: '🎬' },
-  { id: 'chill', name: 'CHILL', icon: '🌿' },
-]
-
-const WORLD_LINES = [
-  { id: 'cyberpunk', name: 'CYBERPUNK', desc: 'Neon + Steel' },
-  { id: 'post-apocalypse', name: 'POST-APOCALYPSE', desc: 'Decay + Ruins' },
-  { id: 'retro-future', name: 'RETRO-FUTURE', desc: 'Vintage Tech' },
-  { id: 'nature', name: 'NATURE', desc: 'Raw Elements' },
-]
+import { MapPin, Navigation, Car, Train } from 'lucide-react'
 
 export function TripGenerator() {
   const [destination, setDestination] = useState('')
-  const [selectedWorldLine, setSelectedWorldLine] = useState('cyberpunk')
-  const [selectedMissionType, setSelectedMissionType] = useState('photo')
+  const [baseArea, setBaseArea] = useState('')
+  const [transportation, setTransportation] = useState<'car' | 'transit'>(
+    'transit'
+  )
 
   const { object, submit, isLoading } = useObject({
     api: '/api/generate',
-    schema: ScouterResponseSchema,
+    schema: OptimizedPlanSchema,
     onFinish: async ({ object }) => {
-      console.log('[Streaming] ✅ Finished')
-      debugLog('[DEBUG] Stream finished with complete scouter response')
+      console.log('[Streaming] Finished')
+      debugLog('[DEBUG] Stream finished with complete optimized plan')
       debugLog('[DEBUG] Object:', object)
 
-      // Save raw ScouterResponse (V2) to database
+      // Save OptimizedPlan (V3) to database
       if (object) {
         try {
-          debugLog('[DEBUG] Saving V2 ScouterResponse to database...')
+          debugLog('[DEBUG] Saving V3 OptimizedPlan to database...')
 
           const response = await fetch('/api/plans', {
             method: 'POST',
@@ -52,22 +39,22 @@ export function TripGenerator() {
           const result = await response.json()
 
           if (result.success) {
-            debugLog('[DEBUG] ScouterResponse saved successfully:', result.slug)
-            toast.success('MISSION ARCHIVED', {
-              description: 'Data stored in database.',
+            debugLog('[DEBUG] OptimizedPlan saved successfully:', result.slug)
+            toast.success('プランを保存しました', {
+              description: 'データベースに保存されました。',
               duration: 3000,
             })
           } else {
-            debugError('[DEBUG] Failed to save ScouterResponse:', result.error)
-            toast.error('ARCHIVE FAILED', {
-              description: 'Mission generated but not saved.',
+            debugError('[DEBUG] Failed to save OptimizedPlan:', result.error)
+            toast.error('保存に失敗しました', {
+              description: 'プランは生成されましたが、保存できませんでした。',
               duration: 5000,
             })
           }
         } catch (error) {
-          debugError('[DEBUG] Error saving ScouterResponse:', error)
-          toast.error('ARCHIVE ERROR', {
-            description: 'Mission generated but not saved.',
+          debugError('[DEBUG] Error saving OptimizedPlan:', error)
+          toast.error('保存エラー', {
+            description: 'プランは生成されましたが、保存できませんでした。',
             duration: 5000,
           })
         }
@@ -75,29 +62,27 @@ export function TripGenerator() {
     },
     onError: error => {
       debugError('[DEBUG] Generation error:', error)
-      debugError('[DEBUG] Error type:', error.constructor?.name)
-      debugError('[DEBUG] Error message:', error.message)
 
-      const errorMessage = error.message || 'SYSTEM ERROR'
+      const errorMessage = error.message || 'エラーが発生しました'
 
       if (
         errorMessage.includes('Rate limit exceeded') ||
         errorMessage.includes('429')
       ) {
-        toast.error('RATE LIMIT EXCEEDED', {
-          description: 'Too many requests. Try again later.',
+        toast.error('リクエスト制限', {
+          description: 'しばらく時間をおいてから再度お試しください。',
           duration: 5000,
         })
       } else if (
         errorMessage.includes('timeout') ||
         errorMessage.includes('504')
       ) {
-        toast.error('REQUEST TIMEOUT', {
-          description: 'Process took too long. Please retry.',
+        toast.error('タイムアウト', {
+          description: '処理に時間がかかりすぎました。再度お試しください。',
           duration: 5000,
         })
       } else {
-        toast.error('GENERATION FAILED', {
+        toast.error('生成エラー', {
           description: errorMessage,
           duration: 5000,
         })
@@ -109,14 +94,17 @@ export function TripGenerator() {
     debugLog('[DEBUG] handleGenerate called')
     debugLog('[DEBUG] Input data:', {
       destination,
-      worldLine: selectedWorldLine,
-      missionType: selectedMissionType,
+      baseArea,
+      transportation,
     })
 
     if (!destination.trim()) {
-      toast.error('TARGET SECTOR REQUIRED', {
-        description: 'Enter a destination to compile mission.',
-      })
+      toast.error('目的地を入力してください')
+      return
+    }
+
+    if (!baseArea.trim()) {
+      toast.error('拠点エリアを入力してください')
       return
     }
 
@@ -124,11 +112,8 @@ export function TripGenerator() {
       debugLog('[DEBUG] Calling submit()...')
       submit({
         destination,
-        template: selectedMissionType, // Use mission type as template
-        options: {
-          worldLine: selectedWorldLine,
-          missionType: selectedMissionType,
-        },
+        base_area: baseArea,
+        transportation,
       })
       debugLog('[DEBUG] submit() called')
     } catch (err) {
@@ -139,141 +124,114 @@ export function TripGenerator() {
   return (
     <>
       {!object && !isLoading ? (
-        <div className="terminal-theme min-h-screen p-4 sm:p-6 terminal-scanlines">
-          <div className="max-w-3xl mx-auto space-y-6">
+        <div className="min-h-screen bg-white p-4 sm:p-6">
+          <div className="max-w-2xl mx-auto space-y-8">
             {/* Header */}
-            <div className="terminal-panel hud-corners">
-              <div className="flex items-center gap-3 mb-2">
-                <Terminal className="w-6 h-6 text-green-500" />
-                <h1 className="terminal-heading">MISSION CONFIG</h1>
-              </div>
-              <div className="text-xs terminal-text-secondary">
-                [ ENGINEER&apos;S SCOUTER v2.0 - BRIEFING SYSTEM ]
-              </div>
-            </div>
+            <header className="text-center pt-8 pb-4">
+              <h1 className="text-3xl font-bold text-gray-900">
+                Optimized Solo Travel
+              </h1>
+              <p className="text-gray-500 mt-2">
+                効率的な一人旅のルートを設計します
+              </p>
+            </header>
 
-            {/* Target Sector Input */}
-            <div className="terminal-panel">
-              <label className="text-xs terminal-text-secondary mb-2 block uppercase tracking-wider">
-                <MapPin className="inline w-3 h-3 mr-1" />
-                TARGET SECTOR
+            {/* Destination Input */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <MapPin className="w-4 h-4" />
+                目的地
               </label>
               <input
                 type="text"
-                placeholder="e.g., 川崎, 池袋, 横浜..."
                 value={destination}
                 onChange={e => setDestination(e.target.value)}
-                className="terminal-input w-full text-base sm:text-lg"
+                placeholder="例: 長崎, 金沢, 尾道..."
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-gray-400"
                 autoFocus
               />
-              <div className="text-xs terminal-text-secondary mt-2">
-                * Enter location name in Japanese or English
-              </div>
             </div>
 
-            {/* World Line Selection */}
-            <div className="terminal-panel">
-              <label className="text-xs terminal-text-secondary mb-3 block uppercase tracking-wider">
-                WORLD LINE
+            {/* Base Area Input */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Navigation className="w-4 h-4" />
+                拠点エリア（ホテル周辺）
               </label>
-              <div className="grid grid-cols-2 gap-3">
-                {WORLD_LINES.map(world => (
-                  <button
-                    key={world.id}
-                    onClick={() => setSelectedWorldLine(world.id)}
-                    className={`
-                      border-2 p-3 rounded-none transition-all text-left
-                      ${
-                        selectedWorldLine === world.id
-                          ? 'border-green-500 bg-green-500/10 text-green-400'
-                          : 'border-green-500/30 text-green-600 hover:border-green-500/50 hover:bg-green-500/5'
-                      }
-                    `}
-                  >
-                    <div className="font-mono text-sm font-bold uppercase">
-                      {world.name}
-                    </div>
-                    <div className="text-xs terminal-text-secondary mt-1">
-                      {world.desc}
-                    </div>
-                  </button>
-                ))}
-              </div>
+              <input
+                type="text"
+                value={baseArea}
+                onChange={e => setBaseArea(e.target.value)}
+                placeholder="例: 長崎駅周辺, 金沢駅東口, 尾道駅前..."
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-gray-400"
+              />
+              <p className="text-xs text-gray-500">
+                ルートの起点・終点となるエリアを指定してください
+              </p>
             </div>
 
-            {/* Mission Type Selection */}
-            <div className="terminal-panel">
-              <label className="text-xs terminal-text-secondary mb-3 block uppercase tracking-wider">
-                MISSION TYPE
+            {/* Transportation Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">
+                移動手段
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {MISSION_TYPES.map(mission => (
-                  <button
-                    key={mission.id}
-                    onClick={() => setSelectedMissionType(mission.id)}
-                    className={`
-                      border-2 p-4 rounded-none transition-all
-                      ${
-                        selectedMissionType === mission.id
-                          ? 'border-amber-500 bg-amber-500/10 text-amber-400'
-                          : 'border-green-500/30 text-green-600 hover:border-green-500/50 hover:bg-green-500/5'
-                      }
-                    `}
-                  >
-                    <div className="text-2xl mb-1">{mission.icon}</div>
-                    <div className="font-mono text-xs uppercase font-bold">
-                      {mission.name}
-                    </div>
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => setTransportation('transit')}
+                  className={`flex items-center justify-center gap-2 py-4 rounded-lg border-2 transition-all ${
+                    transportation === 'transit'
+                      ? 'border-blue-500 bg-blue-50 text-blue-600'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  <Train className="w-5 h-5" />
+                  <span className="font-medium">公共交通</span>
+                </button>
+                <button
+                  onClick={() => setTransportation('car')}
+                  className={`flex items-center justify-center gap-2 py-4 rounded-lg border-2 transition-all ${
+                    transportation === 'car'
+                      ? 'border-blue-500 bg-blue-50 text-blue-600'
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  <Car className="w-5 h-5" />
+                  <span className="font-medium">車</span>
+                </button>
               </div>
             </div>
 
-            {/* Execute Button */}
-            <div className="terminal-panel">
-              <button
-                onClick={handleGenerate}
-                disabled={!destination.trim() || isLoading}
-                className={`
-                  w-full py-4 font-mono uppercase tracking-widest text-lg font-bold
-                  border-2 rounded-none transition-all
-                  ${
-                    !destination.trim() || isLoading
-                      ? 'border-green-900 text-green-900 cursor-not-allowed bg-black'
-                      : 'border-green-500 text-green-400 hover:bg-green-500/20 active:bg-green-500/30'
-                  }
-                `}
-              >
-                {isLoading ? (
-                  <span className="flex items-center justify-center gap-3">
-                    <div className="w-2 h-2 bg-green-500 animate-pulse rounded-full" />
-                    <div className="w-2 h-2 bg-green-500 animate-pulse rounded-full animation-delay-150" />
-                    <div className="w-2 h-2 bg-green-500 animate-pulse rounded-full animation-delay-300" />
-                    <span className="ml-2">COMPILING...</span>
-                  </span>
-                ) : (
-                  '[ EXECUTE MISSION ]'
-                )}
-              </button>
-            </div>
+            {/* Generate Button */}
+            <button
+              onClick={handleGenerate}
+              disabled={!destination.trim() || !baseArea.trim() || isLoading}
+              className="w-full py-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  プランを作成中...
+                </span>
+              ) : (
+                'プランを作成'
+              )}
+            </button>
 
             {/* Disclaimer */}
-            <div className="terminal-panel">
-              <details className="terminal-text-secondary text-xs">
-                <summary className="cursor-pointer hover:text-green-500 uppercase tracking-wide mb-2">
-                  ⚠ System Notice (Beta)
+            <div className="bg-gray-50 rounded-lg p-4">
+              <details className="text-gray-600 text-sm">
+                <summary className="cursor-pointer hover:text-gray-800 font-medium">
+                  ご利用上の注意
                 </summary>
-                <div className="space-y-2 pt-2 border-t border-green-500/20 terminal-body text-xs leading-relaxed">
+                <div className="space-y-2 pt-3 mt-3 border-t border-gray-200 text-xs leading-relaxed">
                   <p>
-                    • This is a BETA system. AI-generated data may be inaccurate
-                    or outdated.
+                    ・このサービスはベータ版です。AIが生成する情報は不正確な場合があります。
                   </p>
                   <p>
-                    • RATE LIMIT: ~100 missions per day due to API constraints.
+                    ・1日あたりのリクエスト数に制限があります（API制約のため）。
                   </p>
                   <p>
-                    • IMPORTANT: Verify all location details (hours, fees,
-                    reservations) before deployment.
+                    ・訪問前に営業時間、料金、予約の必要性などを必ずご確認ください。
                   </p>
                 </div>
               </details>
@@ -281,7 +239,7 @@ export function TripGenerator() {
           </div>
         </div>
       ) : object ? (
-        <MissionBriefing mission={object as ScouterResponse} />
+        <OptimizedPlanView plan={object as OptimizedPlan} />
       ) : null}
     </>
   )

@@ -3,7 +3,14 @@ import {
   planRepository,
   type PlanMetadata,
 } from '@/lib/repositories/plan-repository'
-import { ChevronLeft, ChevronRight, Database, Home } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  FolderOpen,
+  Home,
+  MapPin,
+  Calendar,
+} from 'lucide-react'
 
 const PLANS_PER_PAGE = 20
 
@@ -17,8 +24,8 @@ export default async function PlansPage({ searchParams }: PlansPageProps) {
   const offset = (currentPage - 1) * PLANS_PER_PAGE
 
   const [plans, totalCount] = await Promise.all([
-    planRepository.getRecentPlans(PLANS_PER_PAGE, offset),
-    planRepository.getTotalCount(),
+    planRepository.getRecentPlansV3(PLANS_PER_PAGE, offset),
+    planRepository.getTotalCountV3(),
   ])
 
   const totalPages = Math.ceil(totalCount / PLANS_PER_PAGE)
@@ -26,48 +33,54 @@ export default async function PlansPage({ searchParams }: PlansPageProps) {
   const hasNext = currentPage < totalPages
 
   return (
-    <div className="terminal-theme min-h-screen p-4 sm:p-6 terminal-scanlines">
-      <div className="container mx-auto max-w-6xl">
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
+      <div className="container mx-auto max-w-4xl">
         {/* Header */}
-        <div className="terminal-panel hud-corners mb-6">
-          <div className="flex items-center justify-between mb-2">
+        <div className="bg-white rounded-xl p-6 shadow-sm mb-6">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Database className="w-5 h-5 text-green-500" />
-              <h1 className="terminal-heading">MISSION ARCHIVE DATABASE</h1>
+              <FolderOpen className="w-6 h-6 text-blue-600" />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">
+                  プランアーカイブ
+                </h1>
+                <p className="text-sm text-gray-500">
+                  {totalCount}件のプラン | ページ {currentPage}/
+                  {totalPages || 1}
+                </p>
+              </div>
             </div>
             <Link href="/">
-              <button className="terminal-button text-xs px-3 py-2">
-                <Home className="w-4 h-4 inline mr-1" />
-                HOME
+              <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                <Home className="w-4 h-4" />
+                ホーム
               </button>
             </Link>
-          </div>
-          <div className="text-xs terminal-text-secondary">
-            TOTAL RECORDS: {totalCount} | PAGE: {currentPage}/{totalPages || 1}
           </div>
         </div>
 
         {plans.length === 0 ? (
-          <div className="terminal-panel text-center py-12">
-            <p className="terminal-body mb-2">NO ARCHIVED MISSIONS</p>
-            <p className="text-xs terminal-text-secondary">
-              <Link href="/" className="terminal-text-amber hover:underline">
-                INITIATE NEW OPERATION
-              </Link>
-            </p>
+          <div className="bg-white rounded-xl p-12 shadow-sm text-center">
+            <p className="text-gray-600 mb-2">保存されたプランがありません</p>
+            <Link
+              href="/"
+              className="text-blue-600 hover:underline text-sm font-medium"
+            >
+              新しいプランを作成する
+            </Link>
           </div>
         ) : (
           <>
-            {/* Mission List */}
-            <div className="space-y-2 mb-6">
+            {/* Plan List */}
+            <div className="space-y-3 mb-6">
               {plans.map(plan => (
-                <MissionArchiveEntry key={plan.id} plan={plan} />
+                <PlanArchiveEntry key={plan.id} plan={plan} />
               ))}
             </div>
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="terminal-panel">
+              <div className="bg-white rounded-xl p-4 shadow-sm">
                 <div className="flex justify-center items-center gap-4">
                   <Link
                     href={`/plans?page=${currentPage - 1}`}
@@ -76,28 +89,28 @@ export default async function PlansPage({ searchParams }: PlansPageProps) {
                     }
                   >
                     <button
-                      className="terminal-button text-xs px-4 py-2"
+                      className="flex items-center gap-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
                       disabled={!hasPrevious}
                     >
-                      <ChevronLeft className="h-4 w-4 inline mr-1" />
-                      PREV
+                      <ChevronLeft className="h-4 w-4" />
+                      前へ
                     </button>
                   </Link>
 
-                  <div className="terminal-body text-xs">
-                    PAGE {currentPage} / {totalPages}
-                  </div>
+                  <span className="text-sm text-gray-600">
+                    {currentPage} / {totalPages}
+                  </span>
 
                   <Link
                     href={`/plans?page=${currentPage + 1}`}
                     className={!hasNext ? 'pointer-events-none opacity-30' : ''}
                   >
                     <button
-                      className="terminal-button text-xs px-4 py-2"
+                      className="flex items-center gap-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
                       disabled={!hasNext}
                     >
-                      NEXT
-                      <ChevronRight className="h-4 w-4 inline ml-1" />
+                      次へ
+                      <ChevronRight className="h-4 w-4" />
                     </button>
                   </Link>
                 </div>
@@ -110,41 +123,38 @@ export default async function PlansPage({ searchParams }: PlansPageProps) {
   )
 }
 
-function MissionArchiveEntry({ plan }: { plan: PlanMetadata }) {
+function PlanArchiveEntry({ plan }: { plan: PlanMetadata }) {
   const formatDate = (timestamp: number) => {
     const d = new Date(timestamp)
-    return d.toISOString().slice(0, 19).replace('T', '_').replace(/[:-]/g, '')
+    return d.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
   }
-
-  const logId = formatDate(plan.createdAt).slice(0, 13)
 
   return (
     <Link href={`/plans/${plan.id}`}>
-      <div className="terminal-panel hover:bg-green-500/10 transition-colors cursor-pointer group min-h-[44px] flex items-center">
-        <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-2">
-            <span className="terminal-text-secondary text-xs shrink-0">
-              &gt; [LOG_{logId}]
-            </span>
-            <span className="terminal-text-amber text-xs shrink-0">
-              {plan.target === 'engineer' ? '[ENG]' : '[GEN]'}
-            </span>
-          </div>
+      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all cursor-pointer group">
+        <div className="flex items-center gap-4">
           <div className="flex-1 min-w-0">
-            <span className="terminal-body text-sm line-clamp-1 sm:line-clamp-none">
-              OPERATION: {plan.title.toUpperCase()}
-            </span>
+            <h3 className="font-medium text-gray-900 truncate">{plan.title}</h3>
+            <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5" />
+                {plan.destination}
+              </span>
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" />
+                {plan.days}日間
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-3 sm:gap-4 text-xs terminal-text-secondary shrink-0">
-            <span className="hidden sm:inline">{plan.destination}</span>
-            <span className="hidden sm:inline">{plan.days}D</span>
-            <span className="text-xs">
-              {new Date(plan.createdAt).toLocaleDateString('ja-JP', {
-                month: '2-digit',
-                day: '2-digit',
-              })}
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="text-sm text-gray-400">
+              {formatDate(plan.createdAt)}
             </span>
-            <ChevronRight className="w-4 h-4 text-green-500 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
           </div>
         </div>
       </div>

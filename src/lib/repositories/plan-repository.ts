@@ -1,5 +1,5 @@
 import { Redis } from '@upstash/redis'
-import type { Plan, ScouterResponse } from '@/types/plan'
+import type { Plan, ScouterResponse, OptimizedPlan } from '@/types/plan'
 import { debugLog } from '@/lib/debug'
 
 /**
@@ -17,6 +17,17 @@ export const REDIS_KEYS_V2 = {
 } as const
 
 /**
+ * Redis key patterns for V3 (Optimized Solo Travel)
+ * Completely isolated from V1 and V2 namespaces
+ */
+export const REDIS_KEYS_V3 = {
+  /** Sorted set of all optimized plan IDs (score = timestamp) */
+  SLUGS: 'v3:optimal:slugs',
+  /** Full plan data key pattern (replace {id} with actual ID) */
+  DATA: (id: string) => `v3:optimal:data:${id}`,
+} as const
+
+/**
  * Plan metadata for listing pages
  */
 export interface PlanMetadata {
@@ -26,11 +37,12 @@ export interface PlanMetadata {
   days: number
   target: 'engineer' | 'general'
   createdAt: number
+  version?: 'v2' | 'v3'
 }
 
 /**
  * Interface for Plan repository operations
- * Now supports both V1 (Plan) and V2 (ScouterResponse) data
+ * Now supports V1 (Plan), V2 (ScouterResponse), and V3 (OptimizedPlan) data
  */
 export interface IPlanRepository {
   save(data: Plan | ScouterResponse): Promise<string>
@@ -39,6 +51,11 @@ export interface IPlanRepository {
   getRecent(limit?: number): Promise<string[]>
   getRecentPlans(limit?: number, offset?: number): Promise<PlanMetadata[]>
   getTotalCount(): Promise<number>
+  // V3 methods
+  saveV3(data: OptimizedPlan): Promise<string>
+  getV3(slug: string): Promise<OptimizedPlan | null>
+  getRecentPlansV3(limit?: number, offset?: number): Promise<PlanMetadata[]>
+  getTotalCountV3(): Promise<number>
 }
 
 /**
@@ -369,6 +386,164 @@ export class PlanRepository implements IPlanRepository {
       return count
     } catch (error) {
       debugLog('Error getting total plan count:', error)
+      return 0
+    }
+  }
+
+  // ============================================
+  // V3 Methods: Optimized Solo Travel
+  // ============================================
+
+  /**
+   * Checks if data is OptimizedPlan (V3) format
+   * @private
+   */
+  private isOptimizedPlan(data: unknown): data is OptimizedPlan {
+    return (
+      typeof data === 'object' &&
+      data !== null &&
+      'itinerary' in data &&
+      Array.isArray((data as OptimizedPlan).itinerary)
+    )
+  }
+
+  /**
+   * Saves an OptimizedPlan to Redis (V3 namespace)
+   * @param data - The OptimizedPlan to save
+   * @returns The slug of the saved plan
+   */
+  async saveV3(data: OptimizedPlan): Promise<string> {
+    const fullSlug = this.generateSlug()
+    const timestamp = Date.now()
+
+    if (!this.redis) {
+      debugLog('Redis not configured, data not saved:', fullSlug)
+      return fullSlug
+    }
+
+    // Use pipeline to save atomically (V3 namespace)
+    const pipeline = this.redis.pipeline()
+
+    // Save full data - V3 key pattern
+    pipeline.set(REDIS_KEYS_V3.DATA(fullSlug), JSON.stringify(data))
+
+    // Add to sorted set for chronological ordering - V3 key pattern
+    pipeline.zadd(REDIS_KEYS_V3.SLUGS, { score: timestamp, member: fullSlug })
+
+    await pipeline.exec()
+
+    return fullSlug
+  }
+
+  /**
+   * Retrieves an OptimizedPlan by its slug (V3 namespace only)
+   * @param slug - The slug of the plan
+   * @returns The OptimizedPlan if found, null otherwise
+   */
+  async getV3(slug: string): Promise<OptimizedPlan | null> {
+    if (!this.redis) {
+      return null
+    }
+
+    try {
+      const data = await this.redis.get(REDIS_KEYS_V3.DATA(slug))
+      if (!data) return null
+
+      if (typeof data === 'object' && data !== null) {
+        return data as OptimizedPlan
+      }
+
+      if (typeof data === 'string') {
+        return JSON.parse(data) as OptimizedPlan
+      }
+
+      debugLog('Unexpected data type from Redis:', typeof data)
+      return null
+    } catch (error) {
+      debugLog('Error retrieving V3 plan:', error)
+      return null
+    }
+  }
+
+  /**
+   * Gets recent V3 plans with metadata
+   * @param limit - Maximum number of plans to return (default: 20, max: 100)
+   * @param offset - Number of plans to skip (default: 0)
+   * @returns Array of plan metadata (newest first)
+   */
+  async getRecentPlansV3(
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<PlanMetadata[]> {
+    if (!this.redis) {
+      return []
+    }
+
+    try {
+      const actualLimit = Math.min(limit, 100)
+      const start = offset
+      const end = offset + actualLimit - 1
+
+      // Get recent slugs from V3 namespace
+      const slugs = await this.redis.zrange<string[]>(
+        REDIS_KEYS_V3.SLUGS,
+        start,
+        end,
+        { rev: true }
+      )
+
+      if (slugs.length === 0) {
+        return []
+      }
+
+      // Fetch full data and extract metadata
+      const pipeline = this.redis.pipeline()
+      slugs.forEach(slug => {
+        pipeline.get(REDIS_KEYS_V3.DATA(slug))
+      })
+
+      const results = await pipeline.exec<(OptimizedPlan | null)[]>()
+
+      const metadata: PlanMetadata[] = []
+      for (let i = 0; i < results.length; i++) {
+        const plan = results[i]
+        const slug = slugs[i]
+
+        if (plan && this.isOptimizedPlan(plan)) {
+          const timestamp = Number(slug.split('-').pop()) || Date.now()
+          metadata.push({
+            id: slug,
+            title: plan.title,
+            destination: plan.title.split(' ')[0] || 'Travel',
+            days: plan.itinerary.length,
+            target: 'general',
+            createdAt: timestamp,
+            version: 'v3',
+          })
+        }
+      }
+
+      return metadata.sort((a, b) => b.createdAt - a.createdAt)
+    } catch (error) {
+      debugLog('Error getting recent V3 plans:', error)
+      return []
+    }
+  }
+
+  /**
+   * Gets the total number of V3 plans stored
+   * @returns Total count of V3 plans
+   */
+  async getTotalCountV3(): Promise<number> {
+    if (!this.redis) {
+      return 0
+    }
+
+    try {
+      const count = await this.redis.zcard(REDIS_KEYS_V3.SLUGS)
+      return count
+    } catch (error) {
+      debugLog('Error getting total V3 plan count:', error)
       return 0
     }
   }

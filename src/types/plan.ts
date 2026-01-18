@@ -246,3 +246,32 @@ export const OptimizedPlanSchema = z.object({
   ),
 })
 export type OptimizedPlan = z.infer<typeof OptimizedPlanSchema>
+
+// ============================================
+// INPUT VALIDATION SCHEMA (Step 1: Pre-Check)
+// ============================================
+
+/**
+ * Schema for validating and correcting user input (destination, base_area)
+ * Used in Step 1 lightweight pre-check before main plan generation
+ */
+export const InputValidationResultSchema = z.object({
+  isValid: z
+    .boolean()
+    .describe('Whether the input locations are valid and exist on Google Maps'),
+  correctedDestination: z
+    .string()
+    .describe(
+      'The corrected or validated destination (same as input if valid)'
+    ),
+  correctedBaseArea: z
+    .string()
+    .describe('The corrected or validated base area (same as input if valid)'),
+  reason: z
+    .string()
+    .optional()
+    .describe(
+      'Explanation of the correction if isValid is false (e.g., "島根駅は存在しないため松江駅に変更")'
+    ),
+})
+export type InputValidationResult = z.infer<typeof InputValidationResultSchema>

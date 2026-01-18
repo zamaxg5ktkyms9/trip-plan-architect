@@ -23,6 +23,8 @@ export const REDIS_KEYS_V2 = {
 export const REDIS_KEYS_V3 = {
   /** Sorted set of all optimized plan IDs (score = timestamp) */
   SLUGS: 'v3:optimal:slugs',
+  /** Metadata key pattern (replace {id} with actual ID) */
+  META: (id: string) => `v3:optimal:meta:${id}`,
   /** Full plan data key pattern (replace {id} with actual ID) */
   DATA: (id: string) => `v3:optimal:data:${id}`,
 } as const
@@ -422,11 +424,25 @@ export class PlanRepository implements IPlanRepository {
       return fullSlug
     }
 
+    // Prepare metadata for fast listing (lightweight)
+    const metadata: PlanMetadata = {
+      id: fullSlug,
+      title: data.title,
+      destination: data.title.split(' ')[0] || 'Travel',
+      days: data.itinerary?.length || 1,
+      target: 'general',
+      createdAt: timestamp,
+      version: 'v3',
+    }
+
     // Use pipeline to save atomically (V3 namespace)
     const pipeline = this.redis.pipeline()
 
     // Save full data - V3 key pattern
     pipeline.set(REDIS_KEYS_V3.DATA(fullSlug), JSON.stringify(data))
+
+    // Save lightweight metadata (for listing pages) - V3 key pattern
+    pipeline.set(REDIS_KEYS_V3.META(fullSlug), JSON.stringify(metadata))
 
     // Add to sorted set for chronological ordering - V3 key pattern
     pipeline.zadd(REDIS_KEYS_V3.SLUGS, { score: timestamp, member: fullSlug })
@@ -523,30 +539,61 @@ export class PlanRepository implements IPlanRepository {
         return []
       }
 
-      // Fetch full data and extract metadata
-      const pipeline = this.redis.pipeline()
+      // First, try to fetch lightweight metadata
+      const metaPipeline = this.redis.pipeline()
       slugs.forEach(slug => {
-        pipeline.get(REDIS_KEYS_V3.DATA(slug))
+        metaPipeline.get(REDIS_KEYS_V3.META(slug))
       })
 
-      const results = await pipeline.exec<(OptimizedPlan | null)[]>()
+      const metaResults = await metaPipeline.exec<(PlanMetadata | null)[]>()
 
       const metadata: PlanMetadata[] = []
-      for (let i = 0; i < results.length; i++) {
-        const plan = results[i]
+      const slugsNeedingFallback: string[] = []
+
+      for (let i = 0; i < metaResults.length; i++) {
+        const meta = metaResults[i]
         const slug = slugs[i]
 
-        if (plan && this.isOptimizedPlan(plan)) {
-          const timestamp = Number(slug.split('-').pop()) || Date.now()
-          metadata.push({
-            id: slug,
-            title: plan.title,
-            destination: plan.title.split(' ')[0] || 'Travel',
-            days: plan.itinerary.length,
-            target: 'general',
-            createdAt: timestamp,
-            version: 'v3',
-          })
+        if (meta && typeof meta === 'object') {
+          metadata.push(meta as PlanMetadata)
+        } else if (typeof meta === 'string') {
+          try {
+            metadata.push(JSON.parse(meta) as PlanMetadata)
+          } catch {
+            slugsNeedingFallback.push(slug)
+          }
+        } else {
+          // No metadata key exists - need fallback to full data
+          slugsNeedingFallback.push(slug)
+        }
+      }
+
+      // Fallback: fetch full data for legacy plans without metadata
+      if (slugsNeedingFallback.length > 0) {
+        const fallbackPipeline = this.redis.pipeline()
+        slugsNeedingFallback.forEach(slug => {
+          fallbackPipeline.get(REDIS_KEYS_V3.DATA(slug))
+        })
+
+        const fallbackResults =
+          await fallbackPipeline.exec<(OptimizedPlan | null)[]>()
+
+        for (let i = 0; i < fallbackResults.length; i++) {
+          const plan = fallbackResults[i]
+          const slug = slugsNeedingFallback[i]
+
+          if (plan && this.isOptimizedPlan(plan)) {
+            const timestamp = Number(slug.split('-').pop()) || Date.now()
+            metadata.push({
+              id: slug,
+              title: plan.title,
+              destination: plan.title.split(' ')[0] || 'Travel',
+              days: plan.itinerary.length,
+              target: 'general',
+              createdAt: timestamp,
+              version: 'v3',
+            })
+          }
         }
       }
 

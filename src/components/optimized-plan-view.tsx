@@ -207,7 +207,9 @@ ${plan.affiliate ? `おすすめ: ${plan.affiliate.label}` : ''}`
 
         {/* Back Button */}
         <button
-          onClick={() => router.push('/')}
+          onClick={() => {
+            window.location.href = '/'
+          }}
           className="w-full py-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 font-medium"
         >
           <ArrowLeft className="w-4 h-4" />

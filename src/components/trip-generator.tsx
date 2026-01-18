@@ -189,14 +189,17 @@ export function TripGenerator() {
                 </button>
                 <button
                   onClick={() => setTransportation('car')}
-                  className={`flex items-center justify-center gap-2 py-4 rounded-lg border-2 transition-all ${
+                  className={`relative flex items-center justify-center gap-2 py-4 rounded-lg border-2 transition-all ${
                     transportation === 'car'
                       ? 'border-blue-500 bg-blue-50 text-blue-600'
                       : 'border-gray-200 text-gray-600 hover:border-gray-300'
                   }`}
                 >
+                  <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-orange-500 text-white text-xs font-bold rounded-full">
+                    おすすめ
+                  </span>
                   <Car className="w-5 h-5" />
-                  <span className="font-medium">車</span>
+                  <span className="font-medium">車 / レンタカー</span>
                 </button>
               </div>
             </div>

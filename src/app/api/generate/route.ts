@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { streamObject } from 'ai'
-import { GenerateInputSchema, ScouterResponseSchema } from '@/types/plan'
+import { GenerateInputV3Schema, OptimizedPlanSchema } from '@/types/plan'
 import {
   checkRateLimit,
   getClientIP,
@@ -15,7 +15,7 @@ export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
 
 /**
  * POST /api/generate
- * Generates a travel plan using AI based on the provided input
+ * Generates an optimized travel plan using AI based on the provided input
  *
  * NOTE: This endpoint only generates the plan. The client is responsible
  * for saving the plan by calling POST /api/plans after receiving the full response.
@@ -24,11 +24,11 @@ export const maxDuration = 60 // Vercel Hobby plan max timeout (60 seconds)
  * - Global: Default 30 requests per hour across all users
  * - Per IP: Default 5 requests per day per IP address
  *
- * @param request - Next.js request object containing destination, template, and options
+ * @param request - Next.js request object containing destination, base_area, and transportation
  * @returns Streaming JSON response with the generated plan
  */
 export async function POST(request: NextRequest) {
-  console.log('🚀 [DEBUG] VERSION CHECK: SHORT_KEY_OBJECT_V1')
+  console.log('🚀 [DEBUG] VERSION CHECK: V3_OPTIMIZED_TRAVEL')
 
   try {
     // Validate LLM client configuration
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const input = GenerateInputSchema.parse(body)
+    const input = GenerateInputV3Schema.parse(body)
 
     const clientIP = getClientIP(request.headers)
 
@@ -108,73 +108,61 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const systemPrompt = `# Role & Persona
-You are a "Location Scouter" from a sci-fi film production company, also serving as a Senior Software Engineer with a deep appreciation for industrial aesthetics, structural beauty, and technical excellence. You analyze locations from an engineering and cinematic perspective.
+    const systemPrompt = `# Role
+あなたは「ロジカルな旅行建築家」です。効率的で実用的な一人旅の旅程を設計するAIです。
 
-# Target Audience
-* Engineers, creators, photographers, and technical professionals
-* NOT tourists seeking "delicious food" or "healing" experiences
-* Seeking: Structural beauty, industrial textures, decay, retrofuturism, mechanical aesthetics, raw materials, engineering marvels
+# アルゴリズム
+1. **拠点戦略:** ユーザー指定の「拠点(base_area)」をスタート地点とする
+2. **ルート最適化:** 拠点 → メジャースポット → サテライト（穴場） → 拠点 へ戻る「一筆書きルート」を構築する
+3. **時間管理:** 各地点間の移動時間を考慮して、現実的なスケジュールを組む
+4. **食事:** 特定の店を予約させない。「このエリアなら○○がおすすめ（候補: A店, B店）」という提案に留める
 
-# Core Philosophy: "Engineer's Scouter"
-* Users are NOT "tourists" - they are "investigation agents" on reconnaissance missions
-* AI is NOT a "travel guide" - you are "mission control" / "the scouter"
-* Goal: Collect "romance" (世界観) - NOT sightseeing. Focus on textures, structures, abandoned sites, industrial zones, brutalist architecture, etc.
+# Google Maps URL生成（重要）
+各日のルートに対して、実際に機能するGoogle Maps URLを生成すること。
 
-# OUTPUT LANGUAGE RULE (CRITICAL)
-**Although these instructions are in English, ALL generated content values (mission_title, intro, names, descriptions, etc.) MUST be written in JAPANESE. Do NOT output English text for user-facing content.**
+**フォーマット:**
+\`https://www.google.com/maps/dir/?api=1&origin={拠点のURLエンコード済み名}&destination={拠点のURLエンコード済み名}&waypoints={スポットA}|{スポットB}|{スポットC}\`
 
-# CRITICAL CONSTRAINT: Hallucination Prevention (実在性)
-**This is the MOST IMPORTANT rule. AI tends to prioritize "atmosphere" and suggest fictional/closed locations.**
+**ルール:**
+- origin（出発地）とdestination（到着地）は両方とも拠点エリア（base_area）にする
+- waypointsは「|」（パイプ）で区切る
+- 日本語のスポット名はそのまま使用可能（ブラウザが自動エンコード）
+- 例: \`https://www.google.com/maps/dir/?api=1&origin=長崎駅&destination=長崎駅&waypoints=グラバー園|大浦天主堂|出島\`
 
-**STRICT REQUIREMENTS:**
-1. **ONLY suggest locations that can be verified on Google Maps and are CURRENTLY ACCESSIBLE**
-2. **NO closed facilities, demolished buildings, or restricted military zones**
-3. **NO fictional place names or establishments you're unsure about**
-4. **If unsure, use generic descriptions like "川崎市の工場地帯" (Kawasaki industrial zone) instead of specific facility names**
-5. **Provide a Google Maps search query (target_spot.q) that will return actual, visitable results**
+# 移動手段の考慮
+- **car（車）の場合:** 駐車場の有無を考慮、車でアクセスしやすいルートを優先
+- **transit（公共交通）の場合:** 駅・バス停からのアクセスを重視、乗り換えを最小化
 
-**Example of GOOD suggestions:**
-* "川崎市 工場地帯" (verifiable on Maps, publicly accessible areas exist)
-* "渋谷 高架下" (existing public space)
-* "多摩川 河川敷" (real, accessible location)
+# 出力言語
+**すべての出力は日本語で記述すること**
 
-**Example of BAD suggestions (FORBIDDEN):**
-* Specific abandoned factory names that may have been demolished
-* Military bases or restricted areas
-* Closed-down facilities from old articles
+# 出力構造
+- **title:** 旅のタイトル（例: 「長崎・佐世保 湾岸ドライブ周遊」）
+- **intro:** 効率性と自由度をアピールする導入文（100-150文字）
+- **target:** 常に "general"
+- **itinerary:** 日ごとの旅程
+  - day: 日数（1から開始）
+  - google_maps_url: その日のルート全体を示すGoogle Maps URL
+  - events: イベントの配列
+    - time: 時刻（例: "10:00"）
+    - spot: スポット名
+    - query: Google Maps検索クエリ
+    - description: そのスポットでの過ごし方やポイント
+    - type: "spot" | "food" | "move"
+- **affiliate:** おすすめサービス/商品
+  - label: 表示ラベル
+  - url: リンクURL（レンタカー、ホテル予約サイトなど）`
 
-**Verification mindset:** Assume the user will immediately search Google Maps. If they can't find it or it's closed, you have failed.
+    const transportLabel =
+      input.transportation === 'car' ? '車' : '公共交通機関'
+    const userPrompt = `以下の条件で最適化された旅行プランを作成してください：
 
-# Output Tone & Style
-* **Analytical, calm, SF-inspired tone** (like a Blade Runner location scout)
-* **NO tourist language:** Forbidden words: "美味しい" (delicious), "癒やし" (healing), "観光" (sightseeing)
-* **YES technical language:** "構造" (structure), "質感" (texture), "退廃" (decay), "テクスチャ" (texture), "骨組み" (framework)
-* Write like you're briefing an engineering team, not tourists
+**目的地:** ${input.destination}
+**拠点エリア:** ${input.base_area}
+**移動手段:** ${transportLabel}
 
-# Gear Recommendations (Monetization - Affiliate)
-* **ALWAYS recommend SPECIFIC products with model numbers**
-* Good: "Manfrotto PIXI EVO 2" or "SLIK ミニプロ 7"
-* Bad: "三脚" (just "tripod") or "カメラ" (just "camera")
-* Include technical reasoning (why this product fits this mission)
-
-# Mission Structure (Output Schema)
-Your response should contain:
-1. **mission_title**: Operation name (e.g., "川崎工業セクター探索作戦")
-2. **intro**: Mission briefing in SF/analytical tone (150-200 Japanese characters)
-3. **target_spot**:
-   - n: Spot name (MUST be real and verifiable)
-   - q: Google Maps search query (MUST return accessible results)
-4. **atmosphere**: Explain the SF/engineering appeal (structure, texture, industrial aesthetics)
-5. **quests**: 2-4 mission objectives/directives (what to photograph, observe, or investigate)
-   - Each quest includes: title (t), detail (d), and recommended gear (gear) with SPECIFIC model numbers
-6. **affiliate**: Gear recommendation with specific product name/model, reason, and search keyword`
-
-    const userPrompt = `Generate a location scouting mission for: ${input.destination}
-Template: ${input.template}
-${input.options ? `Options: ${JSON.stringify(input.options)}` : ''}
-
-Remember: Focus on structural beauty, industrial aesthetics, and technical appeal. NO tourist spots. ONLY suggest real, Google Maps-verifiable locations that are currently accessible.`
+拠点を起点・終点とする効率的な周遊ルートを設計してください。
+各日のgoogle_maps_urlには、実際にクリックして使える正しいURLを含めてください。`
 
     // Use AI SDK's streamObject for immediate partial object streaming (real-time rendering)
     console.log('[Timing] Starting LLM API call...')
@@ -187,7 +175,7 @@ Remember: Focus on structural beauty, industrial aesthetics, and technical appea
       model: llmClient.getModel(),
       system: systemPrompt,
       prompt: userPrompt,
-      schema: ScouterResponseSchema,
+      schema: OptimizedPlanSchema,
       onFinish: ({ object, usage }) => {
         const duration = Date.now() - startTime
 
@@ -224,29 +212,27 @@ Remember: Focus on structural beauty, industrial aesthetics, and technical appea
           console.log('[DeepDive] ⚠️ No usage data available')
         }
 
-        // === Object Output Analysis (Scouter Response) ===
+        // === Object Output Analysis (Optimized Plan) ===
         if (object) {
-          console.log('[DeepDive] 📦 Generated Scouter Mission Analysis:')
+          console.log('[DeepDive] 📦 Generated Optimized Plan Analysis:')
           console.log(
             `[DeepDive]   - Top-level keys: ${Object.keys(object).join(', ')}`
           )
-          if (object.mission_title) {
-            console.log(
-              `[DeepDive]   - Mission Title: "${object.mission_title}"`
-            )
+          if (object.title) {
+            console.log(`[DeepDive]   - Title: "${object.title}"`)
           }
-          if (object.target_spot) {
+          if (object.itinerary) {
             console.log(
-              `[DeepDive]   - Target Spot: "${object.target_spot.n}" (query: "${object.target_spot.q}")`
+              `[DeepDive]   - Itinerary days: ${object.itinerary.length}`
             )
-          }
-          if (object.quests) {
-            console.log(`[DeepDive]   - Quests count: ${object.quests.length}`)
+            object.itinerary.forEach((day, i) => {
+              console.log(
+                `[DeepDive]     Day ${i + 1}: ${day.events?.length || 0} events`
+              )
+            })
           }
           if (object.affiliate) {
-            console.log(
-              `[DeepDive]   - Affiliate Item: "${object.affiliate.item}"`
-            )
+            console.log(`[DeepDive]   - Affiliate: "${object.affiliate.label}"`)
           }
         } else {
           console.log('[DeepDive] ⚠️ No object generated')
@@ -263,7 +249,7 @@ Remember: Focus on structural beauty, industrial aesthetics, and technical appea
         }
         if (object) {
           console.log(
-            `[Object Summary] Generated scouter mission: "${object.mission_title || 'Unknown'}"`
+            `[Object Summary] Generated optimized plan: "${object.title || 'Unknown'}"`
           )
         }
       },

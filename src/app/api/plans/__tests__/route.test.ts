@@ -1,42 +1,55 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { POST } from '../route'
 import { planRepository } from '@/lib/repositories/plan-repository'
-import type { ScouterResponse } from '@/types/plan'
+import type { OptimizedPlan } from '@/types/plan'
 
 // Mock the plan repository
 vi.mock('@/lib/repositories/plan-repository', () => ({
   planRepository: {
-    save: vi.fn(),
+    saveV3: vi.fn(),
   },
 }))
 
 describe('POST /api/plans', () => {
-  // V2 format: ScouterResponse (quests requires minimum 2 items)
-  const mockScouterResponse: ScouterResponse = {
-    mission_title: 'Test Tokyo Mission',
-    intro: 'エンジニアのための東京調査ミッション。',
-    target_spot: {
-      n: '渋谷スクランブル交差点',
-      q: 'Shibuya Crossing Tokyo',
-    },
-    atmosphere:
-      '世界最大級のスクランブル交差点。1回の青信号で最大3000人が交差する。',
-    quests: [
+  // V3 format: OptimizedPlan
+  const mockOptimizedPlan: OptimizedPlan = {
+    title: '長崎・佐世保 湾岸ドライブ周遊',
+    intro:
+      '拠点の長崎駅から出発し、グラバー園、出島、平和公園を効率的に巡る1日プランです。',
+    target: 'general',
+    itinerary: [
       {
-        t: '人流観察',
-        d: '青信号1回あたりの横断者数をカウントせよ',
-        gear: 'カウンター、ストップウォッチ',
-      },
-      {
-        t: '信号パターン分析',
-        d: '青信号の間隔と継続時間を記録せよ',
-        gear: 'ストップウォッチ、ノート',
+        day: 1,
+        google_maps_url:
+          'https://www.google.com/maps/dir/?api=1&origin=長崎駅&destination=長崎駅&waypoints=グラバー園|出島|平和公園',
+        events: [
+          {
+            time: '09:00',
+            spot: 'グラバー園',
+            query: 'グラバー園 長崎',
+            description: '歴史的な洋館群を見学',
+            type: 'spot',
+          },
+          {
+            time: '12:00',
+            spot: '出島周辺',
+            query: '出島 長崎',
+            description: 'このエリアでは長崎ちゃんぽんがおすすめ',
+            type: 'food',
+          },
+          {
+            time: '14:00',
+            spot: '平和公園',
+            query: '平和公園 長崎',
+            description: '平和祈念像と資料館を訪問',
+            type: 'spot',
+          },
+        ],
       },
     ],
     affiliate: {
-      item: 'ポータブルチェア',
-      q: 'ポータブルチェア 軽量',
-      reason: '長時間の観察に必要',
+      label: '楽天トラベル - 長崎のホテル予約',
+      url: 'https://travel.rakuten.co.jp/nagasaki',
     },
   }
 
@@ -44,16 +57,16 @@ describe('POST /api/plans', () => {
     vi.clearAllMocks()
   })
 
-  it('should save a valid ScouterResponse and return success with slug', async () => {
+  it('should save a valid OptimizedPlan and return success with slug', async () => {
     const mockSlug = 'plan-1234567890'
-    vi.mocked(planRepository.save).mockResolvedValue(mockSlug)
+    vi.mocked(planRepository.saveV3).mockResolvedValue(mockSlug)
 
     const request = new Request('http://localhost:3000/api/plans', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(mockScouterResponse),
+      body: JSON.stringify(mockOptimizedPlan),
     })
 
     const response = await POST(request as never)
@@ -62,13 +75,13 @@ describe('POST /api/plans', () => {
     expect(response.status).toBe(200)
     expect(data.success).toBe(true)
     expect(data.slug).toBe(mockSlug)
-    expect(planRepository.save).toHaveBeenCalledWith(mockScouterResponse)
+    expect(planRepository.saveV3).toHaveBeenCalledWith(mockOptimizedPlan)
   })
 
-  it('should return 500 if ScouterResponse validation fails', async () => {
+  it('should return 500 if OptimizedPlan validation fails', async () => {
     const invalidResponse = {
-      mission_title: 'Invalid Mission',
-      // Missing required fields: target_spot, atmosphere, quests
+      title: 'Invalid Plan',
+      // Missing required fields: intro, target, itinerary, affiliate
     }
 
     const request = new Request('http://localhost:3000/api/plans', {
@@ -84,12 +97,12 @@ describe('POST /api/plans', () => {
 
     expect(response.status).toBe(500)
     expect(data.success).toBe(false)
-    expect(data.error).toBe('Failed to save ScouterResponse')
-    expect(planRepository.save).not.toHaveBeenCalled()
+    expect(data.error).toBe('Failed to save OptimizedPlan')
+    expect(planRepository.saveV3).not.toHaveBeenCalled()
   })
 
   it('should return 500 if repository save fails', async () => {
-    vi.mocked(planRepository.save).mockRejectedValue(
+    vi.mocked(planRepository.saveV3).mockRejectedValue(
       new Error('Redis connection failed')
     )
 
@@ -98,7 +111,7 @@ describe('POST /api/plans', () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(mockScouterResponse),
+      body: JSON.stringify(mockOptimizedPlan),
     })
 
     const response = await POST(request as never)
@@ -106,7 +119,7 @@ describe('POST /api/plans', () => {
 
     expect(response.status).toBe(500)
     expect(data.success).toBe(false)
-    expect(data.error).toBe('Failed to save ScouterResponse')
+    expect(data.error).toBe('Failed to save OptimizedPlan')
     expect(data.details).toBe('Redis connection failed')
   })
 
@@ -124,7 +137,7 @@ describe('POST /api/plans', () => {
 
     expect(response.status).toBe(500)
     expect(data.success).toBe(false)
-    expect(data.error).toBe('Failed to save ScouterResponse')
-    expect(planRepository.save).not.toHaveBeenCalled()
+    expect(data.error).toBe('Failed to save OptimizedPlan')
+    expect(planRepository.saveV3).not.toHaveBeenCalled()
   })
 })

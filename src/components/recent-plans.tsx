@@ -3,34 +3,32 @@ import {
   planRepository,
   type PlanMetadata,
 } from '@/lib/repositories/plan-repository'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Calendar, MapPin } from 'lucide-react'
 
 interface RecentPlansProps {
   limit?: number
 }
 
 export async function RecentPlans({ limit = 20 }: RecentPlansProps) {
-  const plans = await planRepository.getRecentPlans(limit)
+  const plans = await planRepository.getRecentPlansV3(limit)
 
   return (
-    <section className="mt-16">
-      <div className="terminal-panel mb-4">
-        <h2 className="terminal-heading text-center">[ MISSION LOGS ]</h2>
-        <div className="text-center text-xs terminal-text-secondary mt-2">
-          RECENT OPERATIONS DATABASE
-        </div>
+    <section className="mt-12">
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-gray-900">最近のプラン</h2>
+        <p className="text-sm text-gray-500 mt-1">過去に作成した旅行プラン</p>
       </div>
       {plans.length === 0 ? (
-        <div className="terminal-panel text-center py-12">
-          <p className="terminal-body mb-2">NO MISSION DATA AVAILABLE</p>
-          <p className="text-xs terminal-text-secondary">
-            INITIATE FIRST OPERATION ABOVE
+        <div className="bg-gray-50 rounded-xl p-8 text-center">
+          <p className="text-gray-600 mb-2">まだプランがありません</p>
+          <p className="text-sm text-gray-500">
+            上のフォームから最初のプランを作成しましょう
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {plans.map(plan => (
-            <MissionLogEntry key={plan.id} plan={plan} />
+            <PlanListItem key={plan.id} plan={plan} />
           ))}
         </div>
       )}
@@ -38,41 +36,38 @@ export async function RecentPlans({ limit = 20 }: RecentPlansProps) {
   )
 }
 
-function MissionLogEntry({ plan }: { plan: PlanMetadata }) {
+function PlanListItem({ plan }: { plan: PlanMetadata }) {
   const formatDate = (timestamp: number) => {
     const d = new Date(timestamp)
-    return d.toISOString().slice(0, 19).replace('T', '_').replace(/[:-]/g, '')
+    return d.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
   }
-
-  const logId = formatDate(plan.createdAt).slice(0, 13)
 
   return (
     <Link href={`/plans/${plan.id}`}>
-      <div className="terminal-panel hover:bg-green-500/10 transition-colors cursor-pointer group min-h-[44px] flex items-center">
-        <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-          <div className="flex items-center gap-2">
-            <span className="terminal-text-secondary text-xs shrink-0">
-              &gt; [LOG_{logId}]
-            </span>
-            <span className="terminal-text-amber text-xs shrink-0">
-              {plan.target === 'engineer' ? '[ENG]' : '[GEN]'}
-            </span>
-          </div>
+      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 hover:shadow-md hover:border-gray-200 transition-all cursor-pointer group">
+        <div className="flex items-center gap-4">
           <div className="flex-1 min-w-0">
-            <span className="terminal-body text-sm line-clamp-1 sm:line-clamp-none">
-              OPERATION: {plan.title.toUpperCase()}
-            </span>
+            <h3 className="font-medium text-gray-900 truncate">{plan.title}</h3>
+            <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5" />
+                {plan.destination}
+              </span>
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" />
+                {plan.days}日間
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-3 sm:gap-4 text-xs terminal-text-secondary shrink-0">
-            <span className="hidden sm:inline">{plan.destination}</span>
-            <span className="hidden sm:inline">{plan.days}D</span>
-            <span className="text-xs">
-              {new Date(plan.createdAt).toLocaleDateString('ja-JP', {
-                month: '2-digit',
-                day: '2-digit',
-              })}
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="text-sm text-gray-400">
+              {formatDate(plan.createdAt)}
             </span>
-            <ChevronRight className="w-4 h-4 text-green-500 group-hover:translate-x-1 transition-transform" />
+            <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
           </div>
         </div>
       </div>

@@ -111,21 +111,3 @@ export async function getUnsplashImage(query: string): Promise<string | null> {
     return null
   }
 }
-
-/**
- * Generates a placeholder gradient background for when images are unavailable
- * @param seed - String to seed the color generation (e.g., location name)
- * @returns CSS gradient string
- */
-export function getPlaceholderGradient(seed: string): string {
-  // Simple hash function to generate consistent colors from string
-  let hash = 0
-  for (let i = 0; i < seed.length; i++) {
-    hash = seed.charCodeAt(i) + ((hash << 5) - hash)
-  }
-
-  const hue1 = Math.abs(hash % 360)
-  const hue2 = (hue1 + 60) % 360
-
-  return `linear-gradient(135deg, hsl(${hue1}, 70%, 60%) 0%, hsl(${hue2}, 70%, 75%) 100%)`
-}

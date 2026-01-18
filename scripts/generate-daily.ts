@@ -1,6 +1,6 @@
 #!/usr/bin/env ts-node
 /**
- * Automated Daily Travel Plan Generator
+ * Automated Daily Travel Plan Generator (V3)
  *
  * This script generates SEO-optimized travel plans based on curated seed data.
  * It runs daily via GitHub Actions to populate the database with fresh content.
@@ -9,9 +9,8 @@
  * 1. Load environment variables and validate configuration
  * 2. Select a random seed plan from SEED_PLANS
  * 3. Generate travel plan using configured LLM provider (OpenAI or Google Gemini)
- * 4. Fetch images from Unsplash API using seed keywords
- * 5. Save plan to Redis database
- * 6. Send notification to Discord webhook
+ * 4. Save plan to Redis database (V3 namespace)
+ * 5. Send notification to Discord webhook
  *
  * Usage:
  *   ts-node scripts/generate-daily.ts
@@ -22,24 +21,14 @@
  *   - GEMINI_API_KEY (if using Google Gemini)
  *   - UPSTASH_REDIS_REST_URL
  *   - UPSTASH_REDIS_REST_TOKEN
- *   - UNSPLASH_ACCESS_KEY (optional)
  *   - DISCORD_WEBHOOK_URL (optional)
  */
 
+import { generateObject } from 'ai'
 import { getLLMClient } from '../src/lib/llm/client'
 import { PlanRepository } from '../src/lib/repositories/plan-repository'
 import { SEED_PLANS, SeedPlan } from '../src/lib/constants/seeds'
-
-/**
- * Unsplash API response type
- */
-interface UnsplashSearchResponse {
-  results: Array<{
-    urls: {
-      regular: string
-    }
-  }>
-}
+import { OptimizedPlanSchema, type OptimizedPlan } from '../src/types/plan'
 
 /**
  * Environment variable validation
@@ -75,131 +64,79 @@ function randomChoice<T>(array: readonly T[]): T {
 }
 
 /**
- * Fetches an image URL from Unsplash API
- * Uses seed keywords to improve search accuracy
+ * Generates an optimized travel plan using configured LLM provider based on seed data
  */
-async function fetchUnsplashImage(seed: SeedPlan): Promise<string | null> {
-  if (!process.env.UNSPLASH_ACCESS_KEY) {
-    console.log('⚠ Unsplash API key not configured, skipping image fetch')
-    return null
-  }
-
-  try {
-    // Try primary search with region + first keyword
-    const primaryQuery = `${seed.region} ${seed.keywords[0]}`
-    const url = new URL('https://api.unsplash.com/search/photos')
-    url.searchParams.set('query', primaryQuery)
-    url.searchParams.set('orientation', 'landscape')
-    url.searchParams.set('per_page', '1')
-
-    const response = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`,
-      },
-    })
-
-    if (!response.ok) {
-      console.log(
-        `⚠ Unsplash API error: ${response.status} ${response.statusText}`
-      )
-      return null
-    }
-
-    const data = (await response.json()) as UnsplashSearchResponse
-
-    if (data.results && data.results.length > 0) {
-      console.log(`✓ Image fetched for query: "${primaryQuery}"`)
-      return data.results[0].urls.regular
-    }
-
-    // Fallback: try just the region
-    console.log(`⚠ No results for "${primaryQuery}", trying region only...`)
-    url.searchParams.set('query', seed.region)
-
-    const fallbackResponse = await fetch(url.toString(), {
-      headers: {
-        Authorization: `Client-ID ${process.env.UNSPLASH_ACCESS_KEY}`,
-      },
-    })
-
-    if (fallbackResponse.ok) {
-      const fallbackData =
-        (await fallbackResponse.json()) as UnsplashSearchResponse
-      if (fallbackData.results && fallbackData.results.length > 0) {
-        console.log(`✓ Image fetched for region: "${seed.region}"`)
-        return fallbackData.results[0].urls.regular
-      }
-    }
-
-    console.log('⚠ No images found on Unsplash')
-    return null
-  } catch (error) {
-    console.error('⚠ Error fetching Unsplash image:', error)
-    return null
-  }
-}
-
-/**
- * Generates a travel plan using configured LLM provider based on seed data
- */
-async function generatePlan(seed: SeedPlan) {
-  console.log(`\n📝 Generating plan for: ${seed.title}`)
+async function generatePlan(seed: SeedPlan): Promise<OptimizedPlan> {
+  console.log(`\n📝 Generating V3 optimized plan for: ${seed.title}`)
   console.log(`   Region: ${seed.region}`)
   console.log(`   Theme: ${seed.theme}`)
   console.log(`   Keywords: ${seed.keywords.join(', ')}`)
 
-  const systemPrompt = `# Role Definition
-あなたは日本のソフトウェアエンジニア専属の「Tech-Travel Architect」です。
-ユーザー（エンジニア）のために、最適な「開発合宿」「ワーケーション」「デジタルデトックス」のプランを構築してください。
+  const systemPrompt = `# Role
+あなたは「ロジカルな旅行建築家」です。効率的で実用的な一人旅の旅程を設計するAIです。
 
-# Target Audience
-* 日本のエンジニア（30代中心、男性が多い）。
-* 好み：静寂、高速なWi-Fi、確実に使える電源、ガジェット、アニメ/ゲーム文化、効率性。
-* 嫌い：観光客で混雑している場所、情緒だけの低スペックな環境、曖昧な情報。
+# アルゴリズム
+1. **拠点戦略:** 指定された地域の主要駅周辺をスタート地点とする
+2. **ルート最適化:** 拠点 → メジャースポット → サテライト（穴場） → 拠点 へ戻る「一筆書きルート」を構築する
+3. **時間管理:** 各地点間の移動時間を考慮して、現実的なスケジュールを組む
+4. **食事:** 特定の店を予約させない。「このエリアなら○○がおすすめ（候補: A店, B店）」という提案に留める
 
-# Output Style Guidelines
-1. **Language:** 日本語 (Japanese)。すべての出力は日本語で行うこと。
-2. **Tone:**
-   * "おもてなし"調の敬語は不要。
-   * エンジニア同士の会話のような、論理的で簡潔な「技術文書（Documentation）」スタイル。
-   * 結論ファースト（TL;DR）。
-3. **Format:** JSON形式（既存のスキーマに従うこと）。ただし、説明文（note, activity）等はMarkdown形式を活用する。
+# Google Maps URL生成（重要）
+各日のルートに対して、実際に機能するGoogle Maps URLを生成すること。
 
-# Critical Constraints
-1. **Tech Specs First:**
-   * 観光情報よりも「スペック」を優先して記述すること。
-   * 施設説明には必ず「Wi-Fi速度」「電源可用性」「静寂度」に関する言及（推測可）を含めること。
-2. **Context:**
-   * 単なる旅行ではなく、「コードを書く」「技術書を読む」「思考を整理する」ための文脈を含めること。
-3. **Output Language:**
-   * 入力言語に関わらず、必ず日本語で出力すること（Output must be in Japanese regardless of input language）。
-4. **Theme Focus:**
-   * このプランのテーマは「${seed.theme}」です。このテーマに特化した内容を提供すること。`
+**フォーマット:**
+\`https://www.google.com/maps/dir/?api=1&origin={拠点}&destination={拠点}&waypoints={スポットA}|{スポットB}|{スポットC}\`
 
-  const userPrompt = `Create a travel plan for ${seed.region} with the theme "${seed.theme}".
+**ルール:**
+- origin（出発地）とdestination（到着地）は両方とも拠点エリアにする
+- waypointsは「|」（パイプ）で区切る
+- 日本語のスポット名はそのまま使用可能
 
-Title suggestion: "${seed.title}"
-Focus keywords: ${seed.keywords.join(', ')}
+# 出力言語
+**すべての出力は日本語で記述すること**
 
-Please generate a complete travel itinerary with:
-- A descriptive title (you can use the suggestion or create a better one)
-- 3-5 days of activities
-- Each day should have 4-8 events
-- Each event should include: time, activity description, type (spot/food/work/move), name, and helpful notes
-- Events should be realistic and well-timed (e.g., breakfast at 8:00, lunch at 12:00, etc.)
-- Include a mix of sightseeing, dining, work time (if theme is workation/deep work), and travel time
-- Make it specific to ${seed.region} and authentic to the ${seed.theme} theme
-- Target audience: ${seed.theme.includes('Work') || seed.theme.includes('Tech') ? 'software engineers and tech professionals' : 'general travelers with specific interests'}
+# 出力構造
+- **title:** 旅のタイトル
+- **intro:** 効率性と自由度をアピールする導入文（100-150文字）
+- **target:** 常に "general"
+- **itinerary:** 日ごとの旅程
+  - day: 日数（1から開始）
+  - google_maps_url: その日のルート全体を示すGoogle Maps URL
+  - events: イベントの配列
+    - time: 時刻（例: "10:00"）
+    - spot: スポット名
+    - query: Google Maps検索クエリ
+    - description: そのスポットでの過ごし方やポイント
+    - type: "spot" | "food" | "move"
+- **affiliate:** おすすめサービス/商品
+  - label: 表示ラベル
+  - url: リンクURL（レンタカー、ホテル予約サイトなど）`
 
-Important: Ensure the plan feels natural and valuable, not just keyword-stuffed for SEO.`
+  const userPrompt = `以下の条件で最適化された旅行プランを作成してください：
+
+**目的地:** ${seed.region}
+**テーマ:** ${seed.theme}
+**キーワード:** ${seed.keywords.join(', ')}
+**タイトル案:** ${seed.title}
+
+拠点（${seed.region}の主要駅周辺）を起点・終点とする効率的な周遊ルートを設計してください。
+2〜3日間のプランで、各日のgoogle_maps_urlには、実際にクリックして使える正しいURLを含めてください。`
 
   const llmClient = getLLMClient()
-  const plan = await llmClient.generatePlan(systemPrompt, userPrompt)
+
+  const result = await generateObject({
+    model: llmClient.getModel(),
+    system: systemPrompt,
+    prompt: userPrompt,
+    schema: OptimizedPlanSchema,
+  })
+
+  const plan = result.object
 
   console.log(`✓ Plan generated: "${plan.title}"`)
-  console.log(`   Days: ${plan.days.length}`)
+  console.log(`   Days: ${plan.itinerary.length}`)
   console.log(
-    `   Total events: ${plan.days.reduce((acc: number, day) => acc + day.events.length, 0)}`
+    `   Total events: ${plan.itinerary.reduce((acc: number, day) => acc + day.events.length, 0)}`
   )
 
   return plan
@@ -221,9 +158,9 @@ async function sendDiscordNotification(
   try {
     const url = `https://www.trip-plan-architect.com/plans/${slug}`
     const embed = {
-      title: '✈️ New Travel Plan Generated',
+      title: '✈️ New V3 Travel Plan Generated',
       description: planTitle,
-      color: 0x3b82f6, // Blue
+      color: 0x2563eb, // Blue-600
       fields: [
         {
           name: 'Region',
@@ -275,7 +212,7 @@ async function sendDiscordNotification(
  * Main execution function
  */
 async function main() {
-  console.log('🚀 Starting automated travel plan generation...\n')
+  console.log('🚀 Starting V3 automated travel plan generation...\n')
 
   // Step 1: Validate environment
   validateEnvironment()
@@ -297,24 +234,21 @@ async function main() {
   console.log(`   ${selectedSeed.title} (${selectedSeed.region})`)
 
   try {
-    // Step 4: Generate plan with OpenAI
+    // Step 4: Generate V3 optimized plan
     const plan = await generatePlan(selectedSeed)
 
-    // Step 5: Fetch image (optional, non-blocking)
-    await fetchUnsplashImage(selectedSeed)
-
-    // Step 6: Save to Redis
-    console.log('\n💾 Saving plan to Redis...')
+    // Step 5: Save to Redis (V3 namespace)
+    console.log('\n💾 Saving V3 plan to Redis...')
     const repository = new PlanRepository()
-    const slug = await repository.save(plan)
+    const slug = await repository.saveV3(plan)
     console.log(`✓ Plan saved successfully: ${slug}`)
 
-    // Step 7: Send Discord notification
+    // Step 6: Send Discord notification
     console.log('\n📢 Sending notification...')
     await sendDiscordNotification(selectedSeed, slug, plan.title)
 
     // Success summary
-    console.log('\n✅ Generation completed successfully!')
+    console.log('\n✅ V3 Generation completed successfully!')
     console.log(`   Slug: ${slug}`)
     console.log(`   Title: ${plan.title}`)
     console.log(`   URL: https://www.trip-plan-architect.com/plans/${slug}\n`)

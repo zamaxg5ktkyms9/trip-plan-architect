@@ -17,20 +17,20 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Trip Plan Architect - エンジニアのための旅行計画',
+  title: 'Optimized Solo Travel - 効率的な一人旅ルート設計',
   description:
-    '開発合宿、ワーケーション、デジタルデトックス。日本のエンジニアに最適な『没頭できる旅』をAIが自動構築します。',
+    '行きたい場所を最適なルートに。30代からの効率的なソロ旅をAIが設計します。拠点から始まる一筆書きルートで、自由で無駄のない旅を。',
   openGraph: {
-    title: 'Trip Plan Architect - エンジニアのための旅行計画',
+    title: 'Optimized Solo Travel - 効率的な一人旅ルート設計',
     description:
-      '開発合宿、ワーケーション、デジタルデトックス。日本のエンジニアに最適な『没頭できる旅』をAIが自動構築します。',
+      '行きたい場所を最適なルートに。30代からの効率的なソロ旅をAIが設計します。拠点から始まる一筆書きルートで、自由で無駄のない旅を。',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Trip Plan Architect - エンジニアのための旅行計画',
+    title: 'Optimized Solo Travel - 効率的な一人旅ルート設計',
     description:
-      '開発合宿、ワーケーション、デジタルデトックス。日本のエンジニアに最適な『没頭できる旅』をAIが自動構築します。',
+      '行きたい場所を最適なルートに。30代からの効率的なソロ旅をAIが設計します。拠点から始まる一筆書きルートで、自由で無駄のない旅を。',
   },
 }
 

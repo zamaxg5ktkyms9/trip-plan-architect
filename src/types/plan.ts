@@ -232,6 +232,11 @@ export const OptimizedPlanSchema = z.object({
   title: z
     .string()
     .describe('Trip title (e.g., "長崎・佐世保 湾岸ドライブ周遊")'),
+  image_query: z
+    .string()
+    .describe(
+      'English search query for Unsplash image (format: "City, Country", e.g., "Matsue, Japan"). Must be in English.'
+    ),
   intro: z
     .string()
     .describe(

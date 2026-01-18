@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { DeepPartial } from 'ai'
 import type { OptimizedPlan } from '@/types/plan'
@@ -23,6 +23,31 @@ interface OptimizedPlanViewProps {
 export function OptimizedPlanView({ plan }: OptimizedPlanViewProps) {
   const router = useRouter()
   const [copied, setCopied] = useState(false)
+  const [imageUrl, setImageUrl] = useState<string | null>(null)
+
+  // Fetch destination image from Unsplash
+  useEffect(() => {
+    if (!plan.title) return
+
+    const fetchImage = async () => {
+      try {
+        const response = await fetch(
+          `/api/unsplash?query=${encodeURIComponent(plan.title || '')}`
+        )
+        if (response.ok) {
+          const data = await response.json()
+          if (data.url) {
+            setImageUrl(data.url)
+          }
+        }
+      } catch (error) {
+        // Silently fail - image is optional
+        console.error('Failed to fetch Unsplash image:', error)
+      }
+    }
+
+    fetchImage()
+  }, [plan.title])
 
   const copyPlanText = () => {
     if (!plan.title) return
@@ -86,6 +111,15 @@ ${plan.affiliate ? `おすすめ: ${plan.affiliate.label}` : ''}`
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6">
       <div className="max-w-3xl mx-auto space-y-6">
+        {/* Destination Image */}
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt={plan.title || '旅行先のイメージ'}
+            className="w-full h-48 sm:h-64 object-cover rounded-xl shadow-sm mb-6"
+          />
+        )}
+
         {/* Header Card */}
         <div className="bg-white rounded-xl p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4">

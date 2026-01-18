@@ -16,7 +16,7 @@ export default function Home() {
             ✈️ Trip Plan Architect
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            ハイスペックな休日を、設計しよう。
+            休日を、ロジカルに最適化する。
           </p>
         </header>
 

@@ -6,7 +6,7 @@ import { type OptimizedPlan, OptimizedPlanSchema } from '@/types/plan'
 import { OptimizedPlanView } from '@/components/optimized-plan-view'
 import { toast } from 'sonner'
 import { debugLog, debugError } from '@/lib/debug'
-import { MapPin, Navigation, Car, Train } from 'lucide-react'
+import { MapPin, Navigation, Car, Train, Calendar } from 'lucide-react'
 
 export function TripGenerator() {
   const [destination, setDestination] = useState('')
@@ -14,6 +14,7 @@ export function TripGenerator() {
   const [transportation, setTransportation] = useState<'car' | 'transit'>(
     'transit'
   )
+  const [days, setDays] = useState<number>(2)
 
   const { object, submit, isLoading } = useObject({
     api: '/api/generate',
@@ -96,6 +97,7 @@ export function TripGenerator() {
       destination,
       baseArea,
       transportation,
+      days,
     })
 
     if (!destination.trim()) {
@@ -114,6 +116,7 @@ export function TripGenerator() {
         destination,
         base_area: baseArea,
         transportation,
+        days,
       })
       debugLog('[DEBUG] submit() called')
     } catch (err) {
@@ -202,6 +205,27 @@ export function TripGenerator() {
                   <span className="font-medium">車 / レンタカー</span>
                 </button>
               </div>
+            </div>
+
+            {/* Days Selection */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <Calendar className="w-4 h-4" />
+                旅行日数
+              </label>
+              <select
+                value={days}
+                onChange={e => setDays(Number(e.target.value))}
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white"
+              >
+                <option value={1}>1日（日帰り）</option>
+                <option value={2}>2日（1泊2日）</option>
+                <option value={3}>3日（2泊3日）</option>
+                <option value={4}>4日（3泊4日）</option>
+              </select>
+              <p className="text-xs text-gray-500">
+                生成速度と品質のため、最大3泊4日までとなります
+              </p>
             </div>
 
             {/* Generate Button */}

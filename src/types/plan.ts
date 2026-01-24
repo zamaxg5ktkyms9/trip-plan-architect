@@ -178,6 +178,12 @@ export const GenerateInputV3Schema = z.object({
   destination: z.string().min(1, 'Destination is required'),
   base_area: z.string().min(1, 'Base area is required'),
   transportation: z.enum(['car', 'transit']),
+  days: z
+    .number()
+    .min(1)
+    .max(4)
+    .default(2)
+    .describe('Number of days: 1=日帰り, 2=1泊2日, 3=2泊3日, 4=3泊4日'),
 })
 export type GenerateInputV3 = z.infer<typeof GenerateInputV3Schema>
 

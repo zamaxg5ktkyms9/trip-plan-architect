@@ -58,6 +58,13 @@ const PLAN_GENERATION_PROMPT = `# 最重要: 固有名詞の正確性（ハル�
 
 # ルート構築の絶対ルール（物理的整合性の担保）
 
+## 0. 日数厳守ルール（Days Logic - 最重要）
+**ユーザーが指定した日数（days）の行程を必ず作成すること。それ以上もそれ以下も禁止。**
+- 1日 = Day 1 のみ（日帰り）
+- 2日 = Day 1 〜 Day 2（1泊2日）
+- 3日 = Day 1 〜 Day 3（2泊3日）
+- 4日 = Day 1 〜 Day 4（3泊4日）
+
 ## 1. 開始地点ルール（Start Logic）
 **Day1の最初のイベントは、必ずユーザーが入力した拠点エリア（base_area）からの出発とすること。**
 - いきなり観光地から始めることは禁止。
@@ -370,6 +377,15 @@ export async function POST(request: NextRequest) {
       input.transportation === 'car' ? '車' : '公共交通機関'
 
     // Build user prompt dynamically based on validation result
+    const daysLabel =
+      input.days === 1
+        ? '1日（日帰り）'
+        : input.days === 2
+          ? '2日（1泊2日）'
+          : input.days === 3
+            ? '3日（2泊3日）'
+            : '4日（3泊4日）'
+
     let userPrompt: string
     if (!validationResult.isValid && validationResult.reason) {
       // Correction was applied - include notification instruction
@@ -378,6 +394,7 @@ export async function POST(request: NextRequest) {
 **目的地:** ${effectiveDestination}
 **拠点エリア:** ${effectiveBaseArea}
 **移動手段:** ${transportLabel}
+**旅行日数:** ${daysLabel}（Day 1 〜 Day ${input.days} まで作成すること。それ以上もそれ以下も禁止）
 
 **重要な注意事項:**
 ユーザーは『${input.destination}』と『${input.base_area}』を指定しましたが、実在しないため『${effectiveDestination}』と『${effectiveBaseArea}』としてプランを作成してください。
@@ -392,6 +409,7 @@ export async function POST(request: NextRequest) {
 **目的地:** ${effectiveDestination}
 **拠点エリア:** ${effectiveBaseArea}
 **移動手段:** ${transportLabel}
+**旅行日数:** ${daysLabel}（Day 1 〜 Day ${input.days} まで作成すること。それ以上もそれ以下も禁止）
 
 拠点を起点・終点とする効率的な周遊ルートを設計してください。
 各日のgoogle_maps_urlには、実際にクリックして使える正しいURLを含めてください。`

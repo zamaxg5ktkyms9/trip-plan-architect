@@ -1,0 +1,193 @@
+import { NextRequest, NextResponse } from 'next/server'
+
+export const runtime = 'edge'
+
+/**
+ * 楽天トラベルAPIのホテル情報型定義
+ */
+interface RakutenHotelBasicInfo {
+  hotelNo: number
+  hotelName: string
+  hotelInformationUrl: string
+  hotelMinCharge: number
+  reviewAverage: number
+  reviewCount: number
+  hotelImageUrl: string
+  hotelThumbnailUrl: string
+  address1: string
+  address2: string
+  telephoneNo: string
+  access: string
+}
+
+interface RakutenHotel {
+  hotel: Array<{
+    hotelBasicInfo?: RakutenHotelBasicInfo
+  }>
+}
+
+interface RakutenAPIResponse {
+  pagingInfo?: {
+    recordCount: number
+    pageCount: number
+    page: number
+    first: number
+    last: number
+  }
+  hotels?: RakutenHotel[]
+  error?: string
+  error_description?: string
+}
+
+/**
+ * フロントエンド向けのホテル情報型
+ */
+export interface HotelItem {
+  hotelName: string
+  hotelImageUrl: string
+  minPrice: number
+  reviewAverage: number
+  reviewCount: number
+  affiliateUrl: string
+  address: string
+  access: string
+}
+
+/**
+ * APIレスポンス型
+ */
+export interface RakutenSearchResponse {
+  items: HotelItem[]
+  fallbackUrl: string
+}
+
+/**
+ * GET /api/rakuten/search
+ * 楽天トラベルAPIをプロキシし、ホテル情報を取得
+ *
+ * Query Parameters:
+ * - keyword: 検索キーワード（エリア名やホテル名）
+ *
+ * @returns JSON with items[] and fallbackUrl
+ */
+export async function GET(request: NextRequest) {
+  const { searchParams } = request.nextUrl
+  const keyword = searchParams.get('keyword')
+
+  // 環境変数取得
+  const appId = process.env.RAKUTEN_APP_ID
+  const affiliateId = process.env.RAKUTEN_AFFILIATE_ID
+
+  // Fallback URL生成（APIが失敗してもこれを返す）
+  const fallbackUrl = affiliateId
+    ? `https://search.travel.rakuten.co.jp/ds/hotel/search?f_search_keyword=${encodeURIComponent(keyword || '')}&f_teikei=${affiliateId}`
+    : `https://search.travel.rakuten.co.jp/ds/hotel/search?f_search_keyword=${encodeURIComponent(keyword || '')}`
+
+  // バリデーション
+  if (!keyword) {
+    return NextResponse.json<RakutenSearchResponse>(
+      { items: [], fallbackUrl },
+      { status: 200 }
+    )
+  }
+
+  // 環境変数チェック
+  if (!appId) {
+    console.error('[Rakuten API] RAKUTEN_APP_ID is not configured')
+    return NextResponse.json<RakutenSearchResponse>(
+      { items: [], fallbackUrl },
+      { status: 200 }
+    )
+  }
+
+  try {
+    // 楽天トラベル SimpleHotelSearch API
+    const apiUrl = new URL(
+      'https://app.rakuten.co.jp/services/api/Travel/SimpleHotelSearch/20170426'
+    )
+    apiUrl.searchParams.set('format', 'json')
+    apiUrl.searchParams.set('keyword', keyword)
+    apiUrl.searchParams.set('applicationId', appId)
+    apiUrl.searchParams.set('hits', '3') // 上位3件取得
+    apiUrl.searchParams.set('sort', 'reviewAverage') // レビュー平均順
+
+    if (affiliateId) {
+      apiUrl.searchParams.set('affiliateId', affiliateId)
+    }
+
+    console.log(`[Rakuten API] Fetching: keyword="${keyword}"`)
+
+    const response = await fetch(apiUrl.toString(), {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+
+    // APIエラー（429 Too Many Requests, 5xxなど）
+    if (!response.ok) {
+      console.error(
+        `[Rakuten API] HTTP Error: ${response.status} ${response.statusText}`
+      )
+      return NextResponse.json<RakutenSearchResponse>(
+        { items: [], fallbackUrl },
+        { status: 200 }
+      )
+    }
+
+    const data: RakutenAPIResponse = await response.json()
+
+    // APIレスポンスエラー
+    if (data.error) {
+      console.error(`[Rakuten API] API Error: ${data.error_description}`)
+      return NextResponse.json<RakutenSearchResponse>(
+        { items: [], fallbackUrl },
+        { status: 200 }
+      )
+    }
+
+    // 検索結果が0件
+    if (!data.hotels || data.hotels.length === 0) {
+      console.log(`[Rakuten API] No hotels found for: "${keyword}"`)
+      return NextResponse.json<RakutenSearchResponse>(
+        { items: [], fallbackUrl },
+        { status: 200 }
+      )
+    }
+
+    // ホテル情報を整形
+    const items: HotelItem[] = data.hotels
+      .map(hotel => {
+        const basicInfo = hotel.hotel?.[0]?.hotelBasicInfo
+        if (!basicInfo) return null
+
+        return {
+          hotelName: basicInfo.hotelName,
+          hotelImageUrl:
+            basicInfo.hotelImageUrl || basicInfo.hotelThumbnailUrl || '',
+          minPrice: basicInfo.hotelMinCharge || 0,
+          reviewAverage: basicInfo.reviewAverage || 0,
+          reviewCount: basicInfo.reviewCount || 0,
+          affiliateUrl: basicInfo.hotelInformationUrl,
+          address: `${basicInfo.address1 || ''}${basicInfo.address2 || ''}`,
+          access: basicInfo.access || '',
+        }
+      })
+      .filter((item): item is HotelItem => item !== null)
+
+    console.log(
+      `[Rakuten API] Success: Found ${items.length} hotels for "${keyword}"`
+    )
+
+    return NextResponse.json<RakutenSearchResponse>({
+      items,
+      fallbackUrl,
+    })
+  } catch (error) {
+    console.error('[Rakuten API] Unexpected error:', error)
+    return NextResponse.json<RakutenSearchResponse>(
+      { items: [], fallbackUrl },
+      { status: 200 }
+    )
+  }
+}

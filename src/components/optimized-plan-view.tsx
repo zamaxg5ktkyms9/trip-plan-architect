@@ -15,6 +15,7 @@ import {
   Search,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { RakutenHotelCard } from './rakuten-hotel-card'
 
 interface OptimizedPlanViewProps {
   plan: DeepPartial<OptimizedPlan>
@@ -314,22 +315,27 @@ ${plan.affiliate ? `おすすめ: ${plan.affiliate.label}` : ''}`
                       <p className="text-sm text-gray-600 leading-relaxed">
                         {event?.description}
                       </p>
-                      {/* Google Search Link - different label by event type */}
+                      {/* Search Link / Rakuten Hotel Card - different by event type */}
                       {(event?.type === 'spot' || event?.type === 'food') &&
                         event?.spot &&
                         (() => {
                           const isAccommodation =
                             /ホテル|旅館|宿|Hotel|Ryokan/i.test(event.spot)
+
+                          // 宿泊施設の場合：楽天トラベルカードを表示
+                          if (event.type === 'spot' && isAccommodation) {
+                            return <RakutenHotelCard keyword={event.spot} />
+                          }
+
+                          // それ以外：Google検索リンク
                           const getSearchQuery = () => {
                             if (event.type === 'food')
                               return event.spot + ' グルメ'
-                            if (isAccommodation) return event.spot + ' 宿泊'
                             return event.spot + ' 観光'
                           }
                           const getSearchLabel = () => {
                             if (event.type === 'food')
                               return 'このエリアの人気店を探す'
-                            if (isAccommodation) return '宿泊プラン・詳細を検索'
                             return '最新情報・公式HPを検索'
                           }
                           return (

@@ -316,22 +316,34 @@ ${plan.affiliate ? `おすすめ: ${plan.affiliate.label}` : ''}`
                       </p>
                       {/* Google Search Link - different label by event type */}
                       {(event?.type === 'spot' || event?.type === 'food') &&
-                        event?.spot && (
-                          <a
-                            href={`https://www.google.com/search?q=${encodeURIComponent(
-                              event.spot +
-                                (event.type === 'food' ? ' グルメ' : ' 観光')
-                            )}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
-                          >
-                            <Search className="w-3 h-3" />
-                            {event.type === 'food'
-                              ? 'このエリアの人気店を探す'
-                              : '最新情報・公式HPを検索'}
-                          </a>
-                        )}
+                        event?.spot &&
+                        (() => {
+                          const isAccommodation =
+                            /ホテル|旅館|宿|Hotel|Ryokan/i.test(event.spot)
+                          const getSearchQuery = () => {
+                            if (event.type === 'food')
+                              return event.spot + ' グルメ'
+                            if (isAccommodation) return event.spot + ' 宿泊'
+                            return event.spot + ' 観光'
+                          }
+                          const getSearchLabel = () => {
+                            if (event.type === 'food')
+                              return 'このエリアの人気店を探す'
+                            if (isAccommodation) return '宿泊プラン・詳細を検索'
+                            return '最新情報・公式HPを検索'
+                          }
+                          return (
+                            <a
+                              href={`https://www.google.com/search?q=${encodeURIComponent(getSearchQuery())}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
+                            >
+                              <Search className="w-3 h-3" />
+                              {getSearchLabel()}
+                            </a>
+                          )
+                        })()}
                     </div>
                   </div>
                 ))}

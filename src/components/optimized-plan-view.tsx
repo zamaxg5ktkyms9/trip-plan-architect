@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Utensils,
   Navigation,
+  Search,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -313,6 +314,19 @@ ${plan.affiliate ? `おすすめ: ${plan.affiliate.label}` : ''}`
                       <p className="text-sm text-gray-600 leading-relaxed">
                         {event?.description}
                       </p>
+                      {/* Google Search Link for spot and food events */}
+                      {(event?.type === 'spot' || event?.type === 'food') &&
+                        event?.spot && (
+                          <a
+                            href={`https://www.google.com/search?q=${encodeURIComponent(event.spot + ' 観光')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 mt-2 font-medium"
+                          >
+                            <Search className="w-3 h-3" />
+                            最新情報・公式HPを検索
+                          </a>
+                        )}
                     </div>
                   </div>
                 ))}

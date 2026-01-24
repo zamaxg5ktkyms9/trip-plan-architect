@@ -27,10 +27,10 @@ function generateGoogleMapsUrl(
   baseArea: string,
   day: DeepPartial<ItineraryDay>
 ): string {
-  // Filter events that should be included as waypoints (spot or food, not move)
+  // Filter events: only 'spot' type (exclude 'food' to avoid vague area references like "○○駅周辺")
   const waypoints =
     day.events
-      ?.filter(event => event?.type === 'spot' || event?.type === 'food')
+      ?.filter(event => event?.type === 'spot')
       .map(event => event?.spot)
       .filter((spot): spot is string => !!spot) || []
 
@@ -44,6 +44,8 @@ function generateGoogleMapsUrl(
     params.set('waypoints', waypoints.join('|'))
   }
 
+  // Corrected: Use standard Google Maps Directions URL format
+  // Format: https://www.google.com/maps/dir/?api=1&origin=...&destination=...&waypoints=...
   return `https://www.google.com/maps/dir/?${params.toString()}`
 }
 

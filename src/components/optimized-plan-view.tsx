@@ -314,17 +314,22 @@ ${plan.affiliate ? `おすすめ: ${plan.affiliate.label}` : ''}`
                       <p className="text-sm text-gray-600 leading-relaxed">
                         {event?.description}
                       </p>
-                      {/* Google Search Link for spot and food events */}
+                      {/* Google Search Link - different label by event type */}
                       {(event?.type === 'spot' || event?.type === 'food') &&
                         event?.spot && (
                           <a
-                            href={`https://www.google.com/search?q=${encodeURIComponent(event.spot + ' 観光')}`}
+                            href={`https://www.google.com/search?q=${encodeURIComponent(
+                              event.spot +
+                                (event.type === 'food' ? ' グルメ' : ' 観光')
+                            )}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 mt-2 font-medium"
+                            className="inline-flex items-center gap-1 mt-3 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors"
                           >
                             <Search className="w-3 h-3" />
-                            最新情報・公式HPを検索
+                            {event.type === 'food'
+                              ? 'このエリアの人気店を探す'
+                              : '最新情報・公式HPを検索'}
                           </a>
                         )}
                     </div>

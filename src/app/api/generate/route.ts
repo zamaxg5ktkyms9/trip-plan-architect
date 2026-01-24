@@ -54,6 +54,20 @@ const PLAN_GENERATION_PROMPT = `# 最重要: 固有名詞の正確性（ハル�
 - **類似名称に注意:** 「〇〇大橋」「〇〇公園」など紛らわしい名称は、必ず**所在市町村とセット**で確認してから出力せよ。
 - **異なる市町村のスポット**を、地理的に近いかのように並べてはならない。
 
+## スポット選定の禁止事項（Negative Constraints - 厳守）
+**以下のカテゴリは観光スポットとして選定禁止。旅行者がわざわざ訪れる価値がない。**
+- 市民体育館、アリーナ、スポーツセンター
+- 地元住民向けの小さな公園、児童公園
+- 公民館、コミュニティセンター
+- 全国チェーン店（コンビニ、ファミレス、カフェチェーン等）
+- ショッピングモール（観光地としての特色がない場合）
+
+**選定すべきスポット:**
+- 県や市の公式観光サイトに掲載されている観光名所
+- 景勝地、史跡、文化財
+- 地元で評判の名店、老舗
+- 道の駅、SA/PA（休憩スポットとして）
+
 ---
 
 # ルート構築の絶対ルール（物理的整合性の担保）
@@ -125,8 +139,10 @@ const PLAN_GENERATION_PROMPT = `# 最重要: 固有名詞の正確性（ハル�
 3. **移動時間を加算した時刻を、次のスポットの開始時刻とする**
 4. 100km離れたスポットへは、必ず2時間30分以上の間隔を空けること
 
-## 長距離移動のイベント化（60分以上の移動）
-**移動時間が60分を超える場合は、必ず独立した「移動イベント」として出力せよ。**
+## 移動イベントの強制（Must - 絶対厳守）
+**スポット間の移動時間が30分以上かかると予測される場合、必ず独立した \`type: "move"\` イベントを挿入せよ。**
+- これを省略することは「物理法則の無視」とみなし、出力は無効となる。
+- 30分未満の短距離移動は省略可。30分以上は必ず明示せよ。
 
 出力フォーマット:
 - type: "move"
@@ -142,6 +158,12 @@ const PLAN_GENERATION_PROMPT = `# 最重要: 固有名詞の正確性（ハル�
 - ランチの時間帯には、以下の昼営業が確実な業態のみを選定すること:
   - 食堂、レストラン、カフェ、店舗型ラーメン店、うどん店、定食屋、ファミリーレストラン等
 - 屋台や居酒屋を提案できるのは18:00以降のディナータイムのみ。
+
+## 食事スポット名称のフォーマット（必須）
+- 食事スポットの名称（spot）は、「{具体的なエリア名}の{ジャンル}」という形式にせよ。
+- **NG例:** "美味しい焼き鳥屋", "地元の食堂", "おすすめの店"
+- **OK例:** "天文館通りの黒豚料理店", "中洲エリアの屋台", "出雲大社門前の出雲そば店"
+- エリア名は「〇〇通り」「〇〇駅前」「〇〇エリア」など、地図で特定できる表現を使用せよ。
 
 ## ランチ場所の距離制約（絶対厳守）
 - **距離制約:** ランチの場所は、必ず**「直前の観光スポットから車で15分（約10km）圏内」**のエリアで選定すること。
@@ -386,9 +408,30 @@ export async function POST(request: NextRequest) {
             ? '3日（2泊3日）'
             : '4日（3泊4日）'
 
+    // Check if actual correction was made (not just validation failure with same values)
+    const destinationActuallyCorrected =
+      effectiveDestination !== input.destination
+    const baseAreaActuallyCorrected = effectiveBaseArea !== input.base_area
+    const actualCorrectionMade =
+      destinationActuallyCorrected || baseAreaActuallyCorrected
+
     let userPrompt: string
-    if (!validationResult.isValid && validationResult.reason) {
-      // Correction was applied - include notification instruction
+    if (actualCorrectionMade && validationResult.reason) {
+      // Actual correction was applied - include notification instruction
+      // Build correction message only for fields that were actually changed
+      const correctionParts: string[] = []
+      if (destinationActuallyCorrected) {
+        correctionParts.push(
+          `目的地『${input.destination}』→『${effectiveDestination}』`
+        )
+      }
+      if (baseAreaActuallyCorrected) {
+        correctionParts.push(
+          `拠点『${input.base_area}』→『${effectiveBaseArea}』`
+        )
+      }
+      const correctionMessage = correctionParts.join('、')
+
       userPrompt = `以下の条件で最適化された旅行プランを作成してください：
 
 **目的地:** ${effectiveDestination}
@@ -397,13 +440,13 @@ export async function POST(request: NextRequest) {
 **旅行日数:** ${daysLabel}（Day 1 〜 Day ${input.days} まで作成すること。それ以上もそれ以下も禁止）
 
 **重要な注意事項:**
-ユーザーは『${input.destination}』と『${input.base_area}』を指定しましたが、実在しないため『${effectiveDestination}』と『${effectiveBaseArea}』としてプランを作成してください。
-出力の冒頭（intro）で、「※ご指定の『${input.base_area}』は特定できなかったため、近隣の主要拠点である『${effectiveBaseArea}』を出発地として作成しました。」という形式でユーザーに優しく通知してください。
+ユーザー入力を補正しました（${correctionMessage}）。
+出力の冒頭（intro）で、「※ご指定の地名を補正しました：${correctionMessage}」という形式でユーザーに優しく通知してください。
 
 拠点を起点・終点とする効率的な周遊ルートを設計してください。
 各日のgoogle_maps_urlには、実際にクリックして使える正しいURLを含めてください。`
     } else {
-      // No correction needed - standard prompt
+      // No actual correction needed - standard prompt (even if isValid was false)
       userPrompt = `以下の条件で最適化された旅行プランを作成してください：
 
 **目的地:** ${effectiveDestination}

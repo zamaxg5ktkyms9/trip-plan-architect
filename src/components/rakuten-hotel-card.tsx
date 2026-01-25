@@ -119,7 +119,9 @@ export function RakutenHotelCard({ keyword }: RakutenHotelCardProps) {
       ''
     )
     .trim()
-  const searchListUrl = `https://search.travel.rakuten.co.jp/ds/vacant/search?f_search_keyword=${encodeURIComponent(sanitizedKeyword)}`
+  const searchListUrl =
+    fallbackUrl ||
+    `https://search.travel.rakuten.co.jp/ds/vacant/search?f_search_keyword=${encodeURIComponent(sanitizedKeyword)}`
 
   return (
     <div className="mt-3 space-y-2">

@@ -210,9 +210,8 @@ export const EventV3Schema = z.object({
     ),
   is_stay: z
     .boolean()
-    .optional()
     .describe(
-      'True ONLY if this event is for overnight stay (check-in). False for day-use spots (e.g., day-trip hot springs, lunch at ryokan).'
+      'True ONLY if this event is for overnight stay (check-in). False for day-use spots (e.g., day-trip hot springs, lunch at ryokan). This field is required.'
     ),
 })
 export type EventV3 = z.infer<typeof EventV3Schema>

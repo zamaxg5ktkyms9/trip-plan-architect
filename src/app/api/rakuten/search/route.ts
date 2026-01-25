@@ -138,6 +138,15 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    // 404は「ヒットなし」として正常に処理（エラーログを出さない）
+    if (response.status === 404) {
+      console.log(`[Rakuten API] No hotels found (404) for: "${keyword}"`)
+      return NextResponse.json<RakutenSearchResponse>(
+        { items: [], fallbackUrl },
+        { status: 200 }
+      )
+    }
+
     // APIエラー（429 Too Many Requests, 5xxなど）
     if (!response.ok) {
       console.error(

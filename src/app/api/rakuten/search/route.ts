@@ -67,7 +67,7 @@ export interface RakutenSearchResponse {
 function sanitizeKeyword(keyword: string): string {
   return keyword
     .replace(
-      /[\u2600-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD10-\uDDFF]/g,
+      /[\u2600-\u26FF]|[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD10-\uDDFF]/g,
       ''
     )
     .trim()
@@ -116,9 +116,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 楽天トラベル SimpleHotelSearch API
+    // 楽天トラベル KeywordHotelSearch API
     const apiUrl = new URL(
-      'https://app.rakuten.co.jp/services/api/Travel/SimpleHotelSearch/20170426'
+      'https://app.rakuten.co.jp/services/api/Travel/KeywordHotelSearch/20170426'
     )
     apiUrl.searchParams.set('format', 'json')
     apiUrl.searchParams.set('keyword', keyword)

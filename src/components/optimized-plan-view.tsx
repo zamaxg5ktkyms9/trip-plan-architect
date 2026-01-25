@@ -323,8 +323,13 @@ ${plan.affiliate ? `おすすめ: ${plan.affiliate.label}` : ''}`
                             /ホテル|旅館|宿|Hotel|Ryokan/i.test(event.spot)
 
                           // 宿泊施設の場合：楽天トラベルカードを表示
+                          // search_keyword優先（AIが生成した検索用キーワード）
                           if (event.type === 'spot' && isAccommodation) {
-                            return <RakutenHotelCard keyword={event.spot} />
+                            return (
+                              <RakutenHotelCard
+                                keyword={event.search_keyword || event.spot}
+                              />
+                            )
                           }
 
                           // それ以外：Google検索リンク

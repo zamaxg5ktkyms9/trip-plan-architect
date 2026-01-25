@@ -202,6 +202,12 @@ export const EventV3Schema = z.object({
   query: z.string().describe('Google Maps search query'),
   description: z.string().describe('Description of what to do at this spot'),
   type: EventTypeV3Schema.describe('Event type (spot/food/move)'),
+  search_keyword: z
+    .string()
+    .optional()
+    .describe(
+      'Search query for hotel/spot booking. Format: "Area Keyword" (space separated). No particles like "no", "ni". Example: "Ibusuki Sunamushi", "Tenmonkan Hotel"'
+    ),
 })
 export type EventV3 = z.infer<typeof EventV3Schema>
 

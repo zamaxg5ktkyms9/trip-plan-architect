@@ -85,34 +85,21 @@ export function RakutenHotelCard({ keyword }: RakutenHotelCardProps) {
 
   // エラー時・データなし時：Fallbackリンク表示
   if (hasError || !hotel) {
-    // FallbackURLがなければ何も表示しない
-    if (!fallbackUrl) {
-      // 環境変数からアフィリエイトIDを取得できない場合のフォールバック
-      // 絵文字や特殊記号を除去してからURLエンコード
-      const sanitizedKeyword = keyword
-        .replace(
-          /[\u2600-\u26FF]|[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD10-\uDDFF]/g,
-          ''
-        )
-        .trim()
-      const defaultFallbackUrl = `https://search.travel.rakuten.co.jp/ds/vacant/search?f_search_keyword=${encodeURIComponent(sanitizedKeyword)}`
-      return (
-        <a
-          href={defaultFallbackUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium text-sm shadow-sm"
-        >
-          <Building2 className="w-4 h-4" />
-          楽天トラベルで『{keyword}』の宿を探す
-          <ExternalLink className="w-3.5 h-3.5" />
-        </a>
+    // 絵文字や特殊記号を除去してからURLエンコード
+    const sanitizedKeyword = keyword
+      .replace(
+        /[\u2600-\u26FF]|[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD10-\uDDFF]/g,
+        ''
       )
-    }
+      .trim()
+
+    const finalFallbackUrl =
+      fallbackUrl ||
+      `https://search.travel.rakuten.co.jp/ds/vacant/search?f_search_keyword=${encodeURIComponent(sanitizedKeyword)}`
 
     return (
       <a
-        href={fallbackUrl}
+        href={finalFallbackUrl}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-3 flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-600 hover:to-red-700 transition-all font-medium text-sm shadow-sm"

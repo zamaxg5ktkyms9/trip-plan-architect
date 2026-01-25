@@ -124,7 +124,6 @@ export async function GET(request: NextRequest) {
     apiUrl.searchParams.set('keyword', keyword)
     apiUrl.searchParams.set('applicationId', appId)
     apiUrl.searchParams.set('hits', '3') // 上位3件取得
-    apiUrl.searchParams.set('sort', 'reviewAverage') // レビュー平均順
 
     if (affiliateId) {
       apiUrl.searchParams.set('affiliateId', affiliateId)

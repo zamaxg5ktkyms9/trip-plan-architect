@@ -95,7 +95,7 @@ export function RakutenHotelCard({ keyword }: RakutenHotelCardProps) {
 
     const finalFallbackUrl =
       fallbackUrl ||
-      `https://search.travel.rakuten.co.jp/ds/vacant/search?f_search_keyword=${encodeURIComponent(sanitizedKeyword)}`
+      `https://search.travel.rakuten.co.jp/ds/simple/search?f_query=${encodeURIComponent(sanitizedKeyword)}`
 
     return (
       <a
@@ -121,7 +121,7 @@ export function RakutenHotelCard({ keyword }: RakutenHotelCardProps) {
     .trim()
   const searchListUrl =
     fallbackUrl ||
-    `https://search.travel.rakuten.co.jp/ds/vacant/search?f_search_keyword=${encodeURIComponent(sanitizedKeyword)}`
+    `https://search.travel.rakuten.co.jp/ds/simple/search?f_query=${encodeURIComponent(sanitizedKeyword)}`
 
   return (
     <div className="mt-3 space-y-2">

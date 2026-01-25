@@ -30,6 +30,7 @@ describe('POST /api/plans', () => {
             description: '歴史的な洋館群を見学',
             type: 'spot',
             search_keyword: null,
+            is_stay: false,
           },
           {
             time: '12:00',
@@ -38,6 +39,7 @@ describe('POST /api/plans', () => {
             description: 'このエリアでは長崎ちゃんぽんがおすすめ',
             type: 'food',
             search_keyword: '出島 長崎ちゃんぽん',
+            is_stay: false,
           },
           {
             time: '14:00',
@@ -46,6 +48,7 @@ describe('POST /api/plans', () => {
             description: '平和祈念像と資料館を訪問',
             type: 'spot',
             search_keyword: null,
+            is_stay: false,
           },
         ],
       },

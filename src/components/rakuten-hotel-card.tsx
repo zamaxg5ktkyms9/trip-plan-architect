@@ -88,7 +88,14 @@ export function RakutenHotelCard({ keyword }: RakutenHotelCardProps) {
     // FallbackURLがなければ何も表示しない
     if (!fallbackUrl) {
       // 環境変数からアフィリエイトIDを取得できない場合のフォールバック
-      const defaultFallbackUrl = `https://search.travel.rakuten.co.jp/ds/hotel/search?f_search_keyword=${encodeURIComponent(keyword)}`
+      // 絵文字や特殊記号を除去してからURLエンコード
+      const sanitizedKeyword = keyword
+        .replace(
+          /[\u2600-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD10-\uDDFF]/g,
+          ''
+        )
+        .trim()
+      const defaultFallbackUrl = `https://search.travel.rakuten.co.jp/ds/vacant/search?f_search_keyword=${encodeURIComponent(sanitizedKeyword)}`
       return (
         <a
           href={defaultFallbackUrl}

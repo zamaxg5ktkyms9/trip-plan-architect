@@ -91,7 +91,7 @@ export function RakutenHotelCard({ keyword }: RakutenHotelCardProps) {
       // 絵文字や特殊記号を除去してからURLエンコード
       const sanitizedKeyword = keyword
         .replace(
-          /[\u2600-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD10-\uDDFF]/g,
+          /[\u2600-\u26FF]|[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD10-\uDDFF]/g,
           ''
         )
         .trim()

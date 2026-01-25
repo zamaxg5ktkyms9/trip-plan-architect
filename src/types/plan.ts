@@ -204,9 +204,9 @@ export const EventV3Schema = z.object({
   type: EventTypeV3Schema.describe('Event type (spot/food/move)'),
   search_keyword: z
     .string()
-    .optional()
+    .nullable()
     .describe(
-      'Search query for hotel/spot booking. Format: "Area Keyword" (space separated). No particles like "no", "ni". Example: "Ibusuki Sunamushi", "Tenmonkan Hotel"'
+      'Search query for hotel/spot booking. Format: "Area Keyword" (space separated). No particles like "no", "ni". Example: "Ibusuki Sunamushi", "Tenmonkan Hotel". Use null if not needed for regular tourist spots.'
     ),
 })
 export type EventV3 = z.infer<typeof EventV3Schema>

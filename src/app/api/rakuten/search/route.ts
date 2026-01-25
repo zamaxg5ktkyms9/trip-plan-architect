@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
 
   // Fallback URL生成（APIが失敗してもこれを返す）
   // 1. 正しいエンドポイントとパラメータで検索URLを作成
-  const searchUrl = `https://search.travel.rakuten.co.jp/ds/vacant/search?f_dai=japan&f_query=${encodeURIComponent(keyword)}`
+  const searchUrl = `https://search.travel.rakuten.co.jp/ds/simple/search?f_dai=japan&f_query=${encodeURIComponent(keyword)}`
 
   // 2. affiliateIdがある場合は、hb.afl.rakuten.co.jp でラップする
   const fallbackUrl = affiliateId

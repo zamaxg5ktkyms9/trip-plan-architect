@@ -62,6 +62,18 @@ export interface RakutenSearchResponse {
 }
 
 /**
+ * 絵文字や特殊記号を除去して楽天API用にサニタイズ
+ */
+function sanitizeKeyword(keyword: string): string {
+  return keyword
+    .replace(
+      /[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD10-\uDDFF]/g,
+      ''
+    )
+    .trim()
+}
+
+/**
  * GET /api/rakuten/search
  * 楽天トラベルAPIをプロキシし、ホテル情報を取得
  *
@@ -72,16 +84,19 @@ export interface RakutenSearchResponse {
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
-  const keyword = searchParams.get('keyword')
+  const rawKeyword = searchParams.get('keyword')
 
   // 環境変数取得
   const appId = process.env.RAKUTEN_APP_ID
   const affiliateId = process.env.RAKUTEN_AFFILIATE_ID
 
+  // キーワードをサニタイズ
+  const keyword = rawKeyword ? sanitizeKeyword(rawKeyword) : ''
+
   // Fallback URL生成（APIが失敗してもこれを返す）
   const fallbackUrl = affiliateId
-    ? `https://search.travel.rakuten.co.jp/ds/hotel/search?f_search_keyword=${encodeURIComponent(keyword || '')}&f_teikei=${affiliateId}`
-    : `https://search.travel.rakuten.co.jp/ds/hotel/search?f_search_keyword=${encodeURIComponent(keyword || '')}`
+    ? `https://search.travel.rakuten.co.jp/ds/vacant/search?f_search_keyword=${encodeURIComponent(keyword)}&f_teikei=${affiliateId}`
+    : `https://search.travel.rakuten.co.jp/ds/vacant/search?f_search_keyword=${encodeURIComponent(keyword)}`
 
   // バリデーション
   if (!keyword) {

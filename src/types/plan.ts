@@ -208,6 +208,12 @@ export const EventV3Schema = z.object({
     .describe(
       'Search query for hotel/spot booking. Format: "Area Keyword" (space separated). No particles like "no", "ni". Example: "Ibusuki Sunamushi", "Tenmonkan Hotel". Use null if not needed for regular tourist spots.'
     ),
+  is_stay: z
+    .boolean()
+    .optional()
+    .describe(
+      'True ONLY if this event is for overnight stay (check-in). False for day-use spots (e.g., day-trip hot springs, lunch at ryokan).'
+    ),
 })
 export type EventV3 = z.infer<typeof EventV3Schema>
 

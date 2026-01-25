@@ -319,12 +319,9 @@ ${plan.affiliate ? `おすすめ: ${plan.affiliate.label}` : ''}`
                       {(event?.type === 'spot' || event?.type === 'food') &&
                         event?.spot &&
                         (() => {
-                          const isAccommodation =
-                            /ホテル|旅館|宿|Hotel|Ryokan/i.test(event.spot)
-
                           // 宿泊施設の場合：楽天トラベルカードを表示
-                          // search_keyword優先（AIが生成した検索用キーワード）
-                          if (event.type === 'spot' && isAccommodation) {
+                          // is_stay フラグで判定（日帰り温泉等との混同を防ぐ）
+                          if (event.type === 'spot' && event.is_stay === true) {
                             return (
                               <RakutenHotelCard
                                 keyword={event.search_keyword || event.spot}

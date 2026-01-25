@@ -29,6 +29,7 @@ describe('POST /api/plans', () => {
             query: 'グラバー園 長崎',
             description: '歴史的な洋館群を見学',
             type: 'spot',
+            search_keyword: null,
           },
           {
             time: '12:00',
@@ -36,6 +37,7 @@ describe('POST /api/plans', () => {
             query: '出島 長崎',
             description: 'このエリアでは長崎ちゃんぽんがおすすめ',
             type: 'food',
+            search_keyword: '出島 長崎ちゃんぽん',
           },
           {
             time: '14:00',
@@ -43,6 +45,7 @@ describe('POST /api/plans', () => {
             query: '平和公園 長崎',
             description: '平和祈念像と資料館を訪問',
             type: 'spot',
+            search_keyword: null,
           },
         ],
       },

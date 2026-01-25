@@ -112,79 +112,100 @@ export function RakutenHotelCard({ keyword }: RakutenHotelCardProps) {
   }
 
   // 成功時：ホテルカード表示
+  // 絵文字や特殊記号を除去してからURLエンコード（Fallback URLと同じロジック）
+  const sanitizedKeyword = keyword
+    .replace(
+      /[\u2600-\u26FF]|[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|\uD83E[\uDD10-\uDDFF]/g,
+      ''
+    )
+    .trim()
+  const searchListUrl = `https://search.travel.rakuten.co.jp/ds/vacant/search?f_search_keyword=${encodeURIComponent(sanitizedKeyword)}`
+
   return (
-    <a
-      href={hotel.affiliateUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="mt-3 block border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow bg-white"
-    >
-      <div className="flex gap-3 p-3">
-        {/* ホテル画像 */}
-        {hotel.hotelImageUrl ? (
-          <img
-            src={hotel.hotelImageUrl}
-            alt={hotel.hotelName}
-            className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
-          />
-        ) : (
-          <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center">
-            <Building2 className="w-8 h-8 text-gray-400" />
-          </div>
-        )}
-
-        {/* ホテル情報 */}
-        <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-gray-900 text-sm line-clamp-2">
-            {hotel.hotelName}
-          </h4>
-
-          {/* レビュー */}
-          {hotel.reviewAverage > 0 && (
-            <div className="flex items-center gap-1 mt-1">
-              <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-              <span className="text-xs font-medium text-gray-700">
-                {hotel.reviewAverage.toFixed(1)}
-              </span>
-              {hotel.reviewCount > 0 && (
-                <span className="text-xs text-gray-500">
-                  ({hotel.reviewCount}件)
-                </span>
-              )}
+    <div className="mt-3 space-y-2">
+      <a
+        href={hotel.affiliateUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow bg-white"
+      >
+        <div className="flex gap-3 p-3">
+          {/* ホテル画像 */}
+          {hotel.hotelImageUrl ? (
+            <img
+              src={hotel.hotelImageUrl}
+              alt={hotel.hotelName}
+              className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+            />
+          ) : (
+            <div className="w-20 h-20 bg-gray-100 rounded-lg flex-shrink-0 flex items-center justify-center">
+              <Building2 className="w-8 h-8 text-gray-400" />
             </div>
           )}
 
-          {/* 最安値 */}
-          {hotel.minPrice > 0 && (
-            <p className="mt-1 text-sm">
-              <span className="text-gray-500">最安</span>
-              <span className="ml-1 font-bold text-red-600">
-                ¥{hotel.minPrice.toLocaleString()}〜
-              </span>
-            </p>
-          )}
+          {/* ホテル情報 */}
+          <div className="flex-1 min-w-0">
+            <h4 className="font-medium text-gray-900 text-sm line-clamp-2">
+              {hotel.hotelName}
+            </h4>
 
-          {/* 住所 */}
-          {hotel.address && (
-            <p className="flex items-center gap-1 mt-1 text-xs text-gray-500 line-clamp-1">
-              <MapPin className="w-3 h-3 flex-shrink-0" />
-              {hotel.address}
-            </p>
-          )}
+            {/* レビュー */}
+            {hotel.reviewAverage > 0 && (
+              <div className="flex items-center gap-1 mt-1">
+                <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                <span className="text-xs font-medium text-gray-700">
+                  {hotel.reviewAverage.toFixed(1)}
+                </span>
+                {hotel.reviewCount > 0 && (
+                  <span className="text-xs text-gray-500">
+                    ({hotel.reviewCount}件)
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* 最安値 */}
+            {hotel.minPrice > 0 && (
+              <p className="mt-1 text-sm">
+                <span className="text-gray-500">最安</span>
+                <span className="ml-1 font-bold text-red-600">
+                  ¥{hotel.minPrice.toLocaleString()}〜
+                </span>
+              </p>
+            )}
+
+            {/* 住所 */}
+            {hotel.address && (
+              <p className="flex items-center gap-1 mt-1 text-xs text-gray-500 line-clamp-1">
+                <MapPin className="w-3 h-3 flex-shrink-0" />
+                {hotel.address}
+              </p>
+            )}
+          </div>
+
+          {/* 外部リンクアイコン */}
+          <div className="flex-shrink-0 self-center">
+            <ExternalLink className="w-4 h-4 text-gray-400" />
+          </div>
         </div>
 
-        {/* 外部リンクアイコン */}
-        <div className="flex-shrink-0 self-center">
-          <ExternalLink className="w-4 h-4 text-gray-400" />
+        {/* 楽天トラベルバッジ */}
+        <div className="px-3 py-2 bg-gradient-to-r from-red-50 to-red-100 border-t border-red-100">
+          <p className="text-xs text-red-700 font-medium text-center">
+            🏨 楽天トラベルで予約
+          </p>
         </div>
-      </div>
+      </a>
 
-      {/* 楽天トラベルバッジ */}
-      <div className="px-3 py-2 bg-gradient-to-r from-red-50 to-red-100 border-t border-red-100">
-        <p className="text-xs text-red-700 font-medium text-center">
-          🏨 楽天トラベルで予約
-        </p>
-      </div>
-    </a>
+      {/* 他の宿も探すリンク */}
+      <a
+        href={searchListUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 underline transition-colors"
+      >
+        🏨 楽天トラベルで『{keyword}』の他の宿も探す
+      </a>
+    </div>
   )
 }

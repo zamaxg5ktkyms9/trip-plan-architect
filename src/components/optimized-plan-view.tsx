@@ -15,7 +15,10 @@ import {
   Search,
   Car,
 } from 'lucide-react'
-import type { RentalCarUrlResponse } from '@/app/api/rakuten/rental-car/route'
+import {
+  findPrefectureCode,
+  RAKUTEN_PREF_NAMES,
+} from '@/lib/constants/rakuten-cars'
 
 // X (Twitter) logo SVG component
 const XLogo = ({ className }: { className?: string }) => (
@@ -91,15 +94,32 @@ function extractLocationFromTitle(title: string): string {
 export function OptimizedPlanView({ plan }: OptimizedPlanViewProps) {
   const [copied, setCopied] = useState(false)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
-  const [rentalCarData, setRentalCarData] =
-    useState<RentalCarUrlResponse | null>(null)
 
   // 英語クエリで取得済みかどうか（一度trueになったら日本語検索には戻らない）
   const hasEnglishQueryImageRef = useRef(false)
   // 最後に取得したクエリ（重複リクエスト防止）
   const lastFetchedQueryRef = useRef<string | null>(null)
-  // レンタカーURL取得済みフラグ
-  const rentalCarFetchedRef = useRef(false)
+
+  // レンタカー情報をクライアントサイドで計算
+  const rentalCarInfo = (() => {
+    // 検索対象テキストを優先順位順に試行
+    const searchTexts = [
+      plan.title,
+      plan.base_area,
+      plan.itinerary?.[0]?.events?.[0]?.spot,
+    ].filter((t): t is string => !!t)
+
+    for (const text of searchTexts) {
+      const result = findPrefectureCode(text)
+      if (result) {
+        const [, prefCode] = result
+        const prefName = RAKUTEN_PREF_NAMES[prefCode]
+        const baseUrl = `https://cars.travel.rakuten.co.jp/cars/rcf020a.do?f_cd=${prefCode}`
+        return { prefCode, prefName, url: baseUrl }
+      }
+    }
+    return null
+  })()
 
   // Fetch destination image from Unsplash
   // 優先順位: 1. plan.image_query（AI生成の英語クエリ） 2. extractLocationFromTitle（後方互換）
@@ -166,49 +186,6 @@ export function OptimizedPlanView({ plan }: OptimizedPlanViewProps) {
       isActive = false // クリーンアップ: 古い非同期処理の結果を無視
     }
   }, [plan.image_query, plan.title])
-
-  // Fetch rental car URL based on plan title/base_area
-  useEffect(() => {
-    let isActive = true
-
-    const fetchRentalCarUrl = async () => {
-      // 既に取得済みなら何もしない
-      if (rentalCarFetchedRef.current) return
-
-      // 検索テキストを構築（title, base_area, Day1の最初のスポット）
-      const searchTexts: string[] = []
-      if (plan.title) searchTexts.push(plan.title)
-      if (plan.base_area) searchTexts.push(plan.base_area)
-      if (plan.itinerary?.[0]?.events?.[0]?.spot) {
-        searchTexts.push(plan.itinerary[0].events[0].spot)
-      }
-
-      const searchText = searchTexts.join(' ')
-      if (!searchText) return
-
-      try {
-        const response = await fetch(
-          `/api/rakuten/rental-car?text=${encodeURIComponent(searchText)}`
-        )
-
-        if (!isActive) return
-
-        if (response.ok) {
-          const data: RentalCarUrlResponse = await response.json()
-          setRentalCarData(data)
-          rentalCarFetchedRef.current = true
-        }
-      } catch (error) {
-        console.error('Failed to fetch rental car URL:', error)
-      }
-    }
-
-    fetchRentalCarUrl()
-
-    return () => {
-      isActive = false
-    }
-  }, [plan.title, plan.base_area, plan.itinerary])
 
   const copyPlanText = () => {
     if (!plan.title) return
@@ -349,18 +326,17 @@ ${plan.affiliate ? `おすすめ: ${plan.affiliate.label}` : ''}`
             </div>
 
             {/* Rental Car Button - Day 1 only */}
-            {dayIndex === 0 && rentalCarData && (
+            {dayIndex === 0 && rentalCarInfo && (
               <div className="px-4 sm:px-6 pt-4">
                 <a
-                  href={rentalCarData.url}
+                  href={rentalCarInfo.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all font-medium shadow-sm"
                 >
                   <Car className="w-5 h-5" />
-                  {rentalCarData.matchedKeyword
-                    ? `楽天トラベルで『${rentalCarData.matchedKeyword}』周辺のレンタカーを探す`
-                    : '楽天トラベルでレンタカーを探す'}
+                  🚗 楽天トラベルで『{rentalCarInfo.prefName}
+                  』のレンタカーを探す
                   <ExternalLink className="w-4 h-4" />
                 </a>
               </div>

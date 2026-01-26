@@ -340,17 +340,3 @@ export function generateRentalCarUrl(prefCode: string | null): string {
   }
   return 'https://cars.travel.rakuten.co.jp/cars/'
 }
-
-/**
- * アフィリエイトリンクでラップする
- * @param url 元のURL
- * @param affiliateId 楽天アフィリエイトID
- * @returns アフィリエイトリンク
- */
-export function wrapWithAffiliateLink(
-  url: string,
-  affiliateId: string
-): string {
-  const encodedUrl = encodeURIComponent(url)
-  return `https://hb.afl.rakuten.co.jp/hgc/${affiliateId}/?pc=${encodedUrl}`
-}

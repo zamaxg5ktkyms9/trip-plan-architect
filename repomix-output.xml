@@ -4157,6 +4157,84 @@ if (
 }
 </file>
 
+<file path="package.json">
+{
+  "name": "trip-plan-architect",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "generate:daily": "ts-node scripts/generate-daily.ts",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^3.0.6",
+    "@ai-sdk/openai": "^3.0.2",
+    "@ai-sdk/react": "^3.0.6",
+    "@next/third-parties": "^16.1.1",
+    "@radix-ui/react-dialog": "^1.1.15",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@upstash/ratelimit": "^2.0.7",
+    "@upstash/redis": "^1.36.0",
+    "ai": "^6.0.6",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.562.0",
+    "next": "16.1.1",
+    "next-themes": "^0.4.6",
+    "openai": "^6.15.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.57.0",
+    "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@types/node": "^20.19.27",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.1.2",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-unused-imports": "^4.3.0",
+    "husky": "^9.1.7",
+    "jsdom": "^27.4.0",
+    "knip": "^5.79.0",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.7.4",
+    "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "tw-animate-css": "^1.4.0",
+    "typescript": "^5",
+    "vitest": "^4.0.16"
+  }
+}
+</file>
+
 <file path="src/app/plans/[slug]/page.tsx">
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -4877,84 +4955,6 @@ export class PlanRepository implements IPlanRepository {
 export const planRepository = new PlanRepository()
 </file>
 
-<file path="package.json">
-{
-  "name": "trip-plan-architect",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint",
-    "type-check": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:e2e": "playwright test",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "generate:daily": "ts-node scripts/generate-daily.ts",
-    "prepare": "husky"
-  },
-  "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md,css}": [
-      "prettier --write"
-    ]
-  },
-  "dependencies": {
-    "@ai-sdk/google": "^3.0.6",
-    "@ai-sdk/openai": "^3.0.2",
-    "@ai-sdk/react": "^3.0.6",
-    "@next/third-parties": "^16.1.1",
-    "@radix-ui/react-dialog": "^1.1.15",
-    "@radix-ui/react-slot": "^1.2.4",
-    "@upstash/ratelimit": "^2.0.7",
-    "@upstash/redis": "^1.36.0",
-    "ai": "^6.0.6",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^0.562.0",
-    "next": "16.1.1",
-    "next-themes": "^0.4.6",
-    "openai": "^6.15.0",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "sonner": "^2.0.7",
-    "tailwind-merge": "^3.4.0",
-    "zod": "^3.24.1"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.57.0",
-    "@tailwindcss/postcss": "^4",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.1",
-    "@types/node": "^20.19.27",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "@vitejs/plugin-react": "^5.1.2",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.1",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-unused-imports": "^4.3.0",
-    "husky": "^9.1.7",
-    "jsdom": "^27.4.0",
-    "knip": "^5.79.0",
-    "lint-staged": "^16.2.7",
-    "prettier": "^3.7.4",
-    "tailwindcss": "^4",
-    "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0",
-    "tw-animate-css": "^1.4.0",
-    "typescript": "^5",
-    "vitest": "^4.0.16"
-  }
-}
-</file>
-
 <file path="src/lib/repositories/__tests__/plan-repository.test.ts">
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { PlanRepository, REDIS_KEYS_V2 } from '../plan-repository'
@@ -5618,8 +5618,8 @@ export async function GET(request: NextRequest) {
   const keyword = rawKeyword ? sanitizeKeyword(rawKeyword) : ''
 
   // Fallback URL生成（APIが失敗してもこれを返す）
-  // 1. 正しいエンドポイントとパラメータで検索URLを作成
-  const searchUrl = `https://search.travel.rakuten.co.jp/ds/simple/search?f_dai=japan&f_query=${encodeURIComponent(keyword)}`
+  // 1. キーワード検索（日付未定）の正しいエンドポイント
+  const searchUrl = `https://kw.travel.rakuten.co.jp/keyword/Search.do?charset=utf-8&f_query=${encodeURIComponent(keyword)}`
 
   // 2. affiliateIdがある場合は、hb.afl.rakuten.co.jp でラップする
   const fallbackUrl = affiliateId
@@ -7051,12 +7051,13 @@ const PLAN_GENERATION_PROMPT = `# 最重要: 固有名詞の正確性（ハル�
     - search_keyword: 楽天トラベル等の検索用キーワード。**以下のルールに従って生成せよ:**
       - **重要:** このフィールドは必須です。値がない場合は必ず null を出力してください。
       - **対象イベント:** type: "spot" (特に宿泊施設) または type: "food"
-      - **形式:** 「地域名 キーワード」または「具体的な施設名」のみ。スペース区切り。助詞禁止。
-      - **NG例:** "指宿エリアの砂むし温泉", "天文館周辺のホテル", "〇〇の旅館"
-      - **OK例:** "指宿 砂むし温泉", "天文館 ホテル", "薩摩川内 ホテル"
-      - **理由:** 楽天トラベルAPI等の検索エンジンは自然言語の助詞("の", "に", "で")を処理できない。キーワードのみで構成すること。
-      - **宿泊施設の場合:** 必ず生成すること。エリア名 + "ホテル" or "旅館" の形式を推奨。
-      - **食事スポットの場合:** エリア名 + ジャンル（例: "天文館 黒豚料理", "桜島 カフェ"）
+      - **形式:** 「地域名 都道府県名 キーワード」のみ。スペース区切り。助詞禁止。
+      - **都道府県名の強制付与（最重要）:** 検索精度を高めるため、キーワードには必ず **「都道府県名」** をスペース区切りで付与すること。AIの知識を用いて、そのスポットが属する都道府県を補完せよ。
+      - **NG例:** "指宿", "天文館 ホテル", "指宿エリアの砂むし温泉", "天文館周辺のホテル"
+      - **OK例:** "指宿 鹿児島県", "天文館 鹿児島県 ホテル", "熱海 静岡県", "薩摩川内 鹿児島県 ホテル"
+      - **理由:** 楽天トラベルAPI等の検索エンジンはAND検索に対応しており、県名を含めることで同名地名のノイズを除去できる。また、自然言語の助詞("の", "に", "で")は処理できないため、キーワードのみで構成すること。
+      - **宿泊施設の場合:** 必ず生成すること。エリア名 + 都道府県名 + "ホテル" or "旅館" の形式を推奨。
+      - **食事スポットの場合:** エリア名 + 都道府県名 + ジャンル（例: "天文館 鹿児島県 黒豚料理", "桜島 鹿児島県 カフェ"）
       - **それ以外のスポット（通常の観光地・移動イベント等）:** null を出力すること（楽天APIでの検索対象外のため）
     - is_stay: 宿泊イベント（チェックイン）であるかを示すboolean値。**このフィールドは省略不可（Required）。必ず true または false を出力せよ。**
       - **宿泊イベント（true）:** その日の最終目的地となる宿泊施設へのチェックイン。ホテル・旅館・ゲストハウス等への宿泊を目的とする場合のみ true を設定すること。

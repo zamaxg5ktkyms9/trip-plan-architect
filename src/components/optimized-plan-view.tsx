@@ -14,6 +14,18 @@ import {
   Navigation,
   Search,
 } from 'lucide-react'
+
+// X (Twitter) logo SVG component
+const XLogo = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+)
 import { toast } from 'sonner'
 import { RakutenHotelCard } from './rakuten-hotel-card'
 
@@ -233,17 +245,32 @@ ${plan.affiliate ? `おすすめ: ${plan.affiliate.label}` : ''}`
                 </p>
               )}
             </div>
-            <button
-              onClick={copyPlanText}
-              className="flex-shrink-0 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              title="プランをコピー"
-            >
-              {copied ? (
-                <Check className="w-5 h-5 text-green-500" />
-              ) : (
-                <Copy className="w-5 h-5" />
-              )}
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  const text = `${plan.title || ''}の旅行プランを作成しました！ 🚗💨`
+                  const hashtag = 'TripPlanArchitect'
+                  const url = window.location.href
+                  const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&hashtags=${encodeURIComponent(hashtag)}&url=${encodeURIComponent(url)}`
+                  window.open(tweetUrl, '_blank', 'noopener,noreferrer')
+                }}
+                className="flex-shrink-0 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Xでシェア"
+              >
+                <XLogo className="w-5 h-5" />
+              </button>
+              <button
+                onClick={copyPlanText}
+                className="flex-shrink-0 p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                title="プランをコピー"
+              >
+                {copied ? (
+                  <Check className="w-5 h-5 text-green-500" />
+                ) : (
+                  <Copy className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 

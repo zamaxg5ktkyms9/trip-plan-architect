@@ -11,9 +11,7 @@ import { MapPin, Navigation, Car, Train, Calendar } from 'lucide-react'
 export function TripGenerator() {
   const [destination, setDestination] = useState('')
   const [baseArea, setBaseArea] = useState('')
-  const [transportation, setTransportation] = useState<'car' | 'transit'>(
-    'transit'
-  )
+  const [transportation, setTransportation] = useState<'car' | 'transit'>('car')
   const [days, setDays] = useState<number>(2)
 
   const { object, submit, isLoading } = useObject({
@@ -180,15 +178,11 @@ export function TripGenerator() {
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <button
-                  onClick={() => setTransportation('transit')}
-                  className={`flex items-center justify-center gap-2 py-4 rounded-lg border-2 transition-all ${
-                    transportation === 'transit'
-                      ? 'border-blue-500 bg-blue-50 text-blue-600'
-                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
-                  }`}
+                  disabled
+                  className="flex items-center justify-center gap-2 py-4 rounded-lg border-2 transition-all border-gray-200 text-gray-400 cursor-not-allowed opacity-60"
                 >
                   <Train className="w-5 h-5" />
-                  <span className="font-medium">公共交通</span>
+                  <span className="font-medium">公共交通 (Coming Soon)</span>
                 </button>
                 <button
                   onClick={() => setTransportation('car')}
@@ -198,9 +192,6 @@ export function TripGenerator() {
                       : 'border-gray-200 text-gray-600 hover:border-gray-300'
                   }`}
                 >
-                  <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-orange-500 text-white text-xs font-bold rounded-full">
-                    おすすめ
-                  </span>
                   <Car className="w-5 h-5" />
                   <span className="font-medium">車 / レンタカー</span>
                 </button>

@@ -250,6 +250,11 @@ export const OptimizedPlanSchema = z.object({
     .describe(
       'Base area (starting/ending point) specified by user - used for Google Maps URL generation on frontend'
     ),
+  destination_prefecture_code: z
+    .string()
+    .describe(
+      'JIS X 0401 prefecture code of the destination ("01"~"47"). e.g., "46" for 鹿児島県, "13" for 東京都. Used for hotel search filtering.'
+    ),
   image_query: z
     .string()
     .describe(

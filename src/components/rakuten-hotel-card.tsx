@@ -9,13 +9,17 @@ import type {
 
 interface RakutenHotelCardProps {
   keyword: string
+  prefectureCode?: string
 }
 
 /**
  * 楽天トラベルのホテル情報を表示するコンポーネント
  * APIが失敗した場合はFallback検索リンクを表示
  */
-export function RakutenHotelCard({ keyword }: RakutenHotelCardProps) {
+export function RakutenHotelCard({
+  keyword,
+  prefectureCode,
+}: RakutenHotelCardProps) {
   const [hotel, setHotel] = useState<HotelItem | null>(null)
   const [fallbackUrl, setFallbackUrl] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
@@ -31,9 +35,11 @@ export function RakutenHotelCard({ keyword }: RakutenHotelCardProps) {
       }
 
       try {
-        const response = await fetch(
-          `/api/rakuten/search?keyword=${encodeURIComponent(keyword)}`
-        )
+        const params = new URLSearchParams({ keyword })
+        if (prefectureCode) {
+          params.set('prefectureCode', prefectureCode)
+        }
+        const response = await fetch(`/api/rakuten/search?${params.toString()}`)
 
         if (!isActive) return
 
@@ -65,7 +71,7 @@ export function RakutenHotelCard({ keyword }: RakutenHotelCardProps) {
     return () => {
       isActive = false
     }
-  }, [keyword])
+  }, [keyword, prefectureCode])
 
   // ローディング中
   if (isLoading) {

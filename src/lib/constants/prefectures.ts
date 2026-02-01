@@ -68,18 +68,3 @@ export function getPrefectureByCode(code: string): Prefecture | undefined {
 export function getPrefectureName(code: string): string | undefined {
   return getPrefectureByCode(code)?.name
 }
-
-/** 県名からコードを取得 */
-export function getPrefectureCode(name: string): string | undefined {
-  return PREFECTURES.find(p => p.name === name)?.code
-}
-
-/** slugからコードを取得 */
-export function getPrefectureCodeBySlug(slug: string): string | undefined {
-  return PREFECTURES.find(p => p.slug === slug)?.code
-}
-
-/** コードからslugを取得 */
-export function getPrefectureSlug(code: string): string | undefined {
-  return getPrefectureByCode(code)?.slug
-}

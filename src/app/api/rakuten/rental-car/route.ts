@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
-  findPrefectureCode,
+  findAreaPath,
   generateRentalCarUrl,
 } from '@/lib/constants/rakuten-cars'
 
@@ -12,7 +12,7 @@ export const runtime = 'edge'
 export interface RentalCarUrlResponse {
   url: string
   matchedKeyword: string | null
-  prefCode: string | null
+  areaPath: string | null
 }
 
 /**
@@ -22,7 +22,7 @@ export interface RentalCarUrlResponse {
  * Query Parameters:
  * - text: 検索対象テキスト（タイトル、目的地など）
  *
- * @returns JSON with url, matchedKeyword, prefCode
+ * @returns JSON with url, matchedKeyword, areaPath
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
@@ -30,13 +30,13 @@ export async function GET(request: NextRequest) {
 
   const affiliateId = process.env.RAKUTEN_AFFILIATE_ID
 
-  // テキストから都道府県コードを検索
-  const result = findPrefectureCode(text)
+  // テキストからエリアパスを検索
+  const result = findAreaPath(text)
   const matchedKeyword = result ? result[0] : null
-  const prefCode = result ? result[1] : null
+  const areaPath = result ? result[1] : null
 
-  // 楽天トラベルレンタカーのURLを生成
-  const baseUrl = generateRentalCarUrl(prefCode)
+  // 楽天トラベルレンタカーのエリアページURLを生成
+  const baseUrl = generateRentalCarUrl(areaPath)
 
   // アフィリエイトリンクでラップ
   const url = affiliateId
@@ -44,12 +44,12 @@ export async function GET(request: NextRequest) {
     : baseUrl
 
   console.log(
-    `[Rental Car API] text="${text}" -> matched="${matchedKeyword}" code="${prefCode}"`
+    `[Rental Car API] text="${text}" -> matched="${matchedKeyword}" path="${areaPath}"`
   )
 
   return NextResponse.json<RentalCarUrlResponse>({
     url,
     matchedKeyword,
-    prefCode,
+    areaPath,
   })
 }

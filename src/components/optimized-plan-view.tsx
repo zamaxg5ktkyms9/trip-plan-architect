@@ -96,10 +96,8 @@ export function OptimizedPlanView({ plan }: OptimizedPlanViewProps) {
   const [copied, setCopied] = useState(false)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
 
-  // 英語クエリで取得済みかどうか（一度trueになったら日本語検索には戻らない）
-  const hasEnglishQueryImageRef = useRef(false)
-  // 最後に取得したクエリ（重複リクエスト防止）
-  const lastFetchedQueryRef = useRef<string | null>(null)
+  // 画像取得済みフラグ（一度取得したら再フェッチしない）
+  const hasFetchedImage = useRef(false)
 
   // レンタカー情報をクライアントサイドで計算
   const rentalCarInfo = (() => {
@@ -122,56 +120,41 @@ export function OptimizedPlanView({ plan }: OptimizedPlanViewProps) {
     return null
   })()
 
-  // Fetch destination image from Unsplash
+  // Fetch destination image from Unsplash（一度だけ実行）
   // 優先順位: 1. plan.image_query（AI生成の英語クエリ） 2. extractLocationFromTitle（後方互換）
   useEffect(() => {
-    let isActive = true // クリーンアップ用フラグ（Race Condition対策）
+    // 既に画像取得済み or 取得試行済みならスキップ
+    if (imageUrl || hasFetchedImage.current) return
+
+    // クエリの決定（英語クエリ最優先）
+    let query: string | null = null
+
+    if (plan.image_query && plan.image_query.length >= 2) {
+      query = plan.image_query
+    } else if (plan.title && plan.title.length >= 2) {
+      query = extractLocationFromTitle(plan.title)
+    }
+
+    if (!query) return
+
+    // フェッチ試行済みフラグを即座にセット（重複防止）
+    hasFetchedImage.current = true
+
+    let isActive = true
 
     const fetchImage = async () => {
-      // 1. クエリの決定（英語クエリ最優先）
-      let query: string | null = null
-      let isEnglishQuery = false
-
-      if (plan.image_query && plan.image_query.length >= 2) {
-        query = plan.image_query
-        isEnglishQuery = true
-      } else if (plan.title && plan.title.length >= 2) {
-        // 英語クエリで既に画像取得済みなら、日本語フォールバックは実行しない
-        if (hasEnglishQueryImageRef.current) {
-          return
-        }
-        query = extractLocationFromTitle(plan.title)
-      }
-
-      if (!query) return
-
-      // 同じクエリで既に取得済みならスキップ
-      if (lastFetchedQueryRef.current === query) return
-
       try {
-        console.log(
-          `[Image Search] Query: "${query}" (${isEnglishQuery ? 'English' : 'Japanese fallback'})`
-        )
+        console.log(`[Image Search] Query: "${query}"`)
         const response = await fetch(
-          `/api/unsplash?query=${encodeURIComponent(query)}`
+          `/api/unsplash?query=${encodeURIComponent(query!)}`
         )
 
-        // クリーンアップ済み（新しいクエリで再実行された）なら結果を無視
-        if (!isActive) {
-          console.log(`[Image Search] Ignoring stale response for: "${query}"`)
-          return
-        }
+        if (!isActive) return
 
         if (response.ok) {
           const data = await response.json()
           if (data.imageUrl && isActive) {
             setImageUrl(data.imageUrl)
-            lastFetchedQueryRef.current = query
-
-            // 英語クエリで取得成功したらフラグを立てる
-            if (isEnglishQuery) {
-              hasEnglishQueryImageRef.current = true
-            }
           }
         }
       } catch (error) {
@@ -184,9 +167,9 @@ export function OptimizedPlanView({ plan }: OptimizedPlanViewProps) {
     fetchImage()
 
     return () => {
-      isActive = false // クリーンアップ: 古い非同期処理の結果を無視
+      isActive = false
     }
-  }, [plan.image_query, plan.title])
+  }, [plan.image_query, plan.title, imageUrl])
 
   const copyPlanText = () => {
     if (!plan.title) return

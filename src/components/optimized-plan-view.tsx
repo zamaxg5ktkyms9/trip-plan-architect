@@ -16,7 +16,8 @@ import {
   Car,
 } from 'lucide-react'
 import {
-  findPrefectureCode,
+  findAreaPath,
+  generateRentalCarUrl,
   RAKUTEN_PREF_NAMES,
 } from '@/lib/constants/rakuten-cars'
 
@@ -110,12 +111,12 @@ export function OptimizedPlanView({ plan }: OptimizedPlanViewProps) {
     ].filter((t): t is string => !!t)
 
     for (const text of searchTexts) {
-      const result = findPrefectureCode(text)
+      const result = findAreaPath(text)
       if (result) {
-        const [, prefCode] = result
-        const prefName = RAKUTEN_PREF_NAMES[prefCode]
-        const baseUrl = `https://cars.travel.rakuten.co.jp/cars/rcf020a.do?f_cd=${prefCode}`
-        return { prefCode, prefName, url: baseUrl }
+        const [, areaPath] = result
+        const prefName = RAKUTEN_PREF_NAMES[areaPath]
+        const url = generateRentalCarUrl(areaPath)
+        return { areaPath, prefName, url }
       }
     }
     return null

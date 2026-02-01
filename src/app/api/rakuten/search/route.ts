@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getPrefectureName } from '@/lib/constants/prefectures'
 
 export const runtime = 'edge'
 
@@ -79,12 +80,14 @@ function sanitizeKeyword(keyword: string): string {
  *
  * Query Parameters:
  * - keyword: 検索キーワード（エリア名やホテル名）
+ * - prefectureCode: 都道府県コード（"01"~"47"）。指定時は該当県以外のホテルを除外
  *
  * @returns JSON with items[] and fallbackUrl
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
   const rawKeyword = searchParams.get('keyword')
+  const prefectureCode = searchParams.get('prefectureCode')
 
   // 環境変数取得
   const appId = process.env.RAKUTEN_APP_ID
@@ -119,21 +122,35 @@ export async function GET(request: NextRequest) {
     )
   }
 
+  // 都道府県フィルタリング用の県名を解決
+  const prefectureName = prefectureCode
+    ? getPrefectureName(prefectureCode)
+    : null
+
+  if (prefectureCode && !prefectureName) {
+    console.warn(`[Rakuten API] Unknown prefectureCode: "${prefectureCode}"`)
+  }
+
   try {
     // 楽天トラベル KeywordHotelSearch API
+    // フィルタリング用に多めに取得（県外ホテルが混ざる可能性があるため）
+    const hitsCount = prefectureName ? '10' : '3'
+
     const apiUrl = new URL(
       'https://app.rakuten.co.jp/services/api/Travel/KeywordHotelSearch/20170426'
     )
     apiUrl.searchParams.set('format', 'json')
     apiUrl.searchParams.set('keyword', keyword)
     apiUrl.searchParams.set('applicationId', appId)
-    apiUrl.searchParams.set('hits', '3') // 上位3件取得
+    apiUrl.searchParams.set('hits', hitsCount)
 
     if (affiliateId) {
       apiUrl.searchParams.set('affiliateId', affiliateId)
     }
 
-    console.log(`[Rakuten API] Fetching: keyword="${keyword}"`)
+    console.log(
+      `[Rakuten API] Fetching: keyword="${keyword}"${prefectureName ? ` prefecture="${prefectureName}"` : ''}`
+    )
 
     const response = await fetch(apiUrl.toString(), {
       method: 'GET',
@@ -183,7 +200,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ホテル情報を整形
-    const items: HotelItem[] = data.hotels
+    let items: HotelItem[] = data.hotels
       .map(hotel => {
         const basicInfo = hotel.hotel?.[0]?.hotelBasicInfo
         if (!basicInfo) return null
@@ -202,8 +219,23 @@ export async function GET(request: NextRequest) {
       })
       .filter((item): item is HotelItem => item !== null)
 
+    // 都道府県フィルタリング: address が指定県名で始まるもののみ残す
+    if (prefectureName) {
+      const beforeCount = items.length
+      items = items.filter(item => item.address.startsWith(prefectureName))
+      const filteredCount = beforeCount - items.length
+      if (filteredCount > 0) {
+        console.log(
+          `[Rakuten API] Prefecture filter: removed ${filteredCount}/${beforeCount} hotels outside "${prefectureName}"`
+        )
+      }
+    }
+
+    // フィルタリング後は上位3件に絞る
+    items = items.slice(0, 3)
+
     console.log(
-      `[Rakuten API] Success: Found ${items.length} hotels for "${keyword}"`
+      `[Rakuten API] Success: Found ${items.length} hotels for "${keyword}"${prefectureName ? ` in "${prefectureName}"` : ''}`
     )
 
     return NextResponse.json<RakutenSearchResponse>({

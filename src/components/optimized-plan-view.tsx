@@ -396,6 +396,9 @@ ${plan.affiliate ? `おすすめ: ${plan.affiliate.label}` : ''}`
                             return (
                               <RakutenHotelCard
                                 keyword={event.search_keyword || event.spot}
+                                prefectureCode={
+                                  plan.destination_prefecture_code
+                                }
                               />
                             )
                           }
